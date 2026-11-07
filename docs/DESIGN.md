@@ -15,23 +15,27 @@ Source of truth for game design. Anything not covered here is an open question: 
 Two production jobs, **mining** and **logging**. Each produces its own resources, and higher tiers give different, better resources.
 
 ### Planning layer (plots / slots)
+
 - Production runs on a limited, expandable number of plots (logging) or slots (mining).
 - The player decides what to put in them; expanding capacity is a core progression lever.
 
 ### Logging
+
 - Starts with **one tree plot**.
 - Upgrades add more plots and unlock new **tree kinds**; each tree kind yields a different wood.
 
 ### Mining
+
 - Works the same way as logging (limited slots, upgrades add capacity, higher mine types yield different ores).
 - **New mine types are unlocked via dungeon expeditions.**
 
 ### Resource uses (starting point)
-| Resource | Buys |
-|---|---|
-| Ore | Damage, mine upgrades |
-| Wood | Plot expansions, new tree kinds |
-| Higher-tier wood / ore | Card tier-ups |
+
+| Resource               | Buys                            |
+| ---------------------- | ------------------------------- |
+| Ore                    | Damage, mine upgrades           |
+| Wood                   | Plot expansions, new tree kinds |
+| Higher-tier wood / ore | Card tier-ups                   |
 
 This is a starting point and will be tuned.
 
@@ -57,6 +61,7 @@ This is a starting point and will be tuned.
 - **Production jobs** work the same way: main card shapes the output, supports add bonuses.
 
 ### Ranks
+
 Bronze ★1–6 → Silver ★1–6 → Gold ★1–6 → Prismatic ★1–6 (max).
 
 - ★6 of each tier is a **big upgrade plus a visual change**.

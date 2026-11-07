@@ -1,0 +1,49 @@
+import { join } from 'node:path';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { GAME_TITLE } from '../game';
+import { IPC_CHANNELS } from '../preload/api';
+
+function createWindow(): void {
+  const win = new BrowserWindow({
+    width: 1100,
+    height: 720,
+    show: false,
+    title: GAME_TITLE,
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+
+  win.on('ready-to-show', () => win.show());
+
+  // Never open new Electron windows; send external links to the default browser.
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://')) void shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  win.webContents.on('will-navigate', (event) => event.preventDefault());
+
+  const devUrl = process.env['ELECTRON_RENDERER_URL'];
+  if (!app.isPackaged && devUrl) {
+    void win.loadURL(devUrl);
+  } else {
+    void win.loadFile(join(__dirname, '../renderer/index.html'));
+  }
+}
+
+void app.whenReady().then(() => {
+  ipcMain.handle(IPC_CHANNELS.getVersion, () => app.getVersion());
+  createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
