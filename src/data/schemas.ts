@@ -8,7 +8,6 @@ const decimal = z
   .transform((s) => new Decimal(s));
 
 const positiveDecimal = decimal.refine((d) => d.gt(0), { message: 'must be greater than 0' });
-const nonNegativeDecimal = decimal.refine((d) => d.gte(0), { message: 'must be 0 or more' });
 
 const id = z.string().regex(/^[a-z][a-z0-9_]*$/, 'ids are lowercase snake_case, e.g. "oak_wood"');
 const name = z.string().min(1);

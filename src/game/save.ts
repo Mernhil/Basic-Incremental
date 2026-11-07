@@ -1,0 +1,191 @@
+import { z } from 'zod';
+import type { Content } from '../data';
+import { MIGRATIONS, migrateState, type MigrationTable } from './migrations';
+import { Decimal, decimalToString, isDecimalString } from './num';
+import { SaveError } from './saveError';
+import { cloneState, createInitialState, type GameState } from './state';
+
+export { SaveError } from './saveError';
+
+/** Bump this (and add a migration) whenever the saved format changes. */
+export const CURRENT_SAVE_VERSION = 1;
+
+const decimalText = z.string().refine(isDecimalString, { message: 'not a valid number' });
+const counts = z.record(z.string(), z.number().int().min(0));
+
+/** The on-disk shape of GameState: Decimals as strings, nothing else special. */
+export const serializedStateSchema = z.object({
+  resources: z.record(z.string(), decimalText),
+  producers: counts,
+  damage: decimalText,
+  activeDungeonId: z.string().nullable(),
+  bossHp: decimalText.nullable(),
+  pity: counts,
+  inventory: counts,
+  prestigeCount: z.number().int().min(0),
+  stats: z.object({
+    playTimeMs: z.number().min(0),
+    bossKills: z.number().int().min(0),
+  }),
+});
+export type SerializedState = z.infer<typeof serializedStateSchema>;
+
+const envelopeSchema = z.object({
+  version: z.number().int(),
+  savedAt: z.number().finite(),
+  state: z.unknown(),
+});
+
+export interface LoadedSave {
+  state: GameState;
+  /** Epoch ms of when the save was written; used for offline progress. */
+  savedAt: number;
+}
+
+export function serializeState(state: GameState): SerializedState {
+  const resources: Record<string, string> = {};
+  for (const [id, value] of Object.entries(state.resources)) resources[id] = decimalToString(value);
+  return {
+    resources,
+    producers: { ...state.producers },
+    damage: decimalToString(state.damage),
+    activeDungeonId: state.activeDungeonId,
+    bossHp: state.bossHp ? decimalToString(state.bossHp) : null,
+    pity: { ...state.pity },
+    inventory: { ...state.inventory },
+    prestigeCount: state.prestigeCount,
+    stats: { ...state.stats },
+  };
+}
+
+/** Rebuilds a GameState; resources added to the content since the save are filled in at 0. */
+export function deserializeState(saved: SerializedState, content: Content): GameState {
+  const base = createInitialState(content);
+  const state = cloneState(base);
+  for (const [id, text] of Object.entries(saved.resources)) state.resources[id] = new Decimal(text);
+  state.producers = { ...saved.producers };
+  state.damage = new Decimal(saved.damage);
+  state.activeDungeonId =
+    saved.activeDungeonId && content.dungeonById.has(saved.activeDungeonId)
+      ? saved.activeDungeonId
+      : base.activeDungeonId;
+  state.bossHp = saved.bossHp ? new Decimal(saved.bossHp) : null;
+  state.pity = { ...saved.pity };
+  state.inventory = { ...saved.inventory };
+  state.prestigeCount = saved.prestigeCount;
+  state.stats = { ...saved.stats };
+  return state;
+}
+
+/** The text written to disk: a versioned envelope around the serialized state. */
+export function createSaveText(state: GameState, savedAtMs: number): string {
+  return JSON.stringify({
+    version: CURRENT_SAVE_VERSION,
+    savedAt: savedAtMs,
+    state: serializeState(state),
+  });
+}
+
+/** Parses, migrates and validates save text. Throws SaveError with a player-safe message. */
+export function readSave(
+  text: string,
+  content: Content,
+  migrations: MigrationTable = MIGRATIONS,
+): LoadedSave {
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new SaveError('invalid-json', 'The save is not valid JSON (the file may be corrupted).');
+  }
+
+  const envelope = envelopeSchema.safeParse(json);
+  if (!envelope.success) {
+    throw new SaveError('invalid-format', 'The save is missing its version or timestamp.');
+  }
+
+  const migrated = migrateState(
+    envelope.data.state,
+    envelope.data.version,
+    CURRENT_SAVE_VERSION,
+    migrations,
+  );
+  const parsed = serializedStateSchema.safeParse(migrated);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    const where = first ? first.path.join('.') : 'state';
+    throw new SaveError('invalid-format', `The save data is invalid at "${where}".`);
+  }
+  return { state: deserializeState(parsed.data, content), savedAt: envelope.data.savedAt };
+}
+
+export interface BestSave {
+  save: LoadedSave | null;
+  source: 'primary' | 'backup' | 'none';
+  /** One message per file that existed but could not be read. */
+  errors: string[];
+}
+
+/** Tries the main save, then the backup. A missing file is not an error; a corrupt one is. */
+export function loadBestSave(
+  primary: string | null,
+  backup: string | null,
+  content: Content,
+): BestSave {
+  const errors: string[] = [];
+  const attempts = [
+    ['primary', primary],
+    ['backup', backup],
+  ] as const;
+  for (const [source, text] of attempts) {
+    if (text === null) continue;
+    try {
+      return { save: readSave(text, content), source, errors };
+    } catch (error) {
+      if (!(error instanceof SaveError)) throw error;
+      errors.push(`${source === 'primary' ? 'Save' : 'Backup'}: ${error.message}`);
+    }
+  }
+  return { save: null, source: 'none', errors };
+}
+
+// ---- Export / import as a text string ----
+
+const EXPORT_PREFIX = 'BIv1:';
+
+function toBase64(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+function fromBase64(encoded: string): string {
+  const binary = atob(encoded);
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+}
+
+/** A single copy-pasteable line containing the whole save. */
+export function exportSaveString(state: GameState, savedAtMs: number): string {
+  return EXPORT_PREFIX + toBase64(createSaveText(state, savedAtMs));
+}
+
+/** Decodes and fully validates an exported string. Throws SaveError if it is not a good save. */
+export function importSaveString(
+  input: string,
+  content: Content,
+  migrations: MigrationTable = MIGRATIONS,
+): LoadedSave {
+  const compact = input.replace(/\s+/g, '');
+  if (!compact.startsWith(EXPORT_PREFIX)) {
+    throw new SaveError('invalid-export', 'This is not an exported save string.');
+  }
+  let text: string;
+  try {
+    text = fromBase64(compact.slice(EXPORT_PREFIX.length));
+  } catch {
+    throw new SaveError('invalid-export', 'The save string is damaged or incomplete.');
+  }
+  return readSave(text, content, migrations);
+}
