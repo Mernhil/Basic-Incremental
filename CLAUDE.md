@@ -9,6 +9,12 @@ Windows desktop incremental game (Electron + TypeScript).
 - Save format changes always need a version bump and a migration.
 - Verify changes (build, tests, run) before saying something is done.
 
+## Tools, skills and design choices
+
+- Install whatever tools, dev dependencies or skills make the job better (linters, test helpers, image tools, design or UI skills, …) without asking first. Mention what was installed in the PR.
+- For any UI, graphics or visual design change, use the frontend-design skill and the Design plugin skills, and install or enable other relevant skills when they would help.
+- For any design, UI or graphics change, always show the user **5 options** that differ in ways that matter (layout, colour, density, motion, ornament, …) and let them choose before building the final version. Options are mockups or screenshots, not code merged into `main`.
+
 ## GitHub workflow
 
 Claude handles everything GitHub-related (git + the `gh` CLI); the user does not push, merge or manage PRs manually.
