@@ -1,0 +1,70 @@
+/* Direction A: Flatland Ink. Solid colour, hard outlines, one hard shadow. No gradients except
+   the star shine, which the rank system requires. */
+.dir {
+  --font-body: 'Bricolage Grotesque', 'Segoe UI', sans-serif;
+  --ink: #14222b;
+  --muted: #3f5663;
+  --paper: #ffffff;
+  --table-bg: #d5e3e8;
+  --accent: #ff6a3d;
+  --star-off: #c4d2d8;
+  --radius: 10px;
+  --card-w: 186px;
+  font-weight: 500;
+  background-image: radial-gradient(#b3c6ce 1.4px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+.dir h1 { font-size: 34px; font-weight: 800; letter-spacing: -.02em; line-height: 1; }
+.blurb { margin-top: 6px; color: var(--muted); font-size: 15px; }
+.slots { max-width: 560px; color: var(--ink); }
+.slots b { font-weight: 700; }
+.section-title { font-size: 17px; font-weight: 700; margin-bottom: 14px; color: var(--ink); }
+
+/* tones: flat art backgrounds, all pale enough for ink emblems */
+.tone-a { --art: #ffb199; } .tone-b { --art: #9fe0c9; } .tone-c { --art: #ffd978; } .tone-d { --art: #c5b6f2; }
+.tone-boss { --art: #a9c0cb; }
+.job-fighting { --job: #ff8e66; } .job-mining { --job: #ffd978; } .job-logging { --job: #8fdcb8; }
+
+/* border: Ink outline */
+.card { padding: 9px; gap: 8px; background: var(--paper); border: 3px solid var(--ink); border-radius: var(--radius);
+  box-shadow: 0 5px 0 var(--ink); color: var(--ink); }
+.card__name { font-size: 15px; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; }
+.card__job { flex: none; padding: 2px 8px; border-radius: 99px; background: var(--job, var(--art)); border: 2px solid var(--ink); font-size: 11px; font-weight: 700; line-height: 1.2; }
+.card__art { background: var(--art); border: 2px solid var(--ink); border-radius: 6px; --emblem: var(--ink); }
+.card__stats dt { font-size: 11px; font-weight: 500; color: var(--muted); }
+.card__stats dd { font-size: 16px; font-weight: 800; line-height: 1.15; }
+.card__rank { padding: 5px 8px; margin: 0 -2px -2px; border-radius: 6px; border: 2px solid var(--ink); background: var(--ink); color: #fff; }
+.rank-name { padding: 1px 8px; border-radius: 99px; background: var(--tier-soft); color: var(--ink); font-size: 12px; font-weight: 800; }
+.rank-bronze { --tier-soft: #f3d3b4; } .rank-silver { --tier-soft: #dfe5ec; } .rank-gold { --tier-soft: #fbe49a; } .rank-prismatic { --tier-soft: #f1e4ff; }
+.stars { --star-size: 15px; letter-spacing: .01em; }
+.finish-holo .art__emblem { position: relative; z-index: 1; }
+.stars__off { color: rgba(255, 255, 255, .3); }
+
+/* star-6 evolution: a faint offset ring in the tier colour, flat like everything else */
+.is-star6 { outline: 3px solid var(--star); outline-offset: 4px; }
+.rank-prismatic.is-star6 { outline-color: #b48cff; }
+
+/* finish: Stripe holo (flat hard-stop stripes, no blur) */
+.finish-holo .card__art::after { content: ''; position: absolute; inset: 0; opacity: .6;
+  background: linear-gradient(115deg, #ff9ec7 0 20%, #ffe08a 20% 40%, #9ee6c4 40% 60%, #9ec8ff 60% 80%, #cdb4ff 80% 100%);
+  background-size: 200% 100%; animation: stripes 6s linear infinite alternate; }
+@keyframes stripes { to { background-position: 100% 0; } }
+
+/* boss + HP bar */
+.card--boss { padding: 11px; }
+.card--boss .card__name { font-size: 20px; }
+.hp { border: 3px solid var(--ink); border-radius: 8px; background: #fff; height: 28px; }
+.hp__fill { background: var(--accent); border-right: 3px solid var(--ink); }
+.hp__text { font-size: 13px; font-weight: 800; color: var(--ink); }
+
+/* attack animation: Pop ring + squash */
+.fx { position: absolute; left: 50%; top: 52%; width: 40px; height: 40px; margin: -20px; border-radius: 50%;
+  border: 8px solid var(--accent); opacity: 0; animation: pop-ring 2.4s ease-out infinite; z-index: 2; }
+@keyframes pop-ring { 0% { transform: scale(.3); opacity: 1; } 22% { transform: scale(4.6); opacity: 0; } 100% { opacity: 0; } }
+.card--boss .art__emblem { animation: squash 2.4s ease-out infinite; transform-origin: 50% 90%; }
+@keyframes squash { 0% { transform: scale(1.1, .86); } 12% { transform: scale(.95, 1.06); } 24%, 100% { transform: none; } }
+
+/* tick damage: Sticker pill; number style: Rounded heavy */
+.tick { padding: 3px 10px; border: 2px solid var(--ink); border-radius: 99px; background: var(--paper); color: var(--ink);
+  font-size: 19px; font-weight: 800; box-shadow: 0 3px 0 var(--ink); }
+.tick--crit { background: var(--accent); font-size: 27px; padding: 4px 13px; }

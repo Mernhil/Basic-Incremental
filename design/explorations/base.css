@@ -1,0 +1,73 @@
+/* Shared structure and rank mechanics. Each direction supplies the look through variables
+   and its own rules. Nothing here is a final design token. */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; color: var(--ink); font-family: var(--font-body); background: var(--table-bg); }
+h1, h2, h3, p, ul, dl, dd { margin: 0; padding: 0; }
+ul { list-style: none; }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+
+.table { max-width: 1240px; margin: 0 auto; padding: 28px 32px 56px; display: grid; gap: 34px; }
+.setbar { display: flex; flex-wrap: wrap; gap: 14px 40px; align-items: flex-end; justify-content: space-between; }
+.slots { display: flex; flex-wrap: wrap; gap: 10px 28px; font-size: 14px; line-height: 1.25; }
+.slots li { display: grid; gap: 1px; }
+.slots span { font-size: 12px; opacity: .8; }
+.row { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.row--battle { gap: 28px; }
+
+/* ---- card anatomy ---- */
+.card { position: relative; isolation: isolate; width: var(--card-w, 172px); height: var(--card-h, 244px);
+  display: flex; flex-direction: column; flex: none; }
+.card--boss { --card-w: 276px; --card-h: 372px; }
+.card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.card__art { position: relative; flex: 1; min-height: 0; overflow: hidden; display: grid; place-items: center; }
+.card--boss .art__emblem { width: 70%; height: 70%; }
+.art__emblem { width: 56%; height: 56%; fill: var(--emblem, currentColor); }
+.card__stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.card__stats div { min-width: 0; }
+.card__rank { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+
+/* ---- HP bar ---- */
+.hp { position: relative; height: 22px; overflow: hidden; }
+.hp__fill { height: 100%; }
+.hp__text { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+
+/* ---- stars: tier colours, prismatic animation, and the star-6 shine ---- */
+:root {
+  --bronze: #cd7f32; --bronze-shine: #ffe2bd;
+  --silver: #c9d1db; --silver-shine: #ffffff;
+  --gold: #f6c744;   --gold-shine: #fff7c2;
+  --prism: linear-gradient(90deg, #ff5f9e, #ffb347, #f4f46b, #5ff0a8, #5fc6ff, #b48cff, #ff5f9e);
+}
+.rank-bronze { --star: var(--bronze); --star-deep: #b9651f; --shine: var(--bronze-shine); }
+.rank-silver { --star: var(--silver); --star-deep: #9aa7b8; --shine: var(--silver-shine); }
+.rank-gold { --star: var(--gold); --star-deep: #dc9a0e; --shine: var(--gold-shine); }
+.rank-prismatic { --star: #ff9ad0; --shine: #ffffff; }
+
+.stars { position: relative; display: inline-flex; font-size: var(--star-size, 17px); line-height: 1; letter-spacing: .08em; white-space: nowrap; }
+.stars__on { color: transparent; background-image: linear-gradient(var(--star), var(--star)); -webkit-background-clip: text; background-clip: text; }
+.stars__off { color: var(--star-off, rgba(127, 127, 127, .45)); }
+.is-star6 .stars__on { background-image: linear-gradient(var(--star-deep, var(--star)), var(--star-deep, var(--star))); }
+.rank-prismatic .stars__on { background-image: var(--prism); background-size: 300% 100%; animation: prism 5s linear infinite; }
+@keyframes prism { to { background-position: 300% 0; } }
+
+/* The shine is a separate copy of the filled stars, painted on top, so it can sweep back and
+   forth without fighting the prismatic colour animation underneath. Only star 6 shows it. */
+.stars__sheen { position: absolute; left: 0; top: 0; display: none; color: transparent; pointer-events: none;
+  background-image: linear-gradient(100deg, transparent 26%, var(--shine) 45%, #fff 50%, var(--shine) 55%, transparent 74%); filter: drop-shadow(0 0 3px var(--shine));
+  background-size: 260% 100%; background-repeat: no-repeat; background-position: 50% 0;
+  -webkit-background-clip: text; background-clip: text; animation: shine 2.4s ease-in-out infinite alternate; }
+.is-star6 .stars__sheen { display: inline; }
+@keyframes shine { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+
+/* ---- floating tick numbers ---- */
+.ticks { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.tick { position: absolute; left: var(--x); bottom: 14%; animation: tick-rise 2.4s ease-out infinite; opacity: 0; white-space: nowrap; }
+@keyframes tick-rise { 0% { transform: translateY(0) scale(.8); opacity: 0; } 12% { opacity: 1; transform: translateY(-8px) scale(1); } 100% { transform: translateY(-120px) scale(1); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .tick { opacity: 1; transform: translateY(calc(var(--i, 0) * -26px)); }
+  .stars__sheen { background-position: 50% 0; }
+}
