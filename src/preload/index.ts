@@ -1,17 +1,23 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC_CHANNELS, type AppApi } from './api';
 
+function subscribe(channel: string, callback: () => void): () => void {
+  const listener = (): void => callback();
+  ipcRenderer.on(channel, listener);
+  return () => {
+    ipcRenderer.removeListener(channel, listener);
+  };
+}
+
 const api: AppApi = {
   getVersion: () => ipcRenderer.invoke(IPC_CHANNELS.getVersion) as Promise<string>,
   isUpdateReady: () => ipcRenderer.invoke(IPC_CHANNELS.isUpdateReady) as Promise<boolean>,
-  onUpdateReady: (callback) => {
-    const listener = (): void => callback();
-    ipcRenderer.on(IPC_CHANNELS.updateReady, listener);
-    return () => {
-      ipcRenderer.removeListener(IPC_CHANNELS.updateReady, listener);
-    };
-  },
+  onUpdateReady: (callback) => subscribe(IPC_CHANNELS.updateReady, callback),
   restartToInstall: () => ipcRenderer.send(IPC_CHANNELS.restartToInstall),
+  readSave: () => ipcRenderer.invoke(IPC_CHANNELS.readSave) as ReturnType<AppApi['readSave']>,
+  writeSave: (text) => ipcRenderer.invoke(IPC_CHANNELS.writeSave, text) as Promise<void>,
+  onFlushRequest: (callback) => subscribe(IPC_CHANNELS.flushRequest, callback),
+  flushDone: () => ipcRenderer.send(IPC_CHANNELS.flushDone),
 };
 
 contextBridge.exposeInMainWorld('api', api);
