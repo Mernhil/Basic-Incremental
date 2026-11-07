@@ -24,6 +24,18 @@ How the customization-driven UI is built, so new cosmetics and slots stay consis
 
 An item only lists what it changes: tokens it does not set are inherited from the starter item of its slot. Recipes and effects are not inherited.
 
+## Screen shell
+
+The header, sidebar, framed panels and tooltips (DESIGN.md 9) are skinned by the **table** item, so equipping a table re-skins the whole screen. Token groups, each following the card's `<surface>-bg / -line / -ink / -ink-muted` pattern:
+
+| Group      | Tokens                                                                            | Used by                     |
+| ---------- | --------------------------------------------------------------------------------- | --------------------------- |
+| `chrome-*` | `bg`, `rail-bg`, `line`, `ink`, `ink-muted`, `accent`, `active-bg`                | Header and sidebar          |
+| `frame-*`  | `bg`, `radius`, `line`, `title-bg`, `title-line`, `title-ink`, `ink`, `ink-muted` | Framed panels on every page |
+| `tip-*`    | `bg`, `line`, `ink`, `ink-muted`                                                  | Hover and focus tooltips    |
+
+The starter table must set every table token (a test checks this). Code: `src/renderer/src/shell/` (shell, tooltip, icons, stat breakdowns). `node scripts/a11y-shell.mjs` (with the app running on `--remote-debugging-port=9222`) checks contrast on every page for every table item, keyboard reach and focus rings.
+
 ## Layers on a card
 
 From back to front: rarity body, panel backgrounds (plate, art window, stats), finish, decoration, card text, rank footer. Rank effects (star-6 rings, prismatic aura) sit outside the card edge, so rank and cosmetics never cover each other.
