@@ -9,3 +9,4 @@ export * from './loop';
 export * from './offline';
 export * from './migrations';
 export * from './save';
+export * from './theme';
