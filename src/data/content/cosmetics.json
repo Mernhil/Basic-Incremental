@@ -123,7 +123,26 @@
           "table-bg": "#cfd5dd",
           "table-glow": "rgba(255, 255, 255, 0.55)",
           "on-table": "#1c2330",
-          "on-table-muted": "#3d4757"
+          "on-table-muted": "#3d4757",
+          "chrome-bg": "#161b26",
+          "chrome-line": "rgba(217, 179, 90, 0.55)",
+          "chrome-ink": "#e9eef7",
+          "chrome-ink-muted": "#b4c0d4",
+          "chrome-accent": "#d9b35a",
+          "frame-bg": "#2a2f38",
+          "frame-line": "rgba(217, 179, 90, 0.6)",
+          "frame-title-bg": "rgba(0, 0, 0, 0.4)",
+          "frame-title-line": "rgba(217, 179, 90, 0.3)",
+          "frame-ink": "#e9eef7",
+          "frame-ink-muted": "#b4c0d4",
+          "tip-bg": "#161b26",
+          "tip-line": "rgba(217, 179, 90, 0.65)",
+          "tip-ink": "#e9eef7",
+          "tip-ink-muted": "#b4c0d4",
+          "frame-title-ink": "#e9eef7",
+          "chrome-rail-bg": "#1d2330",
+          "chrome-active-bg": "rgba(217, 179, 90, 0.14)",
+          "frame-radius": "12px"
         }
       }
     ]
@@ -303,7 +322,26 @@
           "table-bg": "#111a35",
           "table-glow": "rgba(140, 170, 255, 0.13)",
           "on-table": "#e9eef7",
-          "on-table-muted": "#a3b0c6"
+          "on-table-muted": "#a3b0c6",
+          "chrome-bg": "#0a1024",
+          "chrome-line": "#b98a2a",
+          "chrome-ink": "#f4ead2",
+          "chrome-ink-muted": "#c9b98f",
+          "chrome-accent": "#f1d27a",
+          "frame-bg": "#4a1219",
+          "frame-line": "#d9b35a",
+          "frame-title-bg": "linear-gradient(180deg, #f1d27a, #b98a2a)",
+          "frame-title-line": "rgba(255, 255, 255, 0.45)",
+          "frame-ink": "#f4ead2",
+          "frame-ink-muted": "#d8c7a0",
+          "tip-bg": "#0a1024",
+          "tip-line": "#d9b35a",
+          "tip-ink": "#f4ead2",
+          "tip-ink-muted": "#c9b98f",
+          "frame-title-ink": "#2a1a0c",
+          "chrome-rail-bg": "#0d1430",
+          "chrome-active-bg": "rgba(241, 210, 122, 0.16)",
+          "frame-radius": "13px"
         }
       }
     ]

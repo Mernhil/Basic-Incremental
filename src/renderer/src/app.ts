@@ -1,11 +1,11 @@
 import { ContentValidationError, loadContent, type Card, type Content } from '../../data';
 import {
   Decimal,
-  GAME_TITLE,
   GameLoop,
   SaveError,
   bossMaxHp,
   collectModifiers,
+  computeStat,
   createInitialState,
   createSaveText,
   defaultRng,
@@ -27,21 +27,13 @@ import { applyGlobalTheme, assertVisualsImplemented } from './theme/apply';
 import { playHit, showTick } from './theme/effects';
 import { createCard, type CardProps, type CardView } from './ui/card';
 import { createHpStack } from './ui/hpStack';
+import { createShell, frame, h, PAGES, placeholderPage, type Currency } from './shell/shell';
+import { statTip } from './shell/stats';
+import { attachTooltip } from './shell/tooltip';
 
 const TICK_INTERVAL_MS = 100;
 const AUTOSAVE_INTERVAL_MS = 30_000;
 const PRODUCTION_HIT_MS = 1000;
-
-function h<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  cls = '',
-  text?: string,
-): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  if (cls) node.className = cls;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
 
 function showFatal(root: HTMLElement, error: unknown): void {
   const box = h('pre', 'fatal');
@@ -129,10 +121,20 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   applyGlobalTheme(content, loop.state.cosmetics.loadout);
 
   // ---- layout ----
-  const app = h('div', 'app');
-  const top = h('header', 'app__top');
-  top.append(h('h1', 'app__title', GAME_TITLE), h('span', 'app__version', version));
-  app.append(top);
+  const KIND_ICON = { wood: 'wood', ore: 'ore', material: 'material', portal: 'portal' } as const;
+  const currencies: Currency[] = content.resources.map((r) => ({
+    id: r.id,
+    name: r.name,
+    icon: KIND_ICON[r.kind],
+    tip: () => `${r.name}: ${formatDecimal(loop.state.resources[r.id] ?? new Decimal(0))}`,
+  }));
+  const shell = createShell({ version, currencies, levelTip: COPY.shell.levelTip });
+  shell.setLevel(1, 0, '');
+  const home = shell.page('home');
+  for (const p of PAGES) {
+    if (p.id !== 'home' && p.id !== 'settings') placeholderPage(shell.page(p.id), p.id);
+  }
+  const app = shell.notices;
 
   if (best.errors.length > 0) {
     const warning = h(
@@ -145,26 +147,25 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   }
 
   if (summary) {
-    const away = h('section', 'panel away');
-    away.setAttribute('aria-labelledby', 'away-title');
-    const title = h('h2', 'panel__title', COPY.away.title);
-    title.id = 'away-title';
+    const away = frame(COPY.away.title);
+    away.el.classList.add('away');
     const list = h('ul', 'away__list');
     for (const line of awayLines(summary, content)) list.append(h('li', '', line));
     const ok = h('button', 'button', COPY.away.dismiss);
     ok.type = 'button';
-    ok.addEventListener('click', () => away.remove());
-    away.append(title, list, ok);
-    app.append(away);
+    ok.addEventListener('click', () => {
+      away.el.remove();
+      shell.scrollToTop();
+    });
+    away.body.append(list, ok);
+    app.append(away.el);
     queueMicrotask(() => ok.focus());
   }
 
-  const table = h('main', 'table');
-  app.append(table);
+  const table = h('div', 'table');
+  home.append(table);
 
   // boss
-  const battle = h('section', 'table__boss');
-  battle.setAttribute('aria-label', COPY.table.boss);
   const dungeon = loop.state.activeDungeonId
     ? content.dungeonById.get(loop.state.activeDungeonId)
     : undefined;
@@ -190,15 +191,28 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
       }),
     });
     boss.hpSlot.append(hp.el);
-    battle.append(boss.el);
   }
-  table.append(battle);
+  const battle = frame(dungeon?.name ?? COPY.table.boss, dungeon ? COPY.table.boss : undefined);
+  battle.el.classList.add('table__boss');
+  if (boss) battle.body.append(boss.el);
+  const damageRow = h('dl', 'stat-row');
+  const damageLabel = h('dt', '', COPY.home.damage);
+  const damageValue = h('dd', 'bi-num');
+  damageValue.tabIndex = 0;
+  damageValue.classList.add('has-tip');
+  damageRow.append(damageLabel, damageValue);
+  const damageStat = () =>
+    computeStat('combat.damage', loop.state.damage, collectModifiers(loop.state, content), {
+      job: 'fighting',
+      dungeon: dungeon?.id,
+    });
+  attachTooltip(damageValue, () => statTip(content, COPY.home.damageTip, damageStat(), '/s'));
+  battle.body.append(damageRow);
+  table.append(battle.el);
 
   // loadout: 1 main + 3 supports
-  const loadout = h('section', 'table__loadout');
-  const loadoutTitle = h('h2', 'section-title', COPY.table.loadout);
-  loadoutTitle.id = 'loadout-title';
-  loadout.setAttribute('aria-labelledby', 'loadout-title');
+  const loadout = frame(COPY.table.loadout);
+  loadout.el.classList.add('table__loadout');
   const slots = h('div', 'loadout');
   const main = content.cards.find((c) => c.job === 'fighting' && c.role === 'main');
   const supports = content.cards
@@ -215,14 +229,14 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
     const empty = h('div', 'slot-empty', COPY.table.emptySlot);
     slots.append(empty);
   }
-  loadout.append(loadoutTitle, slots);
-  table.append(loadout);
+  const fit = h('div', 'loadout-fit');
+  fit.append(slots);
+  loadout.body.append(fit);
+  table.append(loadout.el);
 
   // production
-  const production = h('section', 'production');
-  const productionTitle = h('h2', 'section-title', COPY.table.production);
-  productionTitle.id = 'production-title';
-  production.setAttribute('aria-labelledby', 'production-title');
+  const production = frame(COPY.table.production);
+  production.el.classList.add('production');
   const tiles = h('div', 'production__tiles');
   const producerTiles: Array<{
     stage: HTMLElement;
@@ -267,31 +281,13 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
     tile.append(stage, info);
     tiles.append(tile);
   }
-  production.append(productionTitle, tiles);
-  app.append(production);
+  production.body.append(tiles);
+  home.append(production.el);
 
-  // resources
-  const resources = h('section', 'resources');
-  const resourcesTitle = h('h2', 'section-title', COPY.table.resources);
-  resourcesTitle.id = 'resources-title';
-  resources.setAttribute('aria-labelledby', 'resources-title');
-  const resourceList = h('dl', 'resources__list');
-  const resourceValues = new Map<string, HTMLElement>();
-  for (const r of content.resources) {
-    const row = h('div', 'resources__item');
-    const value = h('dd', 'bi-num');
-    row.append(h('dt', '', r.name), value);
-    resourceValues.set(r.id, value);
-    resourceList.append(row);
-  }
-  resources.append(resourcesTitle, resourceList);
-  app.append(resources);
-
-  // save tools
-  const tools = h('section', 'panel tools');
-  const toolsTitle = h('h2', 'panel__title', COPY.save.heading);
-  toolsTitle.id = 'save-title';
-  tools.setAttribute('aria-labelledby', 'save-title');
+  // save tools (Settings page)
+  const toolsFrame = frame(COPY.save.heading);
+  const tools = toolsFrame.body;
+  tools.classList.add('tools');
   const exportBtn = h('button', 'button', COPY.save.export);
   const importBtn = h('button', 'button', COPY.save.import);
   exportBtn.type = 'button';
@@ -305,10 +301,10 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   message.setAttribute('role', 'status');
   const buttons = h('div', 'tools__buttons');
   buttons.append(exportBtn, importBtn);
-  tools.append(toolsTitle, buttons, saveText, message);
-  app.append(tools);
+  tools.append(buttons, saveText, message);
+  shell.page('settings').append(toolsFrame.el);
 
-  root.replaceChildren(app);
+  root.replaceChildren(shell.el);
 
   // ---- behaviour ----
   const rendered = (): void => {
@@ -319,8 +315,11 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
       const bars = hpBarState(current, max, dungeon.boss.hpBars);
       hp.update(bars, formatDecimal(current), formatDecimal(max), current.div(max).toNumber());
     }
-    for (const [id, el] of resourceValues)
-      el.textContent = formatDecimal(s.resources[id] ?? new Decimal(0));
+    for (const r of content.resources) {
+      const amount = s.resources[r.id] ?? new Decimal(0);
+      shell.setCurrency(r.id, formatDecimal(amount), amount.gt(0));
+    }
+    damageValue.textContent = `${formatDecimal(damageStat().value)}/s`;
   };
 
   const save = async (): Promise<void> => {

@@ -164,6 +164,14 @@ describe('card ranks and portals', () => {
   });
 });
 
+describe('the starter table defines every table token', () => {
+  it('so the screen shell never falls back to a missing value', async () => {
+    const { SLOT_TOKENS } = await import('../src/data');
+    const defined = Object.keys(loadContent().starterBySlot.table.levels[0]!.tokens);
+    for (const key of SLOT_TOKENS.table) expect(defined).toContain(key);
+  });
+});
+
 describe('production data', () => {
   type ProductionRaw = Record<
     'logging' | 'mining',
