@@ -6,7 +6,7 @@ import {
   baseDamage,
   bossMaxHp,
   collectModifiers,
-  computeStat,
+  damageStat as combatDamageStat,
   createInitialState,
   createSaveText,
   defaultRng,
@@ -28,6 +28,7 @@ import {
   type Producer,
   type ProductionJob,
   type OfflineSummary,
+  type TickReport,
 } from '../../game';
 import { COPY } from './copy';
 import { applyGlobalTheme, assertVisualsImplemented } from './theme/apply';
@@ -38,10 +39,12 @@ import { createShell, frame, h, PAGES, placeholderPage, type Currency } from './
 import { statTip } from './shell/stats';
 import { attachTooltip } from './shell/tooltip';
 import { createProductionPage } from './pages/production';
+import { createDungeonsPage } from './pages/dungeons';
 
 const TICK_INTERVAL_MS = 100;
 const AUTOSAVE_INTERVAL_MS = 30_000;
 const PRODUCTION_HIT_MS = 1000;
+const CLEAR_NOTICE_MS = 12_000;
 
 function showFatal(root: HTMLElement, error: unknown): void {
   const box = h('pre', 'fatal');
@@ -142,14 +145,17 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
     levelTip: COPY.shell.levelTip,
     onShow: (id) => {
       if (id === 'production') productionPage?.render();
+      if (id === 'dungeons') dungeonsPage?.render();
     },
   });
   shell.setLevel(1, 0, '');
   // eslint-disable-next-line prefer-const -- assigned once the Home view exists
   let productionPage: { render(): void } | undefined;
+  // eslint-disable-next-line prefer-const -- assigned once the Home view exists
+  let dungeonsPage: { render(): void } | undefined;
   const home = shell.page('home');
   for (const p of PAGES) {
-    if (p.id !== 'home' && p.id !== 'settings' && p.id !== 'production')
+    if (p.id !== 'home' && p.id !== 'settings' && p.id !== 'production' && p.id !== 'dungeons')
       placeholderPage(shell.page(p.id), p.id);
   }
   const app = shell.notices;
@@ -183,55 +189,59 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   const table = h('div', 'table');
   home.append(table);
 
-  // boss
-  const dungeon = loop.state.activeDungeonId
-    ? content.dungeonById.get(loop.state.activeDungeonId)
-    : undefined;
+  // boss: follows whatever is being fought (a dungeon's boss or a special dungeon's target)
   let boss: CardView | null = null;
-  const hp = createHpStack();
-  if (dungeon) {
-    const bossRank = { tier: 'bronze', stars: 1 } as const;
-    boss = createCard({
-      name: dungeon.boss.name,
-      label: COPY.table.boss,
-      job: 'fighting',
-      emblem: 'golem',
-      rank: bossRank,
-      boss: true,
-      stats: [
-        { label: '', value: '' },
-        { label: '', value: '' },
-      ],
-      theme: resolveCard(content, loop.state.cosmetics.loadout, {
-        id: dungeon.boss.id,
-        rank: bossRank,
-        rarity: 'common',
-      }),
-    });
-    boss.hpSlot.append(hp.el);
-  }
-  const battle = frame(dungeon?.name ?? COPY.table.boss, dungeon ? COPY.table.boss : undefined);
-  battle.el.classList.add('table__boss');
-  if (boss) battle.body.append(boss.el);
+  let hp = createHpStack();
+  let battleEl: HTMLElement | null = null;
+  let homeFor: string | null = null;
   const damageRow = h('dl', 'stat-row');
   const damageLabel = h('dt', '', COPY.home.damage);
   const damageValue = h('dd', 'bi-num');
   damageValue.tabIndex = 0;
   damageValue.classList.add('has-tip');
   damageRow.append(damageLabel, damageValue);
-  const damageStat = () =>
-    computeStat(
-      'combat.damage',
-      baseDamage(loop.state, content),
-      collectModifiers(loop.state, content),
-      {
-        job: 'fighting',
-        dungeon: dungeon?.id,
-      },
-    );
+  const damageStat = () => combatDamageStat(loop.state, content);
   attachTooltip(damageValue, () => statTip(content, COPY.home.damageTip, damageStat(), '/s'));
-  battle.body.append(damageRow);
-  table.append(battle.el);
+  const buildHomeBoss = (): void => {
+    const id = loop.state.activeDungeonId;
+    homeFor = id;
+    const dungeon = id ? content.dungeonById.get(id) : undefined;
+    const trial = id ? content.trialById.get(id) : undefined;
+    const foe = dungeon ? dungeon.boss : trial?.target;
+    boss = null;
+    hp = createHpStack();
+    if (foe) {
+      const bossRank = { tier: 'bronze', stars: 1 } as const;
+      boss = createCard({
+        name: foe.name,
+        label: COPY.table.boss,
+        job: 'fighting',
+        emblem: 'golem',
+        rank: bossRank,
+        boss: true,
+        stats: [
+          { label: '', value: '' },
+          { label: '', value: '' },
+        ],
+        theme: resolveCard(content, loop.state.cosmetics.loadout, {
+          id: foe.id,
+          rank: bossRank,
+          rarity: 'common',
+        }),
+      });
+      boss.hpSlot.append(hp.el);
+    }
+    const title = dungeon?.name ?? trial?.name ?? COPY.table.boss;
+    const battle = frame(title, foe ? COPY.table.boss : undefined);
+    battle.el.classList.add('table__boss');
+    if (boss) battle.body.append(boss.el);
+    else battle.body.append(h('p', 'frame__muted', COPY.home.nothingFought));
+    battle.body.append(damageRow);
+    if (battleEl) battleEl.replaceWith(battle.el);
+    else table.prepend(battle.el);
+    battleEl = battle.el;
+  };
+  buildHomeBoss();
 
   // loadout: 1 main + 3 supports
   const loadout = frame(COPY.table.loadout);
@@ -323,6 +333,15 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
       void save(); // purchases are saved right away, not at the next autosave
     },
   });
+  dungeonsPage = createDungeonsPage(shell.page('dungeons'), {
+    content,
+    state: () => loop.state,
+    apply: (next) => {
+      loop.state = next;
+      rendered();
+      void save();
+    },
+  });
 
   // save tools (Settings page)
   const toolsFrame = frame(COPY.save.heading);
@@ -349,10 +368,18 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   // ---- behaviour ----
   const rendered = (): void => {
     const s = loop.state;
+    if (s.activeDungeonId !== homeFor) buildHomeBoss();
+    const dungeon = s.activeDungeonId ? content.dungeonById.get(s.activeDungeonId) : undefined;
+    const trial = s.activeDungeonId ? content.trialById.get(s.activeDungeonId) : undefined;
     if (dungeon && boss) {
       const max = bossMaxHp(dungeon, s.prestigeCount, collectModifiers(s, content));
-      const current = s.bossHp ?? max;
+      const current = Decimal.min(s.bossHp ?? max, max);
       const bars = hpBarState(current, max, dungeon.boss.hpBars);
+      hp.update(bars, formatDecimal(current), formatDecimal(max), current.div(max).toNumber());
+    } else if (trial && boss) {
+      const max = trial.target.hp;
+      const current = Decimal.max(max.sub(s.combat.trialAttempt.dealt), 0);
+      const bars = hpBarState(current, max, 1);
       hp.update(bars, formatDecimal(current), formatDecimal(max), current.div(max).toNumber());
     }
     for (const r of content.resources) {
@@ -361,10 +388,29 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
     }
     damageValue.textContent = `${formatDecimal(damageStat().value)}/s`;
     if (shell.current() === 'production') productionPage?.render();
+    if (shell.current() === 'dungeons') dungeonsPage?.render();
+  };
+
+  /** Steps the loop and announces first clears. */
+  const step = (): void => announce(loop.step(Date.now()));
+  const announce = (report: TickReport): void => {
+    for (const id of report.cleared) {
+      const name = content.dungeonById.get(id)?.name ?? content.trialById.get(id)?.name ?? id;
+      const opened = [
+        ...report.unlockedDungeons.map(
+          (d) => content.dungeonById.get(d)?.name ?? content.trialById.get(d)?.name ?? d,
+        ),
+        ...report.unlockedMines.map((m) => content.mineById.get(m)?.name ?? m),
+      ];
+      const note = h('p', 'notice', COPY.dungeons.clearedNotice(name, COPY.dungeons.and(opened)));
+      note.setAttribute('role', 'status');
+      app.append(note);
+      window.setTimeout(() => note.remove(), CLEAR_NOTICE_MS);
+    }
   };
 
   const save = async (): Promise<void> => {
-    loop.step(Date.now());
+    step();
     try {
       await window.api.writeSave(createSaveText(loop.state, Date.now()));
     } catch (error) {
@@ -375,16 +421,16 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   };
 
   window.setInterval(() => {
-    loop.step(Date.now());
+    step();
     rendered();
   }, TICK_INTERVAL_MS);
 
   // Visual hits follow the main card's rhythm; damage itself is continuous in the game loop.
   const attack = () => resolveGlobal(content, loop.state.cosmetics.loadout).attack.visual.effects;
-  if (boss && main && main.role === 'main') {
-    const view = boss;
+  if (main && main.role === 'main') {
     window.setInterval(() => {
-      if (document.hidden) return;
+      const view = boss;
+      if (document.hidden || !view) return;
       const effect = attack()?.fighting;
       if (effect)
         playHit(effect, view.art, { rng: defaultRng, target: view.art.querySelector('svg') });
@@ -415,7 +461,7 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   });
 
   exportBtn.addEventListener('click', () => {
-    loop.step(Date.now());
+    step();
     saveText.value = exportSaveString(loop.state, Date.now());
     saveText.select();
     navigator.clipboard
