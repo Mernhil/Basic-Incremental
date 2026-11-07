@@ -86,6 +86,14 @@ ul { list-style: none; }
   .stars__sheen { background-position: 50% 0; }
 }
 
+/* ---- picker (mockup tool only, used by the option pages) ---- */
+.picker { position: fixed; right: 14px; bottom: 14px; z-index: 10; display: grid; gap: 8px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(10, 12, 20, 0.88); color: #f2ead6; font: 500 13px/1.2 system-ui, sans-serif; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); }
+.picker fieldset { display: flex; gap: 6px; align-items: center; margin: 0; padding: 0; border: 0; }
+.picker legend { float: left; width: 52px; padding: 0; }
+.picker button { padding: 4px 9px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.picker button[aria-pressed='true'] { background: #f1d27a; color: #2a1a0c; border-color: #f1d27a; }
+
 /* Direction B: Gilded Tradition. Coloured frame, gold name plate, art window, parchment text box,
    on a green felt table. Serif for names, humanist sans for numbers. */
 .dir {

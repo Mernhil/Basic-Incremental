@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gilded Nocturne — style exploration</title>
+<style>
+@font-face{font-family:'Outfit';font-style:normal;font-weight:500;font-display:block;src:url('../../node_modules/@fontsource/outfit/files/outfit-latin-500-normal.woff2') format('woff2')}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:600;font-display:block;src:url('../../node_modules/@fontsource/outfit/files/outfit-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:700;font-display:block;src:url('../../node_modules/@fontsource/outfit/files/outfit-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:800;font-display:block;src:url('../../node_modules/@fontsource/outfit/files/outfit-latin-800-normal.woff2') format('woff2')}
+/* Shared structure and rank mechanics. Each direction supplies the look through variables
+   and its own rules. Nothing here is a final design token. */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; color: var(--ink); font-family: var(--font-body); background: var(--table-bg); }
+h1, h2, h3, p, ul, dl, dd { margin: 0; padding: 0; }
+ul { list-style: none; }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+
+.table { max-width: 1240px; margin: 0 auto; padding: 28px 32px 56px; display: grid; gap: 34px; }
+.setbar { display: flex; flex-wrap: wrap; gap: 14px 40px; align-items: flex-end; justify-content: space-between; }
+.slots { display: flex; flex-wrap: wrap; gap: 10px 28px; font-size: 14px; line-height: 1.25; }
+.slots li { display: grid; gap: 1px; }
+.slots span { font-size: 12px; opacity: .8; }
+.row { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.row--battle { gap: 28px; }
+
+/* ---- card anatomy ---- */
+.card { position: relative; isolation: isolate; width: var(--card-w, 172px); height: var(--card-h, 244px);
+  display: flex; flex-direction: column; flex: none; }
+.card--boss { --card-w: 276px; --card-h: 372px; }
+.card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.card__art { position: relative; flex: 1; min-height: 0; overflow: hidden; display: grid; place-items: center; }
+.card--boss .art__emblem { width: 70%; height: 70%; }
+.art__emblem { width: 56%; height: 56%; fill: var(--emblem, currentColor); }
+.card__stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.card__stats div { min-width: 0; }
+.card__rank { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+
+/* ---- HP bar ---- */
+.hp { position: relative; height: 22px; overflow: hidden; }
+.hp__fill { height: 100%; }
+.hp__text { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+
+/* ---- stars: tier colours, prismatic animation, and the star-6 shine ---- */
+:root {
+  --bronze: #cd7f32; --bronze-shine: #ffe2bd;
+  --silver: #c9d1db; --silver-shine: #ffffff;
+  --gold: #f6c744;   --gold-shine: #fff7c2;
+  --prism: linear-gradient(90deg, #ff5f9e, #ffb347, #f4f46b, #5ff0a8, #5fc6ff, #b48cff, #ff5f9e);
+}
+.rank-bronze { --star: var(--bronze); --star-deep: #b9651f; --shine: var(--bronze-shine); }
+.rank-silver { --star: var(--silver); --star-deep: #9aa7b8; --shine: var(--silver-shine); }
+.rank-gold { --star: var(--gold); --star-deep: #dc9a0e; --shine: var(--gold-shine); }
+.rank-prismatic { --star: #ff9ad0; --shine: #ffffff; }
+
+.stars { position: relative; display: inline-flex; font-size: var(--star-size, 17px); line-height: 1; letter-spacing: .08em; white-space: nowrap; }
+.stars__on { color: transparent; background-image: linear-gradient(var(--star), var(--star)); -webkit-background-clip: text; background-clip: text; }
+.stars__off { color: var(--star-off, rgba(127, 127, 127, .45)); }
+.is-star6 .stars__on { background-image: linear-gradient(var(--star-deep, var(--star)), var(--star-deep, var(--star))); }
+.rank-prismatic .stars__on { background-image: var(--prism); background-size: 300% 100%; animation: prism 5s linear infinite; }
+@keyframes prism { to { background-position: 300% 0; } }
+
+/* The shine is a separate copy of the filled stars, painted on top, so it can sweep back and
+   forth without fighting the prismatic colour animation underneath. Only star 6 shows it. */
+.stars__sheen { position: absolute; left: 0; top: 0; display: none; color: transparent; pointer-events: none;
+  background-image: linear-gradient(100deg, transparent 26%, var(--shine) 45%, #fff 50%, var(--shine) 55%, transparent 74%); filter: drop-shadow(0 0 3px var(--shine));
+  background-size: 260% 100%; background-repeat: no-repeat; background-position: 50% 0;
+  -webkit-background-clip: text; background-clip: text; animation: shine 2.4s ease-in-out infinite alternate; }
+.is-star6 .stars__sheen { display: inline; }
+@keyframes shine { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+
+/* ---- floating tick numbers ---- */
+.ticks { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.tick { position: absolute; left: var(--x); bottom: 14%; animation: tick-rise 2.4s ease-out infinite; opacity: 0; white-space: nowrap; }
+@keyframes tick-rise { 0% { transform: translateY(0) scale(.8); opacity: 0; } 12% { opacity: 1; transform: translateY(-8px) scale(1); } 100% { transform: translateY(-120px) scale(1); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .tick { opacity: 1; transform: translateY(calc(var(--i, 0) * -26px)); }
+  .stars__sheen { background-position: 50% 0; }
+}
+
+/* ---- picker (mockup tool only, used by the option pages) ---- */
+.picker { position: fixed; right: 14px; bottom: 14px; z-index: 10; display: grid; gap: 8px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(10, 12, 20, 0.88); color: #f2ead6; font: 500 13px/1.2 system-ui, sans-serif; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); }
+.picker fieldset { display: flex; gap: 6px; align-items: center; margin: 0; padding: 0; border: 0; }
+.picker legend { float: left; width: 52px; padding: 0; }
+.picker button { padding: 4px 9px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.picker button[aria-pressed='true'] { background: #f1d27a; color: #2a1a0c; border-color: #f1d27a; }
+
+/* Direction D: Gilded Nocturne. The Gilded cosmetic items (gilt, foil, slash, engraved numbers)
+   on Nocturne's calm structure: dark cards, hairlines, quiet type, no name plate, no parchment box.
+   One family (Outfit). Table and gilt amount are switchable through body[data-*]. */
+@property --angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.dir {
+  --font-body: 'Outfit', 'Segoe UI', sans-serif;
+  --ink: #e9eef7;
+  --muted: #a3b0c6;
+  --card-bg: #121722;
+  --line: #2b3447;
+  --gold: #d9b35a;
+  --gold-hi: #f3dc9a;
+  --star-off: rgba(163, 176, 198, 0.35);
+  --on-table: var(--ink);
+  --on-table-muted: var(--muted);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ---- table: plain, no texture ---- */
+body.dir[data-table='navy'] { --table-bg: #10182f; background-image: radial-gradient(80% 55% at 50% 0%, rgba(140, 170, 255, 0.13), transparent 70%); }
+body.dir[data-table='graphite'] { --table-bg: #1b1a1c; background-image: radial-gradient(80% 55% at 50% 0%, rgba(255, 255, 255, 0.07), transparent 70%); }
+body.dir[data-table='stone'] {
+  --table-bg: #cfd5dd; --on-table: #1c2330; --on-table-muted: #3d4757;
+  background-image: radial-gradient(80% 55% at 50% 0%, rgba(255, 255, 255, 0.55), transparent 70%);
+}
+body[data-table='stone'] .picker { background: rgba(255, 255, 255, 0.88); color: #1c2330; }
+
+.dir h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.05; color: var(--on-table); }
+.blurb { margin-top: 6px; font-size: 15px; color: var(--on-table-muted); }
+.slots { max-width: 560px; color: var(--on-table-muted); }
+.slots b { font-weight: 600; color: var(--on-table); }
+.section-title { font-size: 15px; font-weight: 500; margin-bottom: 14px; color: var(--on-table-muted); }
+
+/* Gilded anatomy (frame, name plate, art window, stat box) kept on purpose: each layer is a place
+   future cosmetics can decorate. Surfaces are Nocturne-simple: flat, dark, gold hairlines. */
+.job-fighting { --accent: #e0606d; --frame: #3b1b22; }
+.job-mining { --accent: #e3a548; --frame: #3a2b18; }
+.job-logging { --accent: #5fc2a0; --frame: #173129; }
+.tone-boss { --accent: #93a6bb; --frame: #232a34; }
+.card { --hair: rgba(217, 179, 90, 0.5); --panel: rgba(0, 0, 0, 0.3); }
+
+/* ---- card ---- */
+.card {
+  padding: 10px; gap: 7px; color: var(--ink); border-radius: 12px;
+  background: var(--frame, var(--card-bg));
+  background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.06), transparent 40%);
+  border: 1px solid color-mix(in srgb, var(--gold) 65%, transparent);
+  box-shadow: var(--ornament, 0 0 #0000), var(--halo, 0 0 #0000), var(--lift, 0 0 #0000);
+}
+body[data-table='stone'] .card { --lift: 0 6px 12px rgba(28, 35, 48, 0.3); }
+.card__head { align-items: center; padding: 4px 8px; border-radius: 6px; background: var(--panel); box-shadow: inset 0 0 0 1px var(--hair); }
+.card__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; line-height: 1.2; }
+.card__job { flex: none; font-size: 11px; color: var(--muted); }
+.card__art { border-radius: 6px; --emblem: transparent; box-shadow: inset 0 0 0 1px var(--hair);
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 70%), #0d121b; }
+.art__emblem { fill: none; stroke: var(--gold-hi); stroke-width: 1.6; stroke-linejoin: round; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 55%, transparent)); }
+.card__stats { padding: 5px 8px; border-radius: 6px; background: var(--panel); box-shadow: inset 0 0 0 1px rgba(217, 179, 90, 0.25); }
+.card__stats dt { font-size: 12px; color: var(--muted); }
+.card__stats dd { font-size: 17px; font-weight: 600; line-height: 1.15; }
+.card__rank { padding: 1px 2px 0; }
+.rank-name { font-size: 12px; color: var(--muted); }
+.stars { --star-size: 16px; }
+
+/* ---- gilt amount: Medium fills the name plate with flat gold and adds an inner gilt line ---- */
+body[data-ornament='medium'] .card { --ornament: inset 0 0 0 3px var(--frame, var(--card-bg)), inset 0 0 0 4px rgba(217, 179, 90, 0.55); }
+body[data-ornament='medium'] .card__head { background: var(--gold); box-shadow: none; }
+body[data-ornament='medium'] .card__name { color: #24170a; }
+body[data-ornament='medium'] .card__job { color: #4a3410; }
+body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold), inset 0 0 18px rgba(0, 0, 0, 0.5); }
+
+/* ---- star-6 evolution: hairline takes the tier colour and gains a soft halo ---- */
+.is-star6 { border-color: var(--star); --halo: 0 0 0 1px color-mix(in srgb, var(--star) 40%, transparent), 0 0 22px color-mix(in srgb, var(--star) 28%, transparent); }
+.rank-prismatic.is-star6 { border-color: transparent; }
+.rank-prismatic.is-star6::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; z-index: -1; pointer-events: none;
+  background: conic-gradient(from var(--angle), #ff5f9e, #ffb347, #f4f46b, #5ff0a8, #5fc6ff, #b48cff, #ff5f9e);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: spin 6s linear infinite; }
+@keyframes spin { to { --angle: 360deg; } }
+
+/* ---- finish: Rainbow foil with sparkle (inside the art window only) ---- */
+.finish-holo .art__emblem { position: relative; z-index: 1; }
+.finish-holo .card__art::after { content: ''; position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0.5;
+  background:
+    radial-gradient(circle at 20% 30%, #fff 0 1px, transparent 2px), radial-gradient(circle at 70% 60%, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 45% 80%, #fff 0 1px, transparent 2px), radial-gradient(circle at 85% 20%, #fff 0 1px, transparent 2px),
+    repeating-linear-gradient(115deg, #ff3d9a, #ffc23d, #3dff9e, #3da6ff, #a06bff, #ff3d9a 28%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 220% 100%; animation: foil 5s linear infinite alternate; }
+@keyframes foil { to { background-position: 0 0, 0 0, 0 0, 0 0, 100% 0; } }
+
+/* ---- boss + HP bar ---- */
+.card--boss { padding: 14px; }
+.card--boss .card__name { font-size: 18px; font-weight: 600; }
+.hp { height: 10px; border-radius: 99px; background: #1b2434; overflow: visible; margin: 8px 0 22px; }
+.hp__fill { border-radius: 99px; background: linear-gradient(90deg, #a3313c, #e0606d); box-shadow: 0 0 12px rgba(224, 96, 109, 0.5); }
+.hp__text { inset: auto 0 -22px 0; display: block; text-align: right; font-size: 13px; font-weight: 500; color: var(--muted); }
+
+/* ---- attack animation: Gilt slash ---- */
+.fx { position: absolute; left: -10%; top: 46%; width: 120%; height: 4px; z-index: 2; opacity: 0; transform-origin: 0 50%;
+  background: linear-gradient(90deg, transparent, #fff 25%, var(--gold-hi) 70%, transparent); filter: drop-shadow(0 0 6px #ffe38a);
+  animation: slash 2.4s ease-out infinite; }
+@keyframes slash { 0% { transform: rotate(-32deg) scaleX(0); opacity: 1; } 10% { transform: rotate(-32deg) scaleX(1); opacity: 1; } 24%, 100% { transform: rotate(-32deg) scaleX(1); opacity: 0; } }
+.card--boss .art__emblem { animation: jolt 2.4s ease-out infinite; }
+@keyframes jolt { 0% { transform: translateX(-7px) rotate(-2deg); } 6% { transform: translateX(6px) rotate(1.5deg); } 14%, 100% { transform: none; } }
+
+/* ---- tick damage: Engraved rise; number style: Engraved gold (Outfit) ---- */
+.tick { font-size: 24px; font-weight: 800; letter-spacing: 0.02em; color: var(--gold-hi); -webkit-text-stroke: 2px #2b1a05; paint-order: stroke fill;
+  text-shadow: 0 2px 0 #2b1a05, 0 0 10px rgba(0, 0, 0, 0.6); }
+.tick--crit { font-size: 34px; color: #ffb02e; text-shadow: 0 2px 0 #7c1d2a, 0 0 12px rgba(255, 138, 90, 0.7); }
+
+</style>
+</head>
+<body class="dir" data-table="navy" data-ornament="minimal">
+<main class="table">
+  <header class="setbar">
+    <div><h1>Gilded Nocturne</h1><p class="blurb">Gilded items on a calm Nocturne structure. Outfit throughout.</p></div>
+    <ul class="slots" aria-label="Cosmetic set"><li><span>Card border</span> <b>Gilt hairline</b></li><li><span>Card finish</span> <b>Rainbow foil</b></li><li><span>Attack animation</span> <b>Gilt slash</b></li><li><span>Tick damage</span> <b>Engraved rise</b></li><li><span>Number style</span> <b>Engraved gold</b></li><li><span>Table</span> <b>Plain (pick below)</b></li></ul>
+  </header>
+
+  <section aria-labelledby="s1">
+    <h2 id="s1" class="section-title">Battle</h2>
+    <div class="row row--battle">
+  <article class="card card--boss tone-boss rank-gold" aria-label="Boss: Stone Warden">
+    <header class="card__head"><h3 class="card__name">Stone Warden</h3><span class="card__job">Boss</span></header>
+    <div class="card__art"><div class="fx" aria-hidden="true"></div><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><rect x="22" y="20" width="56" height="48" rx="8"/><rect x="34" y="72" width="12" height="18" rx="3"/><rect x="54" y="72" width="12" height="18" rx="3"/></svg>
+      <div class="ticks" aria-hidden="true">
+        <span class="tick num" style="--x:22%;animation-delay:0s">1.2K</span>
+        <span class="tick num" style="--x:58%;animation-delay:-.2s">1.2K</span>
+        <span class="tick tick--crit num" style="--x:38%;animation-delay:-.45s">8.4K</span>
+        <span class="tick num" style="--x:72%;animation-delay:-.65s">1.2K</span>
+        <span class="tick num" style="--x:12%;animation-delay:-.85s">1.2K</span>
+      </div>
+    </div>
+    <div class="hp" role="progressbar" aria-label="Boss HP" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68">
+      <div class="hp__fill" style="width:68%"></div>
+      <span class="hp__text num">6.8M / 10M</span>
+    </div>
+  </article><div class="row">
+  <article class="card rank-gold job-fighting tone-a ">
+    <header class="card__head"><h3 class="card__name">Ember Warden</h3><span class="card__job">Main</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 62 60 50 70 38 60Z"/><rect x="30" y="64" width="40" height="7" rx="2"/><rect x="45" y="70" width="10" height="22" rx="2"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">12.4K</dd></div>
+      <div><dt>Tick</dt><dd class="num">1.0s</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Gold</span><span class="stars" role="img" aria-label="Gold, 4 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★</span><span class="stars__off" aria-hidden="true">★★</span></span></footer>
+  </article>
+  <article class="card rank-silver job-fighting tone-b ">
+    <header class="card__head"><h3 class="card__name">Whetstone</h3><span class="card__job">Support</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70L90 40 50 90 10 40Z"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">+10%</dd></div>
+      <div><dt>Adds</dt><dd class="num">Damage</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Silver</span><span class="stars" role="img" aria-label="Silver, 3 of 6 stars"><span class="stars__on" aria-hidden="true">★★★</span><span class="stars__sheen" aria-hidden="true">★★★</span><span class="stars__off" aria-hidden="true">★★★</span></span></footer>
+  </article>
+  <article class="card rank-bronze job-fighting tone-c ">
+    <header class="card__head"><h3 class="card__name">Twin Blade</h3><span class="card__job">Support</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 20C62 8 84 26 76 52 60 44 44 42 30 50Z"/><rect x="26" y="20" width="8" height="72" rx="3"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">+20%</dd></div>
+      <div><dt>Adds</dt><dd class="num">Attack</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Bronze</span><span class="stars" role="img" aria-label="Bronze, 5 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★★</span><span class="stars__off" aria-hidden="true">★</span></span></footer>
+  </article>
+  <article class="card rank-silver job-fighting tone-d ">
+    <header class="card__head"><h3 class="card__name">War Drum</h3><span class="card__job">Support</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="32" rx="34" ry="12"/><path d="M16 32V70C16 78 32 86 50 86S84 78 84 70V32C84 40 68 44 50 44S16 40 16 32Z"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">+15%</dd></div>
+      <div><dt>Adds</dt><dd class="num">Speed</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Silver</span><span class="stars" role="img" aria-label="Silver, 1 of 6 stars"><span class="stars__on" aria-hidden="true">★</span><span class="stars__sheen" aria-hidden="true">★</span><span class="stars__off" aria-hidden="true">★★★★★</span></span></footer>
+  </article></div></div>
+  </section>
+
+  <section aria-labelledby="s2">
+    <h2 id="s2" class="section-title">Ranks</h2>
+    <div class="row">
+  <article class="card rank-bronze job-mining tone-c ">
+    <header class="card__head"><h3 class="card__name">Stone Pick</h3><span class="card__job">Mining</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M12 40C30 14 70 14 88 40 70 30 30 30 12 40Z"/><rect x="46" y="30" width="8" height="62" rx="3"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">320</dd></div>
+      <div><dt>Rate</dt><dd class="num">2.4/s</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Bronze</span><span class="stars" role="img" aria-label="Bronze, 3 of 6 stars"><span class="stars__on" aria-hidden="true">★★★</span><span class="stars__sheen" aria-hidden="true">★★★</span><span class="stars__off" aria-hidden="true">★★★</span></span></footer>
+  </article>
+  <article class="card rank-silver job-logging tone-b ">
+    <header class="card__head"><h3 class="card__name">Birch Axe</h3><span class="card__job">Logging</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 20C62 8 84 26 76 52 60 44 44 42 30 50Z"/><rect x="26" y="20" width="8" height="72" rx="3"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">1.8K</dd></div>
+      <div><dt>Rate</dt><dd class="num">9.1/s</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Silver</span><span class="stars" role="img" aria-label="Silver, 4 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★</span><span class="stars__off" aria-hidden="true">★★</span></span></footer>
+  </article>
+  <article class="card rank-gold job-fighting tone-a ">
+    <header class="card__head"><h3 class="card__name">Gilded Edge</h3><span class="card__job">Fighting</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 62 60 50 70 38 60Z"/><rect x="30" y="64" width="40" height="7" rx="2"/><rect x="45" y="70" width="10" height="22" rx="2"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">9.6K</dd></div>
+      <div><dt>Rate</dt><dd class="num">1.0s</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Gold</span><span class="stars" role="img" aria-label="Gold, 2 of 6 stars"><span class="stars__on" aria-hidden="true">★★</span><span class="stars__sheen" aria-hidden="true">★★</span><span class="stars__off" aria-hidden="true">★★★★</span></span></footer>
+  </article>
+  <article class="card rank-prismatic job-fighting tone-d ">
+    <header class="card__head"><h3 class="card__name">Prism Shield</h3><span class="card__job">Fighting</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 84 20V48C84 70 68 84 50 92 32 84 16 70 16 48V20Z"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">52K</dd></div>
+      <div><dt>Rate</dt><dd class="num">0.8s</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Prismatic</span><span class="stars" role="img" aria-label="Prismatic, 5 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★★</span><span class="stars__off" aria-hidden="true">★</span></span></footer>
+  </article></div>
+  </section>
+
+  <section aria-labelledby="s3">
+    <h2 id="s3" class="section-title">Star 5 and star 6, with the shine and a faint frame glow</h2>
+    <div class="row">
+  <article class="card rank-gold job-fighting tone-a ">
+    <header class="card__head"><h3 class="card__name">Gilded Edge</h3><span class="card__job">Fighting</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 62 60 50 70 38 60Z"/><rect x="30" y="64" width="40" height="7" rx="2"/><rect x="45" y="70" width="10" height="22" rx="2"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">14.2K</dd></div>
+      <div><dt>Rate</dt><dd class="num">1.0s</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Gold</span><span class="stars" role="img" aria-label="Gold, 5 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★★</span><span class="stars__off" aria-hidden="true">★</span></span></footer>
+  </article>
+  <article class="card rank-gold is-star6 job-fighting tone-a ">
+    <header class="card__head"><h3 class="card__name">Gilded Edge</h3><span class="card__job">Fighting</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 62 60 50 70 38 60Z"/><rect x="30" y="64" width="40" height="7" rx="2"/><rect x="45" y="70" width="10" height="22" rx="2"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">21.0K</dd></div>
+      <div><dt>Rate</dt><dd class="num">0.9s</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Gold</span><span class="stars" role="img" aria-label="Gold, 6 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★★★</span><span class="stars__off" aria-hidden="true"></span></span></footer>
+  </article><div class="row">
+  <article class="card rank-bronze is-star6 job-mining tone-c ">
+    <header class="card__head"><h3 class="card__name">Stone Pick</h3><span class="card__job">Mining</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M12 40C30 14 70 14 88 40 70 30 30 30 12 40Z"/><rect x="46" y="30" width="8" height="62" rx="3"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">980</dd></div>
+      <div><dt>Rate</dt><dd class="num">3.1/s</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Bronze</span><span class="stars" role="img" aria-label="Bronze, 6 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★★★</span><span class="stars__off" aria-hidden="true"></span></span></footer>
+  </article>
+  <article class="card rank-prismatic is-star6 job-fighting tone-d ">
+    <header class="card__head"><h3 class="card__name">Prism Shield</h3><span class="card__job">Fighting</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 84 20V48C84 70 68 84 50 92 32 84 16 70 16 48V20Z"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">88K</dd></div>
+      <div><dt>Rate</dt><dd class="num">0.7s</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Prismatic</span><span class="stars" role="img" aria-label="Prismatic, 6 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★★★</span><span class="stars__off" aria-hidden="true"></span></span></footer>
+  </article>
+  <article class="card rank-silver job-fighting tone-b finish-holo ">
+    <header class="card__head"><h3 class="card__name">Aurora Fang</h3><span class="card__job">Fighting</span></header>
+    <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70L90 40 50 90 10 40Z"/></svg></div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">3.3K</dd></div>
+      <div><dt>Rate</dt><dd class="num">1.1s</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">Silver</span><span class="stars" role="img" aria-label="Silver, 3 of 6 stars"><span class="stars__on" aria-hidden="true">★★★</span><span class="stars__sheen" aria-hidden="true">★★★</span><span class="stars__off" aria-hidden="true">★★★</span></span></footer>
+  </article></div></div>
+  </section>
+</main>
+<aside class="picker" aria-label="Options" data-keys="table,ornament"><fieldset><legend>Table</legend><button type="button" data-key="table" data-value="navy">Ink navy</button><button type="button" data-key="table" data-value="graphite">Graphite</button><button type="button" data-key="table" data-value="stone">Light stone</button></fieldset><fieldset><legend>Gilt</legend><button type="button" data-key="ornament" data-value="minimal">Minimal</button><button type="button" data-key="ornament" data-value="medium">Medium</button></fieldset></aside><script>
+(() => {
+  const params = new URLSearchParams(location.hash.slice(1));
+  const apply = (key, value) => {
+    document.body.dataset[key] = value;
+    for (const b of document.querySelectorAll('.picker [data-key="' + key + '"]')) {
+      b.setAttribute('aria-pressed', String(b.dataset.value === value));
+    }
+  };
+  const keys = document.querySelector('.picker').dataset.keys.split(',');
+  for (const key of keys) apply(key, params.get(key) ?? document.body.dataset[key]);
+  document.querySelector('.picker').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    apply(b.dataset.key, b.dataset.value);
+    params.set(b.dataset.key, b.dataset.value);
+    history.replaceState(null, '', '#' + params);
+  });
+})();</script>
+</body>
+</html>

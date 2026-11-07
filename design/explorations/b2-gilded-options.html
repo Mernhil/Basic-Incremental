@@ -92,6 +92,14 @@ ul { list-style: none; }
   .stars__sheen { background-position: 50% 0; }
 }
 
+/* ---- picker (mockup tool only, used by the option pages) ---- */
+.picker { position: fixed; right: 14px; bottom: 14px; z-index: 10; display: grid; gap: 8px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(10, 12, 20, 0.88); color: #f2ead6; font: 500 13px/1.2 system-ui, sans-serif; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); }
+.picker fieldset { display: flex; gap: 6px; align-items: center; margin: 0; padding: 0; border: 0; }
+.picker legend { float: left; width: 52px; padding: 0; }
+.picker button { padding: 4px 9px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.picker button[aria-pressed='true'] { background: #f1d27a; color: #2a1a0c; border-color: #f1d27a; }
+
 /* Direction B: Gilded Tradition. Coloured frame, gold name plate, art window, parchment text box,
    on a green felt table. Serif for names, humanist sans for numbers. */
 .dir {
@@ -234,13 +242,6 @@ body[data-font='modern'] .tick { font-weight: 800; }
 body[data-font='modern'] .card__job { font-style: normal; font-weight: 500; }
 body[data-font='modern'] .card__stats dd { font-weight: 700; }
 
-/* ---- picker (mockup tool only) ---- */
-.picker { position: fixed; right: 14px; bottom: 14px; z-index: 10; display: grid; gap: 8px; padding: 10px 12px; border-radius: 10px;
-  background: rgba(10, 12, 20, 0.88); color: #f2ead6; font: 500 13px/1.2 system-ui, sans-serif; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); }
-.picker fieldset { display: flex; gap: 6px; align-items: center; margin: 0; padding: 0; border: 0; }
-.picker legend { float: left; width: 52px; padding: 0; }
-.picker button { padding: 4px 9px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
-.picker button[aria-pressed='true'] { background: #f1d27a; color: #2a1a0c; border-color: #f1d27a; }
 
 /* keep every card title on one line so cards stay aligned across font options */
 body[data-font] .card__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -407,7 +408,7 @@ body[data-font='modern'] .card__job { font-size: 11px; }
   </article></div></div>
   </section>
 </main>
-<aside class="picker" aria-label="Options"><fieldset><legend>Table</legend><button type="button" data-key="table" data-value="navy">Ink navy</button><button type="button" data-key="table" data-value="graphite">Graphite</button><button type="button" data-key="table" data-value="stone">Light stone</button></fieldset><fieldset><legend>Fonts</legend><button type="button" data-key="font" data-value="inscribed">Inscribed</button><button type="button" data-key="font" data-value="bookish">Book serif</button><button type="button" data-key="font" data-value="modern">Modern sans</button></fieldset></aside><script>
+<aside class="picker" aria-label="Options" data-keys="table,font"><fieldset><legend>Table</legend><button type="button" data-key="table" data-value="navy">Ink navy</button><button type="button" data-key="table" data-value="graphite">Graphite</button><button type="button" data-key="table" data-value="stone">Light stone</button></fieldset><fieldset><legend>Fonts</legend><button type="button" data-key="font" data-value="inscribed">Inscribed</button><button type="button" data-key="font" data-value="bookish">Book serif</button><button type="button" data-key="font" data-value="modern">Modern sans</button></fieldset></aside><script>
 (() => {
   const params = new URLSearchParams(location.hash.slice(1));
   const apply = (key, value) => {
@@ -416,7 +417,8 @@ body[data-font='modern'] .card__job { font-size: 11px; }
       b.setAttribute('aria-pressed', String(b.dataset.value === value));
     }
   };
-  for (const key of ['table', 'font']) apply(key, params.get(key) ?? document.body.dataset[key]);
+  const keys = document.querySelector('.picker').dataset.keys.split(',');
+  for (const key of keys) apply(key, params.get(key) ?? document.body.dataset[key]);
   document.querySelector('.picker').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;

@@ -1,0 +1,109 @@
+/* Direction D: Gilded Nocturne. The Gilded cosmetic items (gilt, foil, slash, engraved numbers)
+   on Nocturne's calm structure: dark cards, hairlines, quiet type, no name plate, no parchment box.
+   One family (Outfit). Table and gilt amount are switchable through body[data-*]. */
+@property --angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.dir {
+  --font-body: 'Outfit', 'Segoe UI', sans-serif;
+  --ink: #e9eef7;
+  --muted: #a3b0c6;
+  --card-bg: #121722;
+  --line: #2b3447;
+  --gold: #d9b35a;
+  --gold-hi: #f3dc9a;
+  --star-off: rgba(163, 176, 198, 0.35);
+  --on-table: var(--ink);
+  --on-table-muted: var(--muted);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ---- table: plain, no texture ---- */
+body.dir[data-table='navy'] { --table-bg: #10182f; background-image: radial-gradient(80% 55% at 50% 0%, rgba(140, 170, 255, 0.13), transparent 70%); }
+body.dir[data-table='graphite'] { --table-bg: #1b1a1c; background-image: radial-gradient(80% 55% at 50% 0%, rgba(255, 255, 255, 0.07), transparent 70%); }
+body.dir[data-table='stone'] {
+  --table-bg: #cfd5dd; --on-table: #1c2330; --on-table-muted: #3d4757;
+  background-image: radial-gradient(80% 55% at 50% 0%, rgba(255, 255, 255, 0.55), transparent 70%);
+}
+body[data-table='stone'] .picker { background: rgba(255, 255, 255, 0.88); color: #1c2330; }
+
+.dir h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.05; color: var(--on-table); }
+.blurb { margin-top: 6px; font-size: 15px; color: var(--on-table-muted); }
+.slots { max-width: 560px; color: var(--on-table-muted); }
+.slots b { font-weight: 600; color: var(--on-table); }
+.section-title { font-size: 15px; font-weight: 500; margin-bottom: 14px; color: var(--on-table-muted); }
+
+/* Gilded anatomy (frame, name plate, art window, stat box) kept on purpose: each layer is a place
+   future cosmetics can decorate. Surfaces are Nocturne-simple: flat, dark, gold hairlines. */
+.job-fighting { --accent: #e0606d; --frame: #3b1b22; }
+.job-mining { --accent: #e3a548; --frame: #3a2b18; }
+.job-logging { --accent: #5fc2a0; --frame: #173129; }
+.tone-boss { --accent: #93a6bb; --frame: #232a34; }
+.card { --hair: rgba(217, 179, 90, 0.5); --panel: rgba(0, 0, 0, 0.3); }
+
+/* ---- card ---- */
+.card {
+  padding: 10px; gap: 7px; color: var(--ink); border-radius: 12px;
+  background: var(--frame, var(--card-bg));
+  background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.06), transparent 40%);
+  border: 1px solid color-mix(in srgb, var(--gold) 65%, transparent);
+  box-shadow: var(--ornament, 0 0 #0000), var(--halo, 0 0 #0000), var(--lift, 0 0 #0000);
+}
+body[data-table='stone'] .card { --lift: 0 6px 12px rgba(28, 35, 48, 0.3); }
+.card__head { align-items: center; padding: 4px 8px; border-radius: 6px; background: var(--panel); box-shadow: inset 0 0 0 1px var(--hair); }
+.card__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; line-height: 1.2; }
+.card__job { flex: none; font-size: 11px; color: var(--muted); }
+.card__art { border-radius: 6px; --emblem: transparent; box-shadow: inset 0 0 0 1px var(--hair);
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 70%), #0d121b; }
+.art__emblem { fill: none; stroke: var(--gold-hi); stroke-width: 1.6; stroke-linejoin: round; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 55%, transparent)); }
+.card__stats { padding: 5px 8px; border-radius: 6px; background: var(--panel); box-shadow: inset 0 0 0 1px rgba(217, 179, 90, 0.25); }
+.card__stats dt { font-size: 12px; color: var(--muted); }
+.card__stats dd { font-size: 17px; font-weight: 600; line-height: 1.15; }
+.card__rank { padding: 1px 2px 0; }
+.rank-name { font-size: 12px; color: var(--muted); }
+.stars { --star-size: 16px; }
+
+/* ---- gilt amount: Medium fills the name plate with flat gold and adds an inner gilt line ---- */
+body[data-ornament='medium'] .card { --ornament: inset 0 0 0 3px var(--frame, var(--card-bg)), inset 0 0 0 4px rgba(217, 179, 90, 0.55); }
+body[data-ornament='medium'] .card__head { background: var(--gold); box-shadow: none; }
+body[data-ornament='medium'] .card__name { color: #24170a; }
+body[data-ornament='medium'] .card__job { color: #4a3410; }
+body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold), inset 0 0 18px rgba(0, 0, 0, 0.5); }
+
+/* ---- star-6 evolution: hairline takes the tier colour and gains a soft halo ---- */
+.is-star6 { border-color: var(--star); --halo: 0 0 0 1px color-mix(in srgb, var(--star) 40%, transparent), 0 0 22px color-mix(in srgb, var(--star) 28%, transparent); }
+.rank-prismatic.is-star6 { border-color: transparent; }
+.rank-prismatic.is-star6::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; z-index: -1; pointer-events: none;
+  background: conic-gradient(from var(--angle), #ff5f9e, #ffb347, #f4f46b, #5ff0a8, #5fc6ff, #b48cff, #ff5f9e);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: spin 6s linear infinite; }
+@keyframes spin { to { --angle: 360deg; } }
+
+/* ---- finish: Rainbow foil with sparkle (inside the art window only) ---- */
+.finish-holo .art__emblem { position: relative; z-index: 1; }
+.finish-holo .card__art::after { content: ''; position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0.5;
+  background:
+    radial-gradient(circle at 20% 30%, #fff 0 1px, transparent 2px), radial-gradient(circle at 70% 60%, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 45% 80%, #fff 0 1px, transparent 2px), radial-gradient(circle at 85% 20%, #fff 0 1px, transparent 2px),
+    repeating-linear-gradient(115deg, #ff3d9a, #ffc23d, #3dff9e, #3da6ff, #a06bff, #ff3d9a 28%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 220% 100%; animation: foil 5s linear infinite alternate; }
+@keyframes foil { to { background-position: 0 0, 0 0, 0 0, 0 0, 100% 0; } }
+
+/* ---- boss + HP bar ---- */
+.card--boss { padding: 14px; }
+.card--boss .card__name { font-size: 18px; font-weight: 600; }
+.hp { height: 10px; border-radius: 99px; background: #1b2434; overflow: visible; margin: 8px 0 22px; }
+.hp__fill { border-radius: 99px; background: linear-gradient(90deg, #a3313c, #e0606d); box-shadow: 0 0 12px rgba(224, 96, 109, 0.5); }
+.hp__text { inset: auto 0 -22px 0; display: block; text-align: right; font-size: 13px; font-weight: 500; color: var(--muted); }
+
+/* ---- attack animation: Gilt slash ---- */
+.fx { position: absolute; left: -10%; top: 46%; width: 120%; height: 4px; z-index: 2; opacity: 0; transform-origin: 0 50%;
+  background: linear-gradient(90deg, transparent, #fff 25%, var(--gold-hi) 70%, transparent); filter: drop-shadow(0 0 6px #ffe38a);
+  animation: slash 2.4s ease-out infinite; }
+@keyframes slash { 0% { transform: rotate(-32deg) scaleX(0); opacity: 1; } 10% { transform: rotate(-32deg) scaleX(1); opacity: 1; } 24%, 100% { transform: rotate(-32deg) scaleX(1); opacity: 0; } }
+.card--boss .art__emblem { animation: jolt 2.4s ease-out infinite; }
+@keyframes jolt { 0% { transform: translateX(-7px) rotate(-2deg); } 6% { transform: translateX(6px) rotate(1.5deg); } 14%, 100% { transform: none; } }
+
+/* ---- tick damage: Engraved rise; number style: Engraved gold (Outfit) ---- */
+.tick { font-size: 24px; font-weight: 800; letter-spacing: 0.02em; color: var(--gold-hi); -webkit-text-stroke: 2px #2b1a05; paint-order: stroke fill;
+  text-shadow: 0 2px 0 #2b1a05, 0 0 10px rgba(0, 0, 0, 0.6); }
+.tick--crit { font-size: 34px; color: #ffb02e; text-shadow: 0 2px 0 #7c1d2a, 0 0 12px rgba(255, 138, 90, 0.7); }

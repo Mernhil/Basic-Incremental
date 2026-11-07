@@ -97,6 +97,27 @@ const directions = [
       ['Table', 'Plain (pick below)'],
     ],
   },
+  {
+    file: 'c2-gilded-nocturne.html',
+    css: 'd-hybrid.css',
+    controls: 'hybrid',
+    name: 'Gilded Nocturne',
+    blurb: 'Gilded items on a calm Nocturne structure. Outfit throughout.',
+    fonts: [
+      face('Outfit', 'outfit', 500),
+      face('Outfit', 'outfit', 600),
+      face('Outfit', 'outfit', 700),
+      face('Outfit', 'outfit', 800),
+    ],
+    slots: [
+      ['Card border', 'Gilt hairline'],
+      ['Card finish', 'Rainbow foil'],
+      ['Attack animation', 'Gilt slash'],
+      ['Tick damage', 'Engraved rise'],
+      ['Number style', 'Engraved gold'],
+      ['Table', 'Plain (pick below)'],
+    ],
+  },
 ];
 
 // ---- tiny flat emblems used as art placeholders -------------------------------------------
@@ -171,7 +192,8 @@ const PICKER_SCRIPT = `
       b.setAttribute('aria-pressed', String(b.dataset.value === value));
     }
   };
-  for (const key of ['table', 'font']) apply(key, params.get(key) ?? document.body.dataset[key]);
+  const keys = document.querySelector('.picker').dataset.keys.split(',');
+  for (const key of keys) apply(key, params.get(key) ?? document.body.dataset[key]);
   document.querySelector('.picker').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
@@ -181,25 +203,33 @@ const PICKER_SCRIPT = `
   });
 })();`;
 
-function picker() {
+const TABLES = [
+  ['navy', 'Ink navy'],
+  ['graphite', 'Graphite'],
+  ['stone', 'Light stone'],
+];
+
+function picker(kind) {
   const group = (key, label, items) =>
     `<fieldset><legend>${label}</legend>` +
     items
       .map(([v, t]) => `<button type="button" data-key="${key}" data-value="${v}">${t}</button>`)
       .join('') +
     '</fieldset>';
+  const hybrid = kind === 'hybrid';
+  const fonts = group('font', 'Fonts', [
+    ['inscribed', 'Inscribed'],
+    ['bookish', 'Book serif'],
+    ['modern', 'Modern sans'],
+  ]);
+  const ornament = group('ornament', 'Gilt', [
+    ['minimal', 'Minimal'],
+    ['medium', 'Medium'],
+  ]);
   return (
-    `<aside class="picker" aria-label="Options">` +
-    group('table', 'Table', [
-      ['navy', 'Ink navy'],
-      ['graphite', 'Graphite'],
-      ['stone', 'Light stone'],
-    ]) +
-    group('font', 'Fonts', [
-      ['inscribed', 'Inscribed'],
-      ['bookish', 'Book serif'],
-      ['modern', 'Modern sans'],
-    ]) +
+    `<aside class="picker" aria-label="Options" data-keys="${hybrid ? 'table,ornament' : 'table,font'}">` +
+    group('table', 'Table', TABLES) +
+    (hybrid ? ornament : fonts) +
     `</aside><script>${PICKER_SCRIPT}</script>`
   );
 }
@@ -246,7 +276,7 @@ ${base}
 ${own}
 </style>
 </head>
-<body class="dir"${d.controls ? ' data-table="navy" data-font="inscribed"' : ''}>
+<body class="dir"${d.controls === 'hybrid' ? ' data-table="navy" data-ornament="minimal"' : d.controls ? ' data-table="navy" data-font="inscribed"' : ''}>
 <main class="table">
   <header class="setbar">
     <div><h1>${d.name}</h1><p class="blurb">${d.blurb}</p></div>
@@ -268,7 +298,7 @@ ${own}
     <div class="row">${pair}<div class="row">${extremes}</div></div>
   </section>
 </main>
-${d.controls ? picker() : ''}
+${d.controls ? picker(d.controls) : ''}
 </body>
 </html>
 `;

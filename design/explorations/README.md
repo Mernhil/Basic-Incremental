@@ -38,3 +38,12 @@ node design/explorations/shoot.mjs
 ```
 
 `shoot.mjs` freezes every animation at a fixed frame (attack effects at the hit moment) and writes to `screens/`.
+
+## Follow-up options
+
+- `b2-gilded-options.html`: Gilded Tradition items on three plain tables (ink navy, graphite, light stone) with three font pairings. Chosen font: **Modern sans (Outfit)**.
+- `c2-gilded-nocturne.html`: the hybrid. Gilded anatomy (frame tinted by job, name plate, art window, stat box) kept so each layer can carry future cosmetics, with Nocturne surfaces (flat, dark, gold hairlines) and Outfit throughout. The picker switches the table and the gilt amount (Minimal: hairline plate; Medium: flat gold plate and an inner gilt line).
+
+```bash
+node design/explorations/shoot-options.mjs c2-gilded-nocturne "navy-minimal=table=navy&ornament=minimal" "navy-medium=table=navy&ornament=medium"
+```
