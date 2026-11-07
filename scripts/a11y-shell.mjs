@@ -33,6 +33,13 @@ const CHECKS = [
   '.away__list',
   '.button',
   '.tools__message',
+  '.pp-summary',
+  '.pp-plot__name',
+  '.pp-plot__rate',
+  '.pp-kind__name',
+  '.pp-kind__meta',
+  '.pp-tier',
+  '.pp-kind__level',
 ];
 
 const browser = await chromium.connectOverCDP(`http://localhost:${port}`);
