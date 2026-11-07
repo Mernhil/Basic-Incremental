@@ -107,6 +107,8 @@ export const dungeonSchema = z.strictObject({
     hp: positiveDecimal,
     /** Boss HP is multiplied by (1 + this) for every prestige. Keep it small. */
     hpScalingPerPrestige: z.number().min(0).max(1),
+    /** The HP is shown as this many stacked bars ("x N" lives). */
+    hpBars: z.number().int().min(1).max(100).default(10),
   }),
   drops: z.strictObject({
     /** Rare item (card, cosmetic, ...) dropped on boss kills. */
