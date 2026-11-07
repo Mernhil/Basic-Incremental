@@ -37,7 +37,20 @@ jobs:
       - name: Test
         run: npm test
 
-      - name: Build and publish release
-        run: npm run release
+      # electron-builder's own publishing uploads files in parallel and each upload can create
+      # its own GitHub Release, which left two releases per tag. Build without publishing, then
+      # create one Release with every file in a single step.
+      - name: Build installer
+        run: npm run dist
+
+      - name: Publish release
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          FILES=(release/*-setup-"$VERSION".exe release/*-setup-"$VERSION".exe.blockmap release/latest.yml)
+          for f in "${FILES[@]}"; do
+            if [ ! -f "$f" ]; then echo "Missing $f"; exit 1; fi
+          done
+          gh release create "$GITHUB_REF_NAME" "${FILES[@]}" --verify-tag --title "$VERSION" --generate-notes

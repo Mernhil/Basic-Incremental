@@ -34,5 +34,5 @@ The workflow fails if the tag does not match the `package.json` version, so a mi
 - Versions must increase (semver). The updater only offers a newer version than the one installed.
 - The installer is unsigned, so Windows SmartScreen shows a warning on first install ("More info" → "Run anyway"). Auto-updates after that are silent.
 - Update events are logged to `%APPDATA%\basic-incremental\logs\updater.log`.
-- `npm run dist` builds the installer locally into `release/` without publishing.
+- `npm run dist` builds the installer locally into `release/` without publishing. The Release workflow runs it too, then creates the GitHub Release with `gh release create` in one step. (electron-builder's own publishing could create two Releases for one tag.)
 - If a release is bad, publish a newer fixed version. Do not reuse or move a tag.
