@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Content } from '../data';
+import { JOBS, MAX_STARS, RANK_TIERS } from '../data/schemas';
 import { MIGRATIONS, migrateState, type MigrationTable } from './migrations';
 import { Decimal, decimalToString, isDecimalString } from './num';
 import { SaveError } from './saveError';
@@ -7,21 +8,30 @@ import { isDungeonUnlocked } from './combat';
 import { isProducerUnlocked, PRODUCTION_JOBS } from './production';
 import {
   cloneBursts,
+  cloneCards,
+  emptyCardLoadout,
+  SUPPORT_SLOTS,
+  type CardState,
   cloneProduction,
   cloneState,
   createInitialState,
   type GameState,
 } from './state';
 import { sanitizeLoadout, type CosmeticLoadout } from './theme';
+import { levelCap } from './cards';
 
 export { SaveError } from './saveError';
 
 /** Bump this (and add a migration) whenever the saved format changes. */
-export const CURRENT_SAVE_VERSION = 4;
+export const CURRENT_SAVE_VERSION = 5;
 
 const decimalText = z.string().refine(isDecimalString, { message: 'not a valid number' });
 const counts = z.record(z.string(), z.number().int().min(0));
 const equippedSchema = z.object({ id: z.string(), level: z.number().int().min(1) });
+const cardLoadoutSchema = z.object({
+  main: z.string().nullable(),
+  supports: z.array(z.string().nullable()),
+});
 const gaugeSchema = z.object({ gauge: z.number().min(0), timer: z.number().min(0) });
 const jobProductionSchema = z.object({
   expansions: z.number().int().min(0),
@@ -59,6 +69,24 @@ export const serializedStateSchema = z.object({
       z.string(),
       z.object({ level: z.number().int().min(1), copies: z.number().int().min(0) }),
     ),
+  }),
+  cards: z.object({
+    owned: z.record(
+      z.string(),
+      z.object({
+        tier: z.enum(RANK_TIERS),
+        stars: z.number().int().min(1).max(MAX_STARS),
+        level: z.number().int().min(1),
+        xp: decimalText,
+        duplicates: z.number().int().min(0),
+      }),
+    ),
+    loadouts: z.object({
+      mining: cardLoadoutSchema,
+      logging: cardLoadoutSchema,
+      fighting: cardLoadoutSchema,
+    }),
+    shards: z.number().int().min(0),
   }),
   stats: z.object({
     playTimeMs: z.number().min(0),
@@ -102,6 +130,16 @@ export function serializeState(state: GameState): SerializedState {
     inventory: { ...state.inventory },
     prestigeCount: state.prestigeCount,
     stats: { ...state.stats },
+    cards: {
+      owned: Object.fromEntries(
+        Object.entries(state.cards.owned).map(([id, c]) => [
+          id,
+          { ...c, xp: decimalToString(c.xp) },
+        ]),
+      ),
+      loadouts: cloneCards(state.cards).loadouts,
+      shards: state.cards.shards,
+    },
     cosmetics: {
       loadout: {
         slots: { ...state.cosmetics.loadout.slots },
@@ -160,6 +198,7 @@ export function deserializeState(saved: SerializedState, content: Content): Game
   state.inventory = { ...saved.inventory };
   state.prestigeCount = saved.prestigeCount;
   state.stats = { ...saved.stats };
+  state.cards = deserializeCards(saved.cards, content);
   // Unknown ids (removed from the game) are dropped; starters are always owned.
   const owned: GameState['cosmetics']['owned'] = { ...base.cosmetics.owned };
   for (const [id, entry] of Object.entries(saved.cosmetics.owned)) {
@@ -285,4 +324,39 @@ export function importSaveString(
     throw new SaveError('invalid-export', 'The save string is damaged or incomplete.');
   }
   return readSave(text, content, migrations);
+}
+
+/**
+ * Rebuilds the card collection: unknown cards are dropped, levels are kept within the rank's
+ * cap, and loadout slots holding an unknown, unowned, other-job or repeated card are emptied.
+ */
+function deserializeCards(saved: SerializedState['cards'], content: Content): CardState {
+  const owned: CardState['owned'] = {};
+  for (const [id, c] of Object.entries(saved.owned)) {
+    if (!content.cardById.has(id)) continue;
+    const cap = levelCap(content, { tier: c.tier, stars: c.stars });
+    const level = Math.min(c.level, cap);
+    owned[id] = {
+      tier: c.tier,
+      stars: c.stars,
+      level,
+      xp: level >= cap ? new Decimal(0) : new Decimal(c.xp),
+      duplicates: c.duplicates,
+    };
+  }
+  const loadouts = {} as CardState['loadouts'];
+  for (const job of JOBS) {
+    const seen = new Set<string>();
+    const keep = (id: string | null | undefined): string | null => {
+      if (!id || !owned[id] || content.cardById.get(id)?.job !== job || seen.has(id)) return null;
+      seen.add(id);
+      return id;
+    };
+    const loadout = emptyCardLoadout();
+    loadout.main = keep(saved.loadouts[job].main);
+    for (let i = 0; i < SUPPORT_SLOTS; i++)
+      loadout.supports[i] = keep(saved.loadouts[job].supports[i]);
+    loadouts[job] = loadout;
+  }
+  return { owned, loadouts, shards: saved.shards };
 }

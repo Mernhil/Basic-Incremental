@@ -16,7 +16,47 @@ export const MIGRATIONS: MigrationTable = {
   1: (state) => ({ ...state, cosmetics: { loadout: { slots: {}, cards: {} }, owned: {} } }),
   2: v2ToV3,
   3: v3ToV4,
+  4: v4ToV5,
 };
+
+/**
+ * v4 -> v5: cards (Phase 6). Earlier saves owned no cards; they get the three Common cards at
+ * Bronze ★1 Lv 1, each leading its job, like a new game. The placeholder example cards were
+ * replaced by the beta cards: the Ember Crown (worn on the example main card) now belongs to
+ * Dawnblade Regent, so per-card cosmetics move with it. Ids are a snapshot of the v0.3 data.
+ */
+function v4ToV5(state: Record<string, unknown>): Record<string, unknown> {
+  const card = () => ({ tier: 'bronze', stars: 1, level: 1, xp: '0', duplicates: 0 });
+  const lead = (main: string) => ({ main, supports: [null, null, null] });
+  const cosmetics = isRecord(state['cosmetics']) ? state['cosmetics'] : null;
+  const loadout = cosmetics && isRecord(cosmetics['loadout']) ? cosmetics['loadout'] : null;
+  const migratedCosmetics =
+    cosmetics && loadout
+      ? {
+          ...cosmetics,
+          loadout: {
+            ...loadout,
+            cards: renameKeys(loadout['cards'], {
+              example_fighting_main: 'dawnblade_regent',
+              example_fighting_support: 'shield_warden',
+            }),
+          },
+        }
+      : state['cosmetics'];
+  return {
+    ...state,
+    cosmetics: migratedCosmetics,
+    cards: {
+      owned: { ember_squire: card(), apprentice_feller: card(), cave_digger: card() },
+      loadouts: {
+        fighting: lead('ember_squire'),
+        logging: lead('apprentice_feller'),
+        mining: lead('cave_digger'),
+      },
+      shards: 0,
+    },
+  };
+}
 
 /**
  * v3 -> v4: combat (Phase 5). The single `damage` number became damage upgrade levels (nothing

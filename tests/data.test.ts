@@ -5,6 +5,7 @@ import trees from '../src/data/content/trees.json';
 import mines from '../src/data/content/mines.json';
 import production from '../src/data/content/production.json';
 import cards from '../src/data/content/cards.json';
+import cardRules from '../src/data/content/cardRules.json';
 import dungeons from '../src/data/content/dungeons.json';
 import trials from '../src/data/content/trials.json';
 import combat from '../src/data/content/combat.json';
@@ -27,6 +28,7 @@ function raw(overrides: Partial<RawContent> = {}): RawContent {
     mines,
     production,
     cards,
+    cardRules,
     dungeons,
     trials,
     combat,
@@ -59,7 +61,7 @@ describe('bundled content', () => {
       ['Iron Deeps', 'mossy_cellar'],
       ['Crystal Grotto', 'ember_crypt'],
     ]);
-    expect(content.cards.map((c) => c.role).sort()).toEqual(['main', 'support']);
+    expect(content.cards).toHaveLength(12);
     expect(content.dungeons.map((d) => [d.name, d.boss.name])).toEqual([
       ['Mossy Cellar', 'Root Warden'],
       ['Ember Crypt', 'Cinder Lich'],
@@ -128,23 +130,89 @@ describe('content validation errors', () => {
 });
 
 describe('card ranks and portals', () => {
-  it('defaults a card to Bronze ★1 and keeps an explicit start rank', () => {
+  it('has the 12 beta cards of DESIGN.md 11.9, 4 per job, each with a main and support effect', () => {
     const content = loadContent();
-    const [main, support] = content.cards;
-    expect(main!.startRank).toEqual({ tier: 'bronze', stars: 1 });
-    expect(support!.startRank).toEqual({ tier: 'silver', stars: 2 });
+    expect(content.cards).toHaveLength(12);
+    for (const job of ['fighting', 'logging', 'mining'] as const) {
+      expect(content.cards.filter((c) => c.job === job)).toHaveLength(4);
+    }
+    const rarities = content.cards.map((c) => c.rarity);
+    expect(rarities.filter((r) => r === 'common')).toHaveLength(3);
+    expect(rarities.filter((r) => r === 'rare')).toHaveLength(3);
+    expect(rarities.filter((r) => r === 'epic')).toHaveLength(2);
+    expect(rarities.filter((r) => r === 'legendary')).toHaveLength(2);
+    expect(rarities.filter((r) => r === 'mythic')).toHaveLength(1);
+    expect(rarities.filter((r) => r === 'exotic')).toHaveLength(1);
+    for (const card of content.cards) {
+      expect(card.main.description.length).toBeGreaterThan(0);
+      expect(card.support.modifiers.length).toBeGreaterThan(0);
+    }
+    expect(content.cardRules.startCards).toEqual([
+      'ember_squire',
+      'apprentice_feller',
+      'cave_digger',
+    ]);
   });
 
-  it('rejects ranks outside Bronze..Prismatic and ★1..6', () => {
-    for (const startRank of [
+  it('scales flat and percent card bonuses by default, and nothing else', () => {
+    const content = loadContent();
+    const warden = content.cardById.get('shield_warden')!;
+    expect(warden.main.modifiers.map((m) => [m.kind, m.scale])).toEqual([
+      ['set', 'none'],
+      ['percent', 'full'],
+    ]);
+    expect(warden.support.modifiers[0]!.scale).toBe('none'); // explicit: +1 fill stays +1
+  });
+
+  it('catches bad card rules', () => {
+    const bad = raw();
+    const rules = bad.cardRules as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+    rules['startCards'] = ['ember_squire', 'shield_warden', 'missing_card'];
+    rules['levelCaps'].gold = [60, 64, 68, 66, 76, 80];
+    const issues = issuesFor(bad);
+    expect(issues.some((i) => i.includes('startCards › [1]: a start card already leads'))).toBe(
+      true,
+    );
+    expect(issues.some((i) => i.includes('startCards › [2]: unknown card "missing_card"'))).toBe(
+      true,
+    );
+    expect(issues).toContain('cardRules.json › levelCaps › gold: caps must not go down');
+
+    const short = raw();
+    (short.cardRules as Record<string, any>)['levelCaps'].gold = [60, 64, 68]; // eslint-disable-line @typescript-eslint/no-explicit-any
+    expect(issuesFor(short).some((i) => i.startsWith('cardRules.json › levelCaps › gold'))).toBe(
+      true,
+    );
+  });
+
+  it('catches unknown materials and card modifier scopes', () => {
+    const bad = raw();
+    const rules = bad.cardRules as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+    rules['starUp'].tiers.bronze.resource = 'nope';
+    rules['tierUp'].bronze.mining[0].resource = 'nope';
+    (bad.cards as Record<string, any>[])[0]!['support'].modifiers[0].scope = { dungeon: 'nowhere' }; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const issues = issuesFor(bad);
+    expect(issues).toContain(
+      'cardRules.json › starUp › tiers › bronze › resource: unknown resource "nope"',
+    );
+    expect(issues).toContain(
+      'cardRules.json › tierUp › bronze › mining › [0] › resource: unknown resource "nope"',
+    );
+    expect(issues).toContain(
+      'cards.json › [0] › support › modifiers › [0] › scope › dungeon: unknown dungeon "nowhere"',
+    );
+  });
+
+  it('rejects wear-rule ranks outside Bronze..Prismatic and ★1..6', () => {
+    for (const rank of [
       { tier: 'diamond', stars: 1 },
       { tier: 'gold', stars: 0 },
       { tier: 'gold', stars: 7 },
       { tier: 'gold', stars: 2.5 },
     ]) {
       const bad = raw();
-      (bad.cards as Record<string, unknown>[])[0]!['startRank'] = startRank;
-      expect(issuesFor(bad).some((i) => i.startsWith('cards.json › [0] › startRank'))).toBe(true);
+      (bad.wearRules as Record<string, unknown>)['border'] = rank;
+      expect(issuesFor(bad).some((i) => i.startsWith('wearRules.json › border'))).toBe(true);
     }
   });
 

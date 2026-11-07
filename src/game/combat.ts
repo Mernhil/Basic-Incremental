@@ -1,4 +1,11 @@
-import type { BurstJob, Content, DamageUpgrade, Dungeon, Trial } from '../data';
+import type { BurstJob, Content, DamageUpgrade, Dungeon, ProductionJob, Trial } from '../data';
+import {
+  cardDropChance,
+  fightingXpPerKill,
+  grantCardDrop,
+  grantLoadoutXp,
+  rollCardDrop,
+} from './cards';
 import { rollBossDrop, rollMaterialDrop } from './drops';
 import { hpBarState, type HpBarState } from './hpBars';
 import {
@@ -431,7 +438,10 @@ export function trialStatus(state: GameState, content: Content): TrialStatus | n
 
 // ---- stepping (called by advance) ------------------------------------------------------------
 
-/** Harvest bursts: ticks fill each production job's gauge; full = that much extra output. */
+/**
+ * Harvest bursts: ticks fill each production job's gauge; full = that much extra output.
+ * Returns, per job, the seconds of output the bursts harvested (0 when none fired).
+ */
 export function advanceHarvestBursts(
   next: GameState,
   before: GameState,
@@ -439,7 +449,11 @@ export function advanceHarvestBursts(
   seconds: number,
   report: TickReport,
   modifiers: readonly Modifier[],
-): void {
+): Record<ProductionJob, Decimal> {
+  const harvested: Record<ProductionJob, Decimal> = {
+    logging: new Decimal(0),
+    mining: new Decimal(0),
+  };
   for (const job of PRODUCTION_JOBS) {
     const stats = burstStats(content, job, modifiers);
     const run = advanceGauge(next.bursts[job], seconds, stats);
@@ -447,6 +461,7 @@ export function advanceHarvestBursts(
     if (run.bursts === 0) continue;
     report.bursts[job] += run.bursts;
     const harvestSeconds = stats.power.mul(run.bursts);
+    harvested[job] = harvestSeconds;
     for (const [resource, perSecond] of Object.entries(
       jobProductionPerSecond(before, content, job, modifiers),
     )) {
@@ -455,6 +470,7 @@ export function advanceHarvestBursts(
       );
     }
   }
+  return harvested;
 }
 
 /** Fights whatever is active for `seconds`. Mutates `next` (a fresh clone owned by advance). */
@@ -533,6 +549,7 @@ function fightBoss(
 
   const bossId = dungeon.boss.id;
   const drops = effectiveDrops(dungeon, modifiers);
+  const cardChance = cardDropChance(content, dungeon, modifiers);
   let pity = state.pity[bossId] ?? 0;
   let portal = 0;
   let rares = 0;
@@ -543,6 +560,9 @@ function fightBoss(
     portal += roll.portal;
     if (roll.rare) rares++;
     material += rollMaterialDrop(drops, rng);
+    // Rolled per kill, after the other drops, so the rolls keep their order however time is split.
+    const card = rollCardDrop(content, cardChance, rng);
+    if (card) grantCardDrop(state, content, card, report);
   }
 
   state.pity[bossId] = pity;
@@ -561,6 +581,13 @@ function fightBoss(
     state.inventory[item] = (state.inventory[item] ?? 0) + rares;
     report.drops[item] = (report.drops[item] ?? 0) + rares;
   }
+  // Cards: the fighting loadout gains XP per kill.
+  grantLoadoutXp(
+    state,
+    content,
+    'fighting',
+    fightingXpPerKill(content, dungeon, modifiers).mul(kills),
+  );
   if (totalKills >= dungeon.killsToClear) markCleared(state, content, dungeon.id, report);
 }
 

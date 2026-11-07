@@ -4,6 +4,7 @@ import type { Rng } from './rng';
 import type { GameState } from './state';
 import { collectModifiers, statValue } from './modifiers';
 import { advanceChunked } from './tick';
+import type { CardDrop } from './report';
 
 /** Base offline cap (8 hours). The offline.capHours modifiers can raise it. */
 export const OFFLINE_CAP_MS = 8 * 60 * 60 * 1000;
@@ -34,6 +35,10 @@ export interface OfflineSummary {
   gains: Record<string, Decimal>;
   bossKills: number;
   drops: Record<string, number>;
+  /** Cards dropped while away. */
+  cardDrops: CardDrop[];
+  /** Card id -> levels before and after, for cards that levelled up while away. */
+  cardLevels: Record<string, { from: number; to: number }>;
 }
 
 /** Simulates the time between `savedAtMs` and `nowMs`, capped at OFFLINE_CAP_MS. */
@@ -70,6 +75,8 @@ export function simulateOffline(
       gains,
       bossKills: result.report.bossKills,
       drops: result.report.drops,
+      cardDrops: result.report.cardDrops,
+      cardLevels: result.report.cardLevels,
     },
   };
 }

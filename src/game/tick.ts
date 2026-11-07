@@ -1,11 +1,23 @@
 import type { Content } from '../data';
+import { grantLoadoutXp, hasPendingLevel, productionXpPerUnit, settleCardLevels } from './cards';
 import { advanceCombat, advanceHarvestBursts } from './combat';
 import { collectModifiers } from './modifiers';
 import { Decimal } from './num';
-import { productionPerSecond } from './production';
+import { jobProductionPerSecond, PRODUCTION_JOBS, producerCounts } from './production';
 import { emptyReport, mergeReports, type TickReport } from './report';
 import type { Rng } from './rng';
 import { cloneState, type GameState } from './state';
+
+/**
+ * Card level-ups happen only when play time reaches a whole multiple of this (DESIGN.md 11.2).
+ * XP itself accrues continuously; settling levels on a fixed grid keeps the modifiers they give
+ * changing at the same moments however the time is split into steps (frame-rate independence,
+ * and offline progress matching live play).
+ */
+export const CARD_LEVEL_STEP_MS = 1000;
+
+/** Used to look ahead for level-ups: XP never depends on random drops, so any value works. */
+const lookaheadRng: Rng = () => 0.5;
 
 /**
  * Advances the game by `dtMs` of real time. Pure: returns a new state.
@@ -21,25 +33,70 @@ export function advance(
   const report = emptyReport();
   if (!Number.isFinite(dtMs) || dtMs <= 0) return { state, report };
 
+  let current = state;
+  let remaining = dtMs;
+  while (remaining > 0) {
+    const toBoundary = CARD_LEVEL_STEP_MS - (current.stats.playTimeMs % CARD_LEVEL_STEP_MS);
+    // Without a level-up due on a boundary inside the span, it runs in one go. XP only grows,
+    // so nothing pending at the end means nothing was pending on any boundary before it.
+    if (remaining < toBoundary || !levelUpDue(current, content, remaining)) {
+      current = advanceSpan(current, content, remaining, rng, report);
+      break;
+    }
+    current = advanceSpan(current, content, toBoundary, rng, report);
+    settleCardLevels(current, content, report);
+    remaining -= toBoundary;
+  }
+  return { state: current, report };
+}
+
+/** Whether a card would have a level-up pending after `dtMs`. Runs a throwaway copy. */
+function levelUpDue(state: GameState, content: Content, dtMs: number): boolean {
+  const ahead = advanceSpan(state, content, dtMs, lookaheadRng, emptyReport());
+  return Object.values(ahead.cards.owned).some((owned) => hasPendingLevel(content, owned));
+}
+
+/** One span with fixed modifiers: production, harvest bursts, card XP and combat. */
+function advanceSpan(
+  state: GameState,
+  content: Content,
+  dtMs: number,
+  rng: Rng,
+  report: TickReport,
+): GameState {
   const next = cloneState(state);
   const seconds = dtMs / 1000;
   const modifiers = collectModifiers(state, content);
   next.stats.playTimeMs += dtMs;
 
   // Production: every active plot/slot yields its producer's rate per second.
-  for (const [resource, perSecond] of Object.entries(
-    productionPerSecond(state, content, modifiers),
-  )) {
-    const current = next.resources[resource] ?? new Decimal(0);
-    next.resources[resource] = current.add(perSecond.mul(seconds));
+  const counts = producerCounts(state, content, modifiers);
+  const perJob = Object.fromEntries(
+    PRODUCTION_JOBS.map((job) => [
+      job,
+      jobProductionPerSecond(state, content, job, modifiers, counts),
+    ]),
+  ) as Record<(typeof PRODUCTION_JOBS)[number], Record<string, Decimal>>;
+  for (const job of PRODUCTION_JOBS) {
+    for (const [resource, perSecond] of Object.entries(perJob[job])) {
+      const current = next.resources[resource] ?? new Decimal(0);
+      next.resources[resource] = current.add(perSecond.mul(seconds));
+    }
   }
   // Harvest bursts: production ticks fill each job's gauge; full = a bonus harvest.
-  advanceHarvestBursts(next, state, content, seconds, report, modifiers);
+  const burstSeconds = advanceHarvestBursts(next, state, content, seconds, report, modifiers);
+
+  // Card XP: each job's loadout gains XP per unit harvested (normal output and bursts).
+  for (const job of PRODUCTION_JOBS) {
+    const perSecond = Object.values(perJob[job]).reduce((a, b) => a.add(b), new Decimal(0));
+    const units = perSecond.mul(burstSeconds[job].add(seconds));
+    grantLoadoutXp(next, content, job, units.mul(productionXpPerUnit(content, job, modifiers)));
+  }
 
   // Combat: the boss is auto-fought in parallel and respawns for farming.
   advanceCombat(next, content, seconds, rng, report, modifiers);
 
-  return { state: next, report };
+  return next;
 }
 
 /** Same as advance() but split into steps of at most `chunkMs`. */

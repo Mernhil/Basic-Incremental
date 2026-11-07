@@ -24,7 +24,7 @@ import {
   type Modifier,
   type ProductionResult,
 } from '../src/game';
-import { constantRng, content, freshState } from './helpers';
+import { constantRng, bareState, content, freshState } from './helpers';
 
 const mod = (
   stat: ModifierData['stat'],
@@ -245,7 +245,7 @@ describe('mine types and levels', () => {
 
 describe('production in the tick', () => {
   it('counts every active plot and ignores empty ones', () => {
-    let state = give(freshState(), 'oak_wood', 25);
+    let state = give(bareState(), 'oak_wood', 25);
     state = ok(buyExpansion(state, content, 'logging'));
     let { state: after } = advance(state, content, 10_000, constantRng(0.5));
     expect(after.resources['oak_wood']!.eq(10)).toBe(true); // one Oak plot, one empty

@@ -37,6 +37,7 @@ import trees from '../src/data/content/trees.json';
 import mines from '../src/data/content/mines.json';
 import production from '../src/data/content/production.json';
 import cards from '../src/data/content/cards.json';
+import cardRules from '../src/data/content/cardRules.json';
 import dungeons from '../src/data/content/dungeons.json';
 import trials from '../src/data/content/trials.json';
 import combat from '../src/data/content/combat.json';
@@ -45,7 +46,7 @@ import portals from '../src/data/content/portals.json';
 import rarities from '../src/data/content/rarities.json';
 import wearRules from '../src/data/content/wearRules.json';
 import sets from '../src/data/content/sets.json';
-import { constantRng, content, freshState } from './helpers';
+import { constantRng, bareState, content, freshState } from './helpers';
 
 const rng = constantRng(0.5);
 const [mossy, ember, frost] = content.dungeons as [
@@ -315,7 +316,7 @@ describe('burst gauges (DESIGN.md 11.3, 11.8)', () => {
   });
 
   it('a harvest burst adds 10 s of each job’s output', () => {
-    const { state, report } = advance(freshState(), content, 30_000, rng);
+    const { state, report } = advance(bareState(), content, 30_000, rng);
     expect(report.bursts).toMatchObject({ logging: 1, mining: 1 });
     expect(state.resources['oak_wood']!.eq(30 + 10)).toBe(true); // Oak: 1/s
     expect(state.resources['copper_ore']!.eq(15 + 5)).toBe(true); // Copper Quarry: 0.5/s
@@ -449,6 +450,7 @@ describe('combat data is validated', () => {
       mines,
       production,
       cards,
+      cardRules,
       dungeons,
       trials,
       combat,
