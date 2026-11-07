@@ -66,9 +66,10 @@ describe('content validation errors', () => {
   });
 
   it('catches wrong resource kinds and duplicate ids', () => {
-    const bad = raw();
-    (bad.mines as Record<string, unknown>[])[0]!['resource'] = 'example_wood';
-    bad.resources = [...(bad.resources as object[]), (bad.resources as object[])[0]!];
+    const base = raw();
+    (base.mines as Record<string, unknown>[])[0]!['resource'] = 'example_wood';
+    const list = base.resources as object[];
+    const bad = { ...base, resources: [...list, list[0]!] };
     const issues = issuesFor(bad);
     expect(issues.some((i) => i.includes('is wood, expected ore'))).toBe(true);
     expect(issues.some((i) => i.includes('duplicate id "example_wood"'))).toBe(true);
