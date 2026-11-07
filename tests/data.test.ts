@@ -6,9 +6,25 @@ import mines from '../src/data/content/mines.json';
 import cards from '../src/data/content/cards.json';
 import dungeons from '../src/data/content/dungeons.json';
 import cosmetics from '../src/data/content/cosmetics.json';
+import portals from '../src/data/content/portals.json';
+
+type PortalRaw = {
+  cost: { resource: string };
+  pool: { itemId: string }[];
+  pity: { threshold: number };
+} & Record<string, unknown>;
 
 function raw(overrides: Partial<RawContent> = {}): RawContent {
-  return structuredClone({ resources, trees, mines, cards, dungeons, cosmetics, ...overrides });
+  return structuredClone({
+    resources,
+    trees,
+    mines,
+    cards,
+    dungeons,
+    cosmetics,
+    portals,
+    ...overrides,
+  });
 }
 
 function issuesFor(input: RawContent): string[] {
@@ -30,6 +46,7 @@ describe('bundled content', () => {
     expect(content.cards.map((c) => c.role).sort()).toEqual(['main', 'support']);
     expect(content.dungeons).toHaveLength(1);
     expect(content.cosmetics).toHaveLength(1);
+    expect(content.portals).toHaveLength(1);
     expect(content.dungeons[0]!.boss.hp.eq(100)).toBe(true);
   });
 });
@@ -78,5 +95,51 @@ describe('content validation errors', () => {
   it('requires a message that explains the whole failure', () => {
     const bad = raw({ resources: 'nope' });
     expect(() => validateContent(bad)).toThrow(/Invalid game data \(\d+ problems?\)/);
+  });
+});
+
+describe('card ranks and portals', () => {
+  it('defaults a card to Bronze ★1 and keeps an explicit start rank', () => {
+    const content = loadContent();
+    const [main, support] = content.cards;
+    expect(main!.startRank).toEqual({ tier: 'bronze', stars: 1 });
+    expect(support!.startRank).toEqual({ tier: 'silver', stars: 2 });
+  });
+
+  it('rejects ranks outside Bronze..Prismatic and ★1..6', () => {
+    for (const startRank of [
+      { tier: 'diamond', stars: 1 },
+      { tier: 'gold', stars: 0 },
+      { tier: 'gold', stars: 7 },
+      { tier: 'gold', stars: 2.5 },
+    ]) {
+      const bad = raw();
+      (bad.cards as Record<string, unknown>[])[0]!['startRank'] = startRank;
+      expect(issuesFor(bad).some((i) => i.startsWith('cards.json › [0] › startRank'))).toBe(true);
+    }
+  });
+
+  it('catches portal cost and pool problems', () => {
+    const bad = raw();
+    const portal = (bad.portals as PortalRaw[])[0]!;
+    portal['cost'].resource = 'example_wood';
+    portal['pool'][0].itemId = 'example_cosmetic'; // a cosmetic in a cards portal
+    portal['pool'][1].itemId = 'missing_card';
+    const issues = issuesFor(bad);
+    expect(issues.some((i) => i.includes('is wood, expected portal'))).toBe(true);
+    expect(
+      issues.some((i) => i.includes('pool › [0] › itemId') && i.includes('not a known card')),
+    ).toBe(true);
+    expect(issues.some((i) => i.includes('pool › [1] › itemId'))).toBe(true);
+  });
+
+  it('requires a non-empty pool and a valid pity threshold', () => {
+    const bad = raw();
+    const portal = (bad.portals as PortalRaw[])[0]!;
+    portal['pool'] = [];
+    portal['pity'].threshold = 0;
+    const issues = issuesFor(bad);
+    expect(issues.some((i) => i.startsWith('portals.json › [0] › pool'))).toBe(true);
+    expect(issues.some((i) => i.startsWith('portals.json › [0] › pity › threshold'))).toBe(true);
   });
 });
