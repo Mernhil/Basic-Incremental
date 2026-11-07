@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { MIGRATIONS, migrateState, SaveError, type MigrationTable } from '../src/game';
+import {
+  CURRENT_SAVE_VERSION,
+  MIGRATIONS,
+  migrateState,
+  SaveError,
+  type MigrationTable,
+} from '../src/game';
 
 // A made-up v1 -> v2 migration used only to exercise the pipeline:
 // v1 stored `coins`; v2 renames it to `gold` and adds a `gems` field.
@@ -66,8 +72,11 @@ describe('migration pipeline', () => {
     }
   });
 
-  it('has a complete real migration table for the current version', () => {
-    // CURRENT_SAVE_VERSION is 1, so no steps are required yet; this guards the table's shape.
-    expect(Object.keys(MIGRATIONS).every((k) => Number.isInteger(Number(k)))).toBe(true);
+  it('has a real step for every version below the current one', () => {
+    for (let v = 1; v < CURRENT_SAVE_VERSION; v++) expect(MIGRATIONS[v]).toBeTypeOf('function');
+    expect(MIGRATIONS[1]!({ damage: '1' })).toEqual({
+      damage: '1',
+      cosmetics: { loadout: { slots: {}, cards: {} }, owned: {} },
+    });
   });
 });

@@ -137,3 +137,43 @@ describe('export / import', () => {
     expect(codeOf(() => importSaveString(text.slice(0, text.length - 12), content))).toBeDefined();
   });
 });
+
+describe('save format v2: cosmetics', () => {
+  it('round-trips the equipped loadout and owned items', () => {
+    const state = freshState();
+    state.cosmetics.owned['gilded_filigree'] = { level: 3, copies: 4 };
+    state.cosmetics.loadout = {
+      slots: { border: { id: 'gilded_filigree', level: 3 } },
+      cards: { example_fighting_main: { border: { id: 'ember_crown', level: 1 } } },
+    };
+    const loaded = readSave(createSaveText(state, NOW), content);
+    expect(loaded.state.cosmetics).toEqual(state.cosmetics);
+  });
+
+  it('starts a new game owning every starter item', () => {
+    const owned = freshState().cosmetics.owned;
+    for (const starter of Object.values(content.starterBySlot)) {
+      expect(owned[starter.id]).toEqual({ level: 1, copies: 1 });
+    }
+  });
+
+  it('migrates a v1 save (no cosmetics) to v2 with starters owned', () => {
+    const v1 = JSON.parse(createSaveText(freshState(), NOW));
+    v1.version = 1;
+    delete v1.state.cosmetics;
+    const loaded = readSave(JSON.stringify(v1), content);
+    expect(loaded.state.cosmetics.loadout).toEqual({ slots: {}, cards: {} });
+    expect(loaded.state.cosmetics.owned['gn_border']).toEqual({ level: 1, copies: 1 });
+  });
+
+  it('drops cosmetics that no longer exist and clamps levels', () => {
+    const json = JSON.parse(createSaveText(freshState(), NOW));
+    json.state.cosmetics.owned['removed_item'] = { level: 1, copies: 1 };
+    json.state.cosmetics.owned['aurora_veil'] = { level: 9, copies: 0 };
+    json.state.cosmetics.loadout.slots.border = { id: 'removed_item', level: 1 };
+    const loaded = readSave(JSON.stringify(json), content);
+    expect(loaded.state.cosmetics.owned['removed_item']).toBeUndefined();
+    expect(loaded.state.cosmetics.owned['aurora_veil']!.level).toBe(3);
+    expect(loaded.state.cosmetics.loadout.slots.border).toBeUndefined();
+  });
+});

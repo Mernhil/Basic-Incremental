@@ -1,5 +1,6 @@
 import type { Content } from '../data';
 import { Decimal } from './num';
+import type { CosmeticLoadout } from './theme';
 
 export interface GameStats {
   playTimeMs: number;
@@ -23,6 +24,20 @@ export interface GameState {
   inventory: Record<string, number>;
   prestigeCount: number;
   stats: GameStats;
+  cosmetics: CosmeticState;
+}
+
+export interface OwnedCosmetic {
+  /** Highest unlocked upgrade level (1-based). */
+  level: number;
+  /** Duplicate copies held, used to unlock levels. */
+  copies: number;
+}
+
+export interface CosmeticState {
+  loadout: CosmeticLoadout;
+  /** Cosmetic id -> ownership. Owning grants the item's buff whether or not it is worn. */
+  owned: Record<string, OwnedCosmetic>;
 }
 
 export const STARTING_DAMAGE = 1;
@@ -46,6 +61,12 @@ export function createInitialState(content: Content): GameState {
     inventory: {},
     prestigeCount: 0,
     stats: { playTimeMs: 0, bossKills: 0 },
+    cosmetics: {
+      loadout: { slots: {}, cards: {} },
+      owned: Object.fromEntries(
+        Object.values(content.starterBySlot).map((c) => [c.id, { level: 1, copies: 1 }]),
+      ),
+    },
   };
 }
 
@@ -58,5 +79,12 @@ export function cloneState(state: GameState): GameState {
     pity: { ...state.pity },
     inventory: { ...state.inventory },
     stats: { ...state.stats },
+    cosmetics: {
+      loadout: {
+        slots: { ...state.cosmetics.loadout.slots },
+        cards: { ...state.cosmetics.loadout.cards },
+      },
+      owned: { ...state.cosmetics.owned },
+    },
   };
 }

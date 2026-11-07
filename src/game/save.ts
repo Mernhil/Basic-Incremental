@@ -4,14 +4,16 @@ import { MIGRATIONS, migrateState, type MigrationTable } from './migrations';
 import { Decimal, decimalToString, isDecimalString } from './num';
 import { SaveError } from './saveError';
 import { cloneState, createInitialState, type GameState } from './state';
+import { sanitizeLoadout, type CosmeticLoadout } from './theme';
 
 export { SaveError } from './saveError';
 
 /** Bump this (and add a migration) whenever the saved format changes. */
-export const CURRENT_SAVE_VERSION = 1;
+export const CURRENT_SAVE_VERSION = 2;
 
 const decimalText = z.string().refine(isDecimalString, { message: 'not a valid number' });
 const counts = z.record(z.string(), z.number().int().min(0));
+const equippedSchema = z.object({ id: z.string(), level: z.number().int().min(1) });
 
 /** The on-disk shape of GameState: Decimals as strings, nothing else special. */
 export const serializedStateSchema = z.object({
@@ -23,6 +25,16 @@ export const serializedStateSchema = z.object({
   pity: counts,
   inventory: counts,
   prestigeCount: z.number().int().min(0),
+  cosmetics: z.object({
+    loadout: z.object({
+      slots: z.record(z.string(), equippedSchema),
+      cards: z.record(z.string(), z.record(z.string(), equippedSchema)),
+    }),
+    owned: z.record(
+      z.string(),
+      z.object({ level: z.number().int().min(1), copies: z.number().int().min(0) }),
+    ),
+  }),
   stats: z.object({
     playTimeMs: z.number().min(0),
     bossKills: z.number().int().min(0),
@@ -55,6 +67,13 @@ export function serializeState(state: GameState): SerializedState {
     inventory: { ...state.inventory },
     prestigeCount: state.prestigeCount,
     stats: { ...state.stats },
+    cosmetics: {
+      loadout: {
+        slots: { ...state.cosmetics.loadout.slots },
+        cards: { ...state.cosmetics.loadout.cards },
+      },
+      owned: { ...state.cosmetics.owned },
+    },
   };
 }
 
@@ -74,6 +93,17 @@ export function deserializeState(saved: SerializedState, content: Content): Game
   state.inventory = { ...saved.inventory };
   state.prestigeCount = saved.prestigeCount;
   state.stats = { ...saved.stats };
+  // Unknown ids (removed from the game) are dropped; starters are always owned.
+  const owned: GameState['cosmetics']['owned'] = { ...base.cosmetics.owned };
+  for (const [id, entry] of Object.entries(saved.cosmetics.owned)) {
+    const cosmetic = content.cosmeticById.get(id);
+    if (cosmetic)
+      owned[id] = { level: Math.min(entry.level, cosmetic.levels.length), copies: entry.copies };
+  }
+  state.cosmetics = {
+    loadout: sanitizeLoadout(content, saved.cosmetics.loadout as CosmeticLoadout),
+    owned,
+  };
   return state;
 }
 
