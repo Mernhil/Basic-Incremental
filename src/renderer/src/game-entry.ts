@@ -1,16 +1,25 @@
-import { GAME_TITLE, formatVersionLabel } from '../../game';
+import { formatVersionLabel } from '../../game';
 import { startGame } from './app';
+import { COPY } from './copy';
 import './style.css';
 
-function setupUpdateNotice(): void {
-  const notice = document.getElementById('update-notice');
-  const restart = document.getElementById('update-restart');
-  if (!notice || !restart) return;
+function setupUpdateNotice(root: HTMLElement): void {
+  const notice = document.createElement('div');
+  notice.className = 'update-notice';
+  notice.setAttribute('role', 'status');
+  notice.hidden = true;
+  const text = document.createElement('span');
+  text.textContent = COPY.update.message;
+  const restart = document.createElement('button');
+  restart.type = 'button';
+  restart.textContent = COPY.update.action;
+  restart.addEventListener('click', () => window.api.restartToInstall());
+  notice.append(text, restart);
+  root.append(notice);
 
   const show = (): void => {
     notice.hidden = false;
   };
-  restart.addEventListener('click', () => window.api.restartToInstall());
   window.api.onUpdateReady(show);
   // The download may have finished before this window finished loading.
   window.api
@@ -22,12 +31,9 @@ function setupUpdateNotice(): void {
 }
 
 export async function init(): Promise<void> {
-  const title = document.getElementById('title');
-  const version = document.getElementById('version');
-  if (!title || !version) return;
-
-  title.textContent = GAME_TITLE;
-  version.textContent = formatVersionLabel(await window.api.getVersion());
-  setupUpdateNotice();
-  await startGame();
+  const root = document.getElementById('app');
+  if (!root) return;
+  const version = formatVersionLabel(await window.api.getVersion());
+  await startGame(root, version);
+  setupUpdateNotice(document.body);
 }

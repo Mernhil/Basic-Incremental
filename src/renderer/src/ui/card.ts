@@ -43,6 +43,10 @@ export interface CardProps {
 export interface CardView {
   el: HTMLElement;
   update(props: CardProps): void;
+  /** Where a boss card shows its HP (empty on other cards). */
+  hpSlot: HTMLElement;
+  /** The art window, used as the stage for hit effects and tick numbers. */
+  art: HTMLElement;
   /** Plays the one-time star 5 -> 6 flash (skipped with reduced motion by CSS). */
   levelUp(): void;
 }
@@ -75,6 +79,7 @@ export function createCard(initial: CardProps): CardView {
       <div><dt></dt><dd class="bi-num"></dd></div>
       <div><dt></dt><dd class="bi-num"></dd></div>
     </dl>
+    <div class="bi-card__hp"></div>
     <footer class="bi-card__rank"><span class="bi-rank-name"></span><span class="bi-stars" role="img"></span></footer>`;
 
   const q = <T extends Element>(sel: string) => el.querySelector(sel) as T;
@@ -88,12 +93,20 @@ export function createCard(initial: CardProps): CardView {
 
   const update = (p: CardProps): void => {
     el.classList.toggle('bi-card--boss', Boolean(p.boss));
-    el.dataset['tier'] = p.rank.tier;
-    el.dataset['stars'] = String(p.rank.stars);
+    // Bosses have no rank: no tier/stars data, so the rank layer stays off.
+    if (p.boss) {
+      delete el.dataset['tier'];
+      delete el.dataset['stars'];
+    } else {
+      el.dataset['tier'] = p.rank.tier;
+      el.dataset['stars'] = String(p.rank.stars);
+    }
     el.dataset['job'] = p.job;
     el.setAttribute(
       'aria-label',
-      `${p.name}, ${p.label}, ${TIER_NAMES[p.rank.tier]} ${p.rank.stars} of 6 stars`,
+      p.boss
+        ? `${p.name}, ${p.label}`
+        : `${p.name}, ${p.label}, ${TIER_NAMES[p.rank.tier]} ${p.rank.stars} of 6 stars`,
     );
     name.textContent = p.name;
     job.textContent = p.label;
@@ -113,6 +126,8 @@ export function createCard(initial: CardProps): CardView {
   return {
     el,
     update,
+    hpSlot: q<HTMLElement>('.bi-card__hp'),
+    art: q<HTMLElement>('.bi-card__art'),
     levelUp() {
       el.classList.remove('is-levelup');
       void el.offsetWidth; // restart the animation

@@ -19,6 +19,8 @@ import {
 } from '../../../game';
 import { applyGlobalTheme, assertVisualsImplemented } from '../theme/apply';
 import { createCard, type CardView } from '../ui/card';
+import { playHit, showTick } from '../theme/effects';
+import { defaultRng, resolveGlobal } from '../../../game';
 import './gallery.css';
 
 /**
@@ -194,6 +196,38 @@ export function renderGallery(root: HTMLElement = document.body): void {
     if (demo.rank.stars === 6) demo.view.levelUp();
     button.textContent = demo.rank.stars === 6 ? 'Back to star 5' : 'Raise to star 6';
   });
+
+  // attack effects of the equipped attack item, one stage per job
+  const fxSection = el('section', 'gallery__section');
+  fxSection.append(el('h2', 'gallery__h2', 'Attack effects (equipped attack item, one per job)'));
+  const fxRow = el('div', 'gallery__row');
+  const stages = (['fighting', 'mining', 'logging'] as const).map((job) => {
+    const fig = el('figure', 'gallery__fig');
+    const stage = el('div', 'prod__stage gallery__stage');
+    stage.innerHTML = `<svg class="bi-card__emblem" viewBox="0 0 100 100" aria-hidden="true">${
+      job === 'mining'
+        ? '<path d="M14 70 26 38 46 26 70 30 86 52 82 76 54 86 28 84Z"/>'
+        : job === 'logging'
+          ? '<path d="M50 10 76 46H62L82 70H18L38 46H24Z"/><path d="M44 70H56V90H44Z"/>'
+          : '<rect x="22" y="20" width="56" height="48" rx="8"/><rect x="34" y="72" width="12" height="18" rx="3"/><rect x="54" y="72" width="12" height="18" rx="3"/>'
+    }</svg>`;
+    fig.append(stage, el('figcaption', '', cap(job)));
+    fxRow.append(fig);
+    return { job, stage };
+  });
+  fxSection.append(fxRow);
+  page.append(fxSection);
+  window.setInterval(() => {
+    const effects = resolveGlobal(content, loadout).attack.visual.effects;
+    for (const { job, stage } of stages) {
+      if (effects)
+        playHit(effects[job], stage, { rng: defaultRng, target: stage.querySelector('svg') });
+      showTick(stage, job === 'fighting' ? '12.4K' : '+3', {
+        rng: defaultRng,
+        crit: defaultRng() < 0.2,
+      });
+    }
+  }, 700);
 
   function refresh(): void {
     applyGlobalTheme(content, loadout);

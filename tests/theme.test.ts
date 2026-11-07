@@ -273,3 +273,18 @@ describe('invalid cosmetic data is rejected', () => {
     expect(issues(bad).join('\n')).toContain('set "gilded_tradition" already has a border item');
   });
 });
+
+describe('token inheritance', () => {
+  it('fills tokens an item does not set from the slot starter', () => {
+    const plate = equip(content, emptyLoadout(), 'border', { id: 'gilded_plate', level: 1 });
+    const card = resolveCard(content, plate, cardAt(r('gold', 1)));
+    expect(card.vars['--bi-plate-bg']).toBe('#d9b35a'); // set by the item
+    expect(card.vars['--bi-panel-ink-muted']).toBe('#b4c0d4'); // inherited from Gilt Hairline
+    expect(card.recipes).toContain('inner-gilt');
+  });
+
+  it('does not inherit the starter recipes', () => {
+    const prism = equip(content, emptyLoadout(), 'cursor', { id: 'prism_pointer', level: 1 });
+    expect(resolveGlobal(content, prism).cursor.visual.recipes).toEqual(['cursor-prism']);
+  });
+});

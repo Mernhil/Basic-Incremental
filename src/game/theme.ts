@@ -97,6 +97,17 @@ export function levelVisual(cosmetic: Cosmetic, level: number): Visual {
   return visual;
 }
 
+/**
+ * The visual for an item in its slot: the starter's tokens fill in anything the item does not set,
+ * so a new item only has to list what it changes. Recipes and effects are not inherited.
+ */
+export function slotVisual(content: Content, cosmetic: Cosmetic, level: number): Visual {
+  const own = levelVisual(cosmetic, level);
+  const starter = content.starterBySlot[cosmetic.slot];
+  if (starter.id === cosmetic.id) return own;
+  return { ...own, tokens: { ...levelVisual(starter, 1).tokens, ...own.tokens } };
+}
+
 // ---- equipping ------------------------------------------------------------------------------
 
 function isCardSlot(slot: CosmeticSlot): slot is CardSlot {
@@ -201,7 +212,7 @@ export function resolveGlobal(
   const out = {} as Record<CosmeticSlot, ResolvedSlot>;
   for (const slot of COSMETIC_SLOTS) {
     const { cosmetic, level } = resolveEquipped(content, slot, loadout.slots[slot]);
-    out[slot] = { slot, cosmetic, level, visual: levelVisual(cosmetic, level), worn: true };
+    out[slot] = { slot, cosmetic, level, visual: slotVisual(content, cosmetic, level), worn: true };
   }
   return out;
 }
@@ -246,7 +257,7 @@ export function resolveCard(
       cosmetic = content.starterBySlot[slot];
       level = 1;
     }
-    const visual = levelVisual(cosmetic, level);
+    const visual = slotVisual(content, cosmetic, level);
     slots[slot] = { slot, cosmetic, level, visual, worn, ...(blocked ? { blocked } : {}) };
     Object.assign(vars, cssVars(visual.tokens));
     recipes.push(...visual.recipes);

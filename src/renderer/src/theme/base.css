@@ -122,7 +122,7 @@ body {
 }
 .bi-card__job {
   flex: none;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--bi-plate-ink-muted, #a3b0c6);
 }
 
@@ -176,11 +176,16 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 1px 2px 0;
+  /* the footer sits on the card body (any rarity, any border), so it carries its own backing
+     to keep the tier name readable everywhere */
+  padding: 3px 6px;
+  margin: 0 -4px -4px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
 }
 .bi-rank-name {
   font-size: 12px;
-  color: var(--bi-plate-ink-muted, #a3b0c6);
+  color: var(--bi-rank-ink, #d3dbe8);
 }
 
 /* ---- boss HP ---- */
@@ -209,6 +214,73 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .bi-hp__fill {
+    transition: none;
+  }
+}
+
+/* boss cards: HP instead of stats and rank */
+.bi-card--boss .bi-card__stats,
+.bi-card--boss .bi-card__rank {
+  display: none;
+}
+.bi-card__hp:empty {
+  display: none;
+}
+
+/* ---- stacked HP bars ---- */
+:root {
+  --bi-hp-0: #e0606d;
+  --bi-hp-1: #e3a548;
+  --bi-hp-2: #d8cc57;
+  --bi-hp-3: #5fc2a0;
+  --bi-hp-4: #5fa6e0;
+  --bi-hp-5: #b48cff;
+}
+.bi-hpstack {
+  display: grid;
+  gap: 4px;
+}
+.bi-hpstack__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bi-hpstack__track {
+  position: relative;
+  flex: 1;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 0 1px var(--bi-panel-line, rgba(217, 179, 90, 0.25));
+}
+.bi-hpstack__under,
+.bi-hpstack__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+}
+.bi-hpstack__under {
+  width: 100%;
+  opacity: 0.55;
+}
+.bi-hpstack__fill {
+  transition: width 0.25s linear;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
+}
+.bi-hpstack__count {
+  min-width: 2.6em;
+  text-align: right;
+  font-size: 18px;
+  color: var(--bi-plate-ink, #e9eef7);
+}
+.bi-hpstack__text {
+  justify-self: end;
+  font-size: 13px;
+  color: var(--bi-plate-ink-muted, #a3b0c6);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bi-hpstack__fill {
     transition: none;
   }
 }

@@ -7,8 +7,10 @@ import { setupAutoUpdates } from './updater';
 
 function createWindow(): void {
   const win = new BrowserWindow({
-    width: 1100,
-    height: 720,
+    width: 1280,
+    height: 820,
+    minWidth: 1024,
+    minHeight: 640,
     show: false,
     title: GAME_TITLE,
     autoHideMenuBar: true,
