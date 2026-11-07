@@ -8,9 +8,13 @@ export type MigrationTable = Record<number, MigrationStep>;
 
 /**
  * The real migrations. Whenever the save format changes: bump CURRENT_SAVE_VERSION and add a
- * step here keyed by the previous version. There have been no format changes yet.
+ * step here keyed by the previous version.
  */
-export const MIGRATIONS: MigrationTable = {};
+export const MIGRATIONS: MigrationTable = {
+  /** v1 -> v2: cosmetics (equipped loadout and owned items) were added. Start empty; starters
+   *  are filled in when the save is read. */
+  1: (state) => ({ ...state, cosmetics: { loadout: { slots: {}, cards: {} }, owned: {} } }),
+};
 
 /** Runs every step from `fromVersion` up to `targetVersion`, in order. */
 export function migrateState(

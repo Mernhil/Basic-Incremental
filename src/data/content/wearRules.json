@@ -1,0 +1,5 @@
+{
+  "border": { "tier": "gold", "stars": 1 },
+  "finish": { "tier": "prismatic", "stars": 1 },
+  "exclusive": { "tier": "prismatic", "stars": 6 }
+}

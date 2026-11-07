@@ -1,0 +1,311 @@
+/* Cosmetic recipes: visuals a token cannot express. Each is a class `.r-<id>` that cosmetic data
+   may name (see registry.ts). Card recipes are applied to the card root; global recipes (cursor)
+   to <html>. Recipes draw only inside the card edge: borders on the card box / decoration layer,
+   finishes on the finish layer, rarity on the rarity layer. Upgrade levels stack: level 3 has
+   r-filigree-1, r-filigree-2 and r-filigree-3 all applied. */
+
+/* ===== border: Gilded Filigree ============================================================ */
+.r-filigree-1 .bi-card__deco {
+  --c: #f3dc9a;
+  --L: 16px;
+  --t: 2px;
+  --o: 3px;
+  background:
+    linear-gradient(var(--c), var(--c)) top var(--o) left var(--o) / var(--L) var(--t),
+    linear-gradient(var(--c), var(--c)) top var(--o) left var(--o) / var(--t) var(--L),
+    linear-gradient(var(--c), var(--c)) top var(--o) right var(--o) / var(--L) var(--t),
+    linear-gradient(var(--c), var(--c)) top var(--o) right var(--o) / var(--t) var(--L),
+    linear-gradient(var(--c), var(--c)) bottom var(--o) left var(--o) / var(--L) var(--t),
+    linear-gradient(var(--c), var(--c)) bottom var(--o) left var(--o) / var(--t) var(--L),
+    linear-gradient(var(--c), var(--c)) bottom var(--o) right var(--o) / var(--L) var(--t),
+    linear-gradient(var(--c), var(--c)) bottom var(--o) right var(--o) / var(--t) var(--L);
+  background-repeat: no-repeat;
+}
+.bi-gem {
+  display: none;
+}
+.r-filigree-2 .bi-card__deco {
+  --L: 24px;
+  --t: 2.5px;
+}
+.r-filigree-2 .bi-card__deco::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(243, 220, 154, 0.38);
+}
+.r-filigree-2 .bi-gem {
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  background: linear-gradient(135deg, #fff3c4, #d9b35a 50%, #8a6a22);
+  box-shadow: 0 0 0 1.5px #2b1a05;
+}
+.r-filigree-3 .bi-gem {
+  width: 13px;
+  height: 13px;
+  margin-left: -6.5px;
+  top: -7px;
+  background: radial-gradient(circle at 35% 35%, #ffd0d0, #d9404f 45%, #5a0f1a);
+  box-shadow:
+    0 0 0 1.5px #d9b35a,
+    0 0 0 3px #2b1a05;
+  animation: r-gem-pulse 2.4s ease-in-out infinite;
+}
+@keyframes r-gem-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px rgba(255, 90, 100, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(255, 90, 100, 0.95));
+  }
+}
+.r-filigree-3 .bi-card__deco::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--bi-angle),
+    transparent 0 72%,
+    rgba(255, 246, 214, 0) 74%,
+    #fff6d6 84%,
+    rgba(255, 246, 214, 0) 94%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: bi-spin 4.5s linear infinite;
+}
+
+/* ===== border: Gilded Plate (inner gilt line) and Gilded Frame (tradition) ===================== */
+.r-inner-gilt {
+  box-shadow:
+    inset 0 0 0 3px var(--bi-rarity-body, #2a2f38),
+    inset 0 0 0 4px rgba(217, 179, 90, 0.6);
+}
+.r-frame-tradition {
+  box-shadow:
+    inset 0 0 0 3px var(--bi-rarity-body, #2a2f38),
+    inset 0 0 0 4.5px #f1d27a,
+    inset 0 0 0 6px #2b1a05,
+    0 6px 14px rgba(0, 0, 0, 0.35);
+}
+.r-frame-tradition .bi-card__head {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* ===== border: Ember Crown (exclusive) ======================================================== */
+.r-crown .bi-card__deco {
+  background:
+    radial-gradient(circle at 0 0, rgba(255, 138, 61, 0.55), transparent 28px),
+    radial-gradient(circle at 100% 0, rgba(255, 138, 61, 0.55), transparent 28px),
+    radial-gradient(circle at 0 100%, rgba(255, 92, 40, 0.35), transparent 24px),
+    radial-gradient(circle at 100% 100%, rgba(255, 92, 40, 0.35), transparent 24px);
+}
+.r-crown .bi-gem {
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: -11px;
+  width: 30px;
+  height: 14px;
+  margin-left: -15px;
+  background: linear-gradient(180deg, #ffd08a, #ff8a3d 60%, #b8431a);
+  clip-path: polygon(0 100%, 0 30%, 25% 65%, 50% 0, 75% 65%, 100% 30%, 100% 100%);
+  filter: drop-shadow(0 0 5px rgba(255, 138, 61, 0.9));
+}
+
+/* ===== finish: full-card holo. Colour shows only where the moving light meets the pattern ===== */
+[class*='r-holo-'] .bi-card__finish {
+  display: block;
+  opacity: var(--bi-finish-opacity, 0.5);
+  mix-blend-mode: screen;
+}
+[class*='r-holo-'] .bi-card__finish::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+        110deg,
+        transparent 22%,
+        var(--bi-finish-a) 40%,
+        var(--bi-finish-b) 50%,
+        var(--bi-finish-c) 60%,
+        transparent 78%
+      )
+      0 0 / 300% 100% no-repeat,
+    rgba(255, 255, 255, 0.08);
+  animation: r-holo-sweep var(--bi-finish-speed, 6s) ease-in-out infinite alternate;
+}
+@keyframes r-holo-sweep {
+  from {
+    background-position:
+      100% 0,
+      0 0;
+  }
+  to {
+    background-position:
+      0% 0,
+      0 0;
+  }
+}
+
+/* geometric: triangle/hex lattice from three line sets */
+.r-holo-hex .bi-card__finish::before {
+  --m:
+    repeating-linear-gradient(0deg, #000 0 1px, transparent 1px 12px),
+    repeating-linear-gradient(60deg, #000 0 1px, transparent 1px 12px),
+    repeating-linear-gradient(120deg, #000 0 1px, transparent 1px 12px);
+  -webkit-mask: var(--m);
+  mask: var(--m);
+}
+/* geometric: diamond grid */
+.r-holo-diamond .bi-card__finish::before {
+  --m:
+    repeating-linear-gradient(45deg, #000 0 1px, transparent 1px 10px),
+    repeating-linear-gradient(-45deg, #000 0 1px, transparent 1px 10px);
+  -webkit-mask: var(--m);
+  mask: var(--m);
+}
+/* fluid: tiled sine waves */
+.r-holo-waves .bi-card__finish::before {
+  --m: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='14'><path d='M0 7 Q12 0 24 7 T48 7' fill='none' stroke='black' stroke-width='1.2'/></svg>")
+    0 0 / 48px 14px;
+  -webkit-mask: var(--m);
+  mask: var(--m);
+}
+/* fluid: soft aurora blobs (no mask); level 2 drifts, level 3 sparkles */
+.r-holo-aurora .bi-card__finish::before {
+  background:
+    radial-gradient(60% 40% at 25% 30%, var(--bi-finish-a), transparent 70%),
+    radial-gradient(55% 45% at 75% 55%, var(--bi-finish-b), transparent 70%),
+    radial-gradient(50% 35% at 40% 85%, var(--bi-finish-c), transparent 70%);
+  background-size: 100% 100%;
+  animation: none;
+}
+.r-holo-aurora-flow .bi-card__finish::before {
+  background-size: 160% 160%;
+  animation: r-aurora-flow var(--bi-finish-speed, 9s) ease-in-out infinite alternate;
+}
+@keyframes r-aurora-flow {
+  0% {
+    background-position:
+      0% 0%,
+      100% 50%,
+      30% 100%;
+  }
+  100% {
+    background-position:
+      100% 60%,
+      0% 20%,
+      80% 0%;
+  }
+}
+.r-holo-sparkle .bi-card__finish::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 22%, #fff 0 1px, transparent 2.2px),
+    radial-gradient(circle at 76% 16%, #fff 0 1.2px, transparent 2.5px),
+    radial-gradient(circle at 62% 48%, #fff 0 1px, transparent 2.2px),
+    radial-gradient(circle at 30% 62%, #fff 0 1.2px, transparent 2.5px),
+    radial-gradient(circle at 86% 72%, #fff 0 1px, transparent 2.2px),
+    radial-gradient(circle at 14% 88%, #fff 0 1px, transparent 2.2px);
+  animation: r-twinkle 1.4s ease-in-out infinite alternate;
+}
+@keyframes r-twinkle {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ===== rarity: neon tubes inside the body, black chrome ====================================== */
+.r-neon .bi-card__rarity {
+  background: radial-gradient(130% 70% at 50% -10%, var(--bi-rarity-neon-soft), transparent 60%);
+  box-shadow:
+    inset 0 0 0 3px var(--bi-rarity-body),
+    inset 0 0 0 4.5px var(--bi-rarity-neon),
+    inset 0 0 16px var(--bi-rarity-neon-soft);
+}
+.r-neon .bi-card__head {
+  box-shadow:
+    inset 0 0 0 1px var(--bi-rarity-neon),
+    0 0 10px var(--bi-rarity-neon-soft);
+}
+.r-chrome .bi-card__rarity {
+  background: linear-gradient(
+    125deg,
+    #060708 0%,
+    #3a3f49 16%,
+    #060708 30%,
+    var(--bi-rarity-body-accent, #6b7280) 46%,
+    #0c0d10 58%,
+    #2f333b 78%,
+    #060708 100%
+  );
+  background-size: 220% 100%;
+  box-shadow:
+    inset 0 0 0 3px var(--bi-rarity-body),
+    inset 0 0 0 4px rgba(220, 228, 240, 0.45);
+  animation: r-chrome 7s ease-in-out infinite alternate;
+}
+@keyframes r-chrome {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 100% 0;
+  }
+}
+
+/* ===== cursor (global) ========================================================================= */
+.r-cursor-gilded,
+.r-cursor-gilded body {
+  cursor:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M4 3 L25 15 L15 17 L11 27 Z' fill='%231a1410' stroke='%23f3dc9a' stroke-width='2' stroke-linejoin='round'/></svg>")
+      4 3,
+    auto;
+}
+.r-cursor-crimson,
+.r-cursor-crimson body {
+  cursor:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M4 3 L25 15 L15 17 L11 27 Z' fill='%237c1d2a' stroke='%23f1d27a' stroke-width='2' stroke-linejoin='round'/></svg>")
+      4 3,
+    auto;
+}
+.r-cursor-prism,
+.r-cursor-prism body {
+  cursor:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23ff5f9e'/><stop offset='.35' stop-color='%23f4f46b'/><stop offset='.65' stop-color='%235fc6ff'/><stop offset='1' stop-color='%23b48cff'/></linearGradient></defs><path d='M4 3 L25 15 L15 17 L11 27 Z' fill='%23100c18' stroke='url(%23g)' stroke-width='2.4' stroke-linejoin='round'/></svg>")
+      4 3,
+    auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*='r-'] .bi-card__finish::before,
+  [class*='r-'] .bi-card__finish::after,
+  [class*='r-'] .bi-card__deco::after,
+  [class*='r-'] .bi-gem,
+  [class*='r-'] .bi-card__rarity {
+    animation: none !important;
+  }
+}

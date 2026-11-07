@@ -7,6 +7,8 @@ import cards from '../src/data/content/cards.json';
 import dungeons from '../src/data/content/dungeons.json';
 import cosmetics from '../src/data/content/cosmetics.json';
 import portals from '../src/data/content/portals.json';
+import rarities from '../src/data/content/rarities.json';
+import wearRules from '../src/data/content/wearRules.json';
 
 type PortalRaw = {
   cost: { resource: string };
@@ -23,6 +25,8 @@ function raw(overrides: Partial<RawContent> = {}): RawContent {
     dungeons,
     cosmetics,
     portals,
+    rarities,
+    wearRules,
     ...overrides,
   });
 }
@@ -45,7 +49,7 @@ describe('bundled content', () => {
     expect(content.mines).toHaveLength(1);
     expect(content.cards.map((c) => c.role).sort()).toEqual(['main', 'support']);
     expect(content.dungeons).toHaveLength(1);
-    expect(content.cosmetics).toHaveLength(1);
+    expect(content.cosmetics.length).toBeGreaterThan(7);
     expect(content.portals).toHaveLength(1);
     expect(content.dungeons[0]!.boss.hp.eq(100)).toBe(true);
   });
@@ -76,10 +80,14 @@ describe('content validation errors', () => {
   it('catches broken cross-references', () => {
     const bad = raw();
     (bad.trees as Record<string, unknown>[])[0]!['resource'] = 'missing_wood';
-    (bad.cosmetics as Record<string, unknown>[])[0]!['exclusiveCard'] = 'missing_card';
+    const list = bad.cosmetics as Record<string, unknown>[];
+    const crown = list.findIndex((c) => c['exclusiveCard']);
+    list[crown]!['exclusiveCard'] = 'missing_card';
     const issues = issuesFor(bad);
     expect(issues).toContain('trees.json › [0] › resource: unknown resource "missing_wood"');
-    expect(issues).toContain('cosmetics.json › [0] › exclusiveCard: unknown card "missing_card"');
+    expect(issues).toContain(
+      `cosmetics.json › [${crown}] › exclusiveCard: unknown card "missing_card"`,
+    );
   });
 
   it('catches wrong resource kinds and duplicate ids', () => {
@@ -123,7 +131,7 @@ describe('card ranks and portals', () => {
     const bad = raw();
     const portal = (bad.portals as PortalRaw[])[0]!;
     portal.cost.resource = 'example_wood';
-    portal.pool[0]!.itemId = 'example_cosmetic'; // a cosmetic in a cards portal
+    portal.pool[0]!.itemId = 'holo_hex'; // a cosmetic in a cards portal
     portal.pool[1]!.itemId = 'missing_card';
     const issues = issuesFor(bad);
     expect(issues.some((i) => i.includes('is wood, expected portal'))).toBe(true);

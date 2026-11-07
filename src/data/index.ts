@@ -1,5 +1,17 @@
-import { contentSchemas } from './schemas';
-import type { Card, Cosmetic, Dungeon, Mine, Portal, Resource, Tree } from './schemas';
+import { COSMETIC_SLOTS, RARITIES, contentSchemas } from './schemas';
+import type {
+  Card,
+  Cosmetic,
+  CosmeticSlot,
+  Dungeon,
+  Mine,
+  Portal,
+  Rarity,
+  RarityStyle,
+  Resource,
+  Tree,
+  WearRules,
+} from './schemas';
 import resourcesJson from './content/resources.json';
 import treesJson from './content/trees.json';
 import minesJson from './content/mines.json';
@@ -7,6 +19,8 @@ import cardsJson from './content/cards.json';
 import dungeonsJson from './content/dungeons.json';
 import cosmeticsJson from './content/cosmetics.json';
 import portalsJson from './content/portals.json';
+import raritiesJson from './content/rarities.json';
+import wearRulesJson from './content/wearRules.json';
 
 export * from './schemas';
 
@@ -18,8 +32,15 @@ export interface Content {
   dungeons: Dungeon[];
   cosmetics: Cosmetic[];
   portals: Portal[];
+  rarities: RarityStyle[];
+  wearRules: WearRules;
   resourceById: ReadonlyMap<string, Resource>;
   dungeonById: ReadonlyMap<string, Dungeon>;
+  cardById: ReadonlyMap<string, Card>;
+  cosmeticById: ReadonlyMap<string, Cosmetic>;
+  rarityById: ReadonlyMap<Rarity, RarityStyle>;
+  /** The starter item of each slot (validated: exactly one per slot). */
+  starterBySlot: Readonly<Record<CosmeticSlot, Cosmetic>>;
 }
 
 export type RawContent = { [K in keyof typeof contentSchemas]: unknown };
@@ -55,9 +76,15 @@ export function validateContent(raw: RawContent): Content {
   }
   if (issues.length > 0) throw new ContentValidationError(issues);
 
-  const { resources, trees, mines, cards, dungeons, cosmetics, portals } = parsed;
+  const { resources, trees, mines, cards, dungeons, cosmetics, portals, rarities, wearRules } =
+    parsed;
   checkReferences({ resources, trees, mines, cards, dungeons, cosmetics, portals }, issues);
+  checkCosmetics(cosmetics, rarities, issues);
   if (issues.length > 0) throw new ContentValidationError(issues);
+
+  const starterBySlot = Object.fromEntries(
+    COSMETIC_SLOTS.map((slot) => [slot, cosmetics.find((c) => c.starter && c.slot === slot)!]),
+  ) as Record<CosmeticSlot, Cosmetic>;
 
   return {
     resources,
@@ -67,9 +94,46 @@ export function validateContent(raw: RawContent): Content {
     dungeons,
     cosmetics,
     portals,
+    rarities,
+    wearRules,
     resourceById: new Map(resources.map((r) => [r.id, r])),
     dungeonById: new Map(dungeons.map((d) => [d.id, d])),
+    cardById: new Map(cards.map((x) => [x.id, x])),
+    cosmeticById: new Map(cosmetics.map((x) => [x.id, x])),
+    rarityById: new Map(rarities.map((r) => [r.id, r])),
+    starterBySlot,
   };
+}
+
+function checkCosmetics(cosmetics: Cosmetic[], rarities: RarityStyle[], issues: string[]): void {
+  for (const slot of COSMETIC_SLOTS) {
+    const starters = cosmetics.filter((c) => c.starter && c.slot === slot);
+    if (starters.length !== 1) {
+      issues.push(
+        `cosmetics.json: slot "${slot}" needs exactly one starter item, found ${starters.length}`,
+      );
+    }
+  }
+  // A set has at most one item per slot, so "fully equipped" is well defined.
+  const seen = new Map<string, number>();
+  cosmetics.forEach((c, i) => {
+    if (!c.set) return;
+    const key = `${c.set}/${c.slot}`;
+    const first = seen.get(key);
+    if (first !== undefined) {
+      issues.push(
+        `cosmetics.json › [${i}] › set: set "${c.set}" already has a ${c.slot} item (at [${first}])`,
+      );
+    } else {
+      seen.set(key, i);
+    }
+  });
+  for (const rarity of RARITIES) {
+    const count = rarities.filter((r) => r.id === rarity).length;
+    if (count !== 1) {
+      issues.push(`rarities.json: rarity "${rarity}" needs exactly one entry, found ${count}`);
+    }
+  }
 }
 
 function checkReferences(
@@ -193,5 +257,7 @@ export function loadContent(): Content {
     dungeons: dungeonsJson,
     cosmetics: cosmeticsJson,
     portals: portalsJson,
+    rarities: raritiesJson,
+    wearRules: wearRulesJson,
   });
 }
