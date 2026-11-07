@@ -296,6 +296,9 @@ export const cardRulesSchema = z.strictObject({
     silver: perJob(z.array(costSchema).min(1)),
     gold: perJob(z.array(costSchema).min(1)),
   }),
+  /** Base health of a card by rarity, multiplied by its power (DESIGN.md 11.10). The fighting
+   *  loadout's health pool sums its cards. */
+  health: perRarity(positiveDecimal),
   /** Shards for a duplicate gained once the card is Prismatic ★6, by rarity. */
   shards: perRarity(count),
   /** Random card on boss kills (until summon portals): `chance` per kill (`drops.cardChance`),

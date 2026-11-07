@@ -9,6 +9,7 @@ import {
   cardDropChance,
   cardDropWeights,
   cardEffectModifiers,
+  cardHealth,
   cardInfo,
   cardModifiers,
   cardPower,
@@ -256,6 +257,15 @@ describe('card effects through the modifier pipeline (DESIGN.md 11.5, 11.9)', ()
       ['combat.damage', 20],
       ['burst.fill', 2],
     ]);
+  });
+
+  it('gives each card health by rarity, scaled by its power', () => {
+    const base = newOwnedCard();
+    expect(cardHealth(content, 'ember_squire', base).eq(100)).toBe(true);
+    expect(cardHealth(content, 'dawnblade_regent', base).eq(350)).toBe(true);
+    const silver = { ...base, tier: 'silver' as const, level: 11 };
+    expect(cardHealth(content, 'ember_squire', silver).toNumber()).toBeCloseTo(100 * 1.2 * 1.5);
+    expect(cardHealth(content, 'nope', base).eq(0)).toBe(true);
   });
 
   it('makes a levelled main card raise its job output', () => {

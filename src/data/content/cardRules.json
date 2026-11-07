@@ -105,6 +105,15 @@
       ]
     }
   },
+  "health": {
+    "common": "100",
+    "rare": "150",
+    "epic": "225",
+    "legendary": "350",
+    "mythic": "500",
+    "exotic": "700",
+    "void": "1000"
+  },
   "shards": {
     "common": 1,
     "rare": 2,

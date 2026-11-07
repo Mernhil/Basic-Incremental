@@ -89,6 +89,16 @@ export function cardPower(content: Content, owned: OwnedCard): number {
 }
 
 /**
+ * A card's health (DESIGN.md 11.10): its rarity's base health × its power, so it grows with
+ * level, stars and tier like its bonuses. 0 for unknown ids. The fight side sums the loadout.
+ */
+export function cardHealth(content: Content, cardId: string, owned: OwnedCard): Decimal {
+  const card = content.cardById.get(cardId);
+  if (!card) return new Decimal(0);
+  return content.cardRules.health[card.rarity].mul(cardPower(content, owned));
+}
+
+/**
  * Levels a card up while its XP allows (mutates it). XP stops at the level cap: a card at its cap
  * keeps 0 XP until a star-up or tier-up raises the cap. Returns the levels before and after, or
  * null when the level did not change.
