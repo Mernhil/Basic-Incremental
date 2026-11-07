@@ -79,9 +79,7 @@ describe('advance (tick math)', () => {
     const coarse = advanceChunked(freshState(), content, total, rng, 1000).state;
     const fine = advanceChunked(freshState(), content, total, rng, 16).state;
     for (const other of [coarse, fine]) {
-      expect(approxEq(other.resources['oak_wood']!, whole.resources['oak_wood']!)).toBe(
-        true,
-      );
+      expect(approxEq(other.resources['oak_wood']!, whole.resources['oak_wood']!)).toBe(true);
       expect(approxEq(other.bossHp!, whole.bossHp!)).toBe(true);
       expect(other.stats.playTimeMs).toBe(total);
     }

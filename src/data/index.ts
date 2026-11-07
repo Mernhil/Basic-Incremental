@@ -142,7 +142,8 @@ function checkProduction(
   const checkCost = (where: string, resource: string, kind: Resource['kind']): void => {
     const res = resources.get(resource);
     if (!res) issues.push(`${where}: unknown resource "${resource}"`);
-    else if (res.kind !== kind) issues.push(`${where}: "${resource}" is ${res.kind}, expected ${kind}`);
+    else if (res.kind !== kind)
+      issues.push(`${where}: "${resource}" is ${res.kind}, expected ${kind}`);
   };
 
   // Logging is paid for with wood, mining with ore (DESIGN.md 2).
@@ -164,15 +165,27 @@ function checkProduction(
   });
 
   const jobs = [
-    { job: 'logging', kind: 'wood', starters: c.trees.filter((t) => t.unlockCost.length === 0), all: c.trees },
-    { job: 'mining', kind: 'ore', starters: c.mines.filter((m) => m.unlockedByDungeon === null), all: c.mines },
+    {
+      job: 'logging',
+      kind: 'wood',
+      starters: c.trees.filter((t) => t.unlockCost.length === 0),
+      all: c.trees,
+    },
+    {
+      job: 'mining',
+      kind: 'ore',
+      starters: c.mines.filter((m) => m.unlockedByDungeon === null),
+      all: c.mines,
+    },
   ] as const;
   for (const { job, kind, starters, all } of jobs) {
     const config = c.production[job];
     checkCost(`production.json › ${job} › expansion › resource`, config.expansion.resource, kind);
     const where = `production.json › ${job} › startProducer`;
     if (!all.some((p) => p.id === config.startProducer)) {
-      issues.push(`${where}: unknown ${job === 'logging' ? 'tree' : 'mine'} "${config.startProducer}"`);
+      issues.push(
+        `${where}: unknown ${job === 'logging' ? 'tree' : 'mine'} "${config.startProducer}"`,
+      );
     } else if (!starters.some((p) => p.id === config.startProducer)) {
       issues.push(`${where}: "${config.startProducer}" is not available from the start`);
     }

@@ -96,7 +96,9 @@ export function advance(
   next.stats.playTimeMs += dtMs;
 
   // Production: every active plot/slot yields its producer's rate per second.
-  for (const [resource, perSecond] of Object.entries(productionPerSecond(state, content, modifiers))) {
+  for (const [resource, perSecond] of Object.entries(
+    productionPerSecond(state, content, modifiers),
+  )) {
     const current = next.resources[resource] ?? new Decimal(0);
     next.resources[resource] = current.add(perSecond.mul(seconds));
   }

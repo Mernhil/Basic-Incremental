@@ -66,7 +66,10 @@ export const STARTING_DAMAGE = 1;
 export function initialProduction(content: Content): ProductionState {
   const job = (key: ProductionJob): JobProductionState => {
     const config = content.production[key];
-    return { expansions: 0, plots: Array<string | null>(config.startPlots).fill(config.startProducer) };
+    return {
+      expansions: 0,
+      plots: Array<string | null>(config.startPlots).fill(config.startProducer),
+    };
   };
   return { logging: job('logging'), mining: job('mining'), unlockedTrees: [], mineLevels: {} };
 }

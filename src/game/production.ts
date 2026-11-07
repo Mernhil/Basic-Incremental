@@ -37,7 +37,8 @@ export type ProductionFailure =
   /** The plot/slot index is not within the current capacity. */
   | 'invalid-plot';
 
-export type ProductionResult = { ok: true; state: GameState } | { ok: false; reason: ProductionFailure };
+export type ProductionResult =
+  { ok: true; state: GameState } | { ok: false; reason: ProductionFailure };
 
 const fail = (reason: ProductionFailure): ProductionResult => ({ ok: false, reason });
 
@@ -160,7 +161,11 @@ export function assignPlot(
   producerId: string | null,
   modifiers: readonly Modifier[] = collectModifiers(state, content),
 ): ProductionResult {
-  if (!Number.isInteger(index) || index < 0 || index >= plotCapacity(state, content, job, modifiers)) {
+  if (
+    !Number.isInteger(index) ||
+    index < 0 ||
+    index >= plotCapacity(state, content, job, modifiers)
+  ) {
     return fail('invalid-plot');
   }
   if (producerId !== null) {
@@ -207,9 +212,14 @@ export function expansionCost(
   job: ProductionJob,
   modifiers: readonly Modifier[] = collectModifiers(state, content),
 ): Price {
-  return curvePrice(content.production[job].expansion, state.production[job].expansions, modifiers, {
-    job,
-  });
+  return curvePrice(
+    content.production[job].expansion,
+    state.production[job].expansions,
+    modifiers,
+    {
+      job,
+    },
+  );
 }
 
 /** One-time wood price to unlock a tree kind. Empty for start kinds. */

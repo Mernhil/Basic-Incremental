@@ -163,3 +163,48 @@ describe('card ranks and portals', () => {
     expect(issues.some((i) => i.startsWith('portals.json › [0] › pity › threshold'))).toBe(true);
   });
 });
+
+describe('production data', () => {
+  type ProductionRaw = Record<
+    'logging' | 'mining',
+    { startProducer: string; expansion: { resource: string; growth: string } }
+  >;
+
+  it('catches wrong cost resources, bad start producers and shared ids', () => {
+    const bad = raw();
+    const trees = bad.trees as { unlockCost: { resource: string }[] }[];
+    trees[1]!.unlockCost[0]!.resource = 'copper_ore';
+    const mines = bad.mines as { id: string; level: { cost: { resource: string } } }[];
+    mines[0]!.level.cost.resource = 'oak_wood';
+    mines[2]!.id = 'oak';
+    const production = bad.production as ProductionRaw;
+    production.logging.startProducer = 'ironbark';
+    production.mining.startProducer = 'missing_mine';
+    production.mining.expansion.resource = 'moss_sigil';
+    const issues = issuesFor(bad);
+    expect(issues).toContain(
+      'trees.json › [1] › unlockCost › [0] › resource: "copper_ore" is ore, expected wood',
+    );
+    expect(issues).toContain(
+      'mines.json › [0] › level › cost › resource: "oak_wood" is wood, expected ore',
+    );
+    expect(issues).toContain('mines.json › [2] › id: "oak" is already a tree id');
+    expect(issues).toContain(
+      'production.json › logging › startProducer: "ironbark" is not available from the start',
+    );
+    expect(issues).toContain(
+      'production.json › mining › startProducer: unknown mine "missing_mine"',
+    );
+    expect(issues).toContain(
+      'production.json › mining › expansion › resource: "moss_sigil" is portal, expected ore',
+    );
+  });
+
+  it('rejects a cost curve that shrinks', () => {
+    const bad = raw();
+    (bad.production as ProductionRaw).logging.expansion.growth = '0.9';
+    expect(issuesFor(bad)).toContain(
+      'production.json › logging › expansion › growth: must be at least 1',
+    );
+  });
+});
