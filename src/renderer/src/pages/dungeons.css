@@ -1,0 +1,338 @@
+/* Dungeons page, "Descent": a column of floors in order, the special dungeon branching off,
+   the active floor opened up with the live fight; damage upgrades in a column on the right.
+   Theme colours come from the frame-* and chrome-* tokens; the tier hues identify dungeons. */
+
+.dp-wrap {
+  --dp-tier-1: #7fae68;
+  --dp-tier-2: #e08a55;
+  --dp-tier-3: #8fc0e0;
+  --dp-tier-special: #c9a7f0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 330px);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .dp-wrap {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- floors ---- */
+.dp-floors {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+.dp-floor {
+  --dp-hue: var(--dp-tier-1);
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  column-gap: 14px;
+  row-gap: 12px;
+  align-items: center;
+  padding: 10px 12px 10px 10px;
+  border-radius: 10px;
+  background: var(--bi-frame-title-bg);
+  box-shadow: inset 0 0 0 1px var(--bi-frame-title-line);
+  color: var(--bi-frame-title-ink);
+}
+.dp-floor[data-tier='2'] {
+  --dp-hue: var(--dp-tier-2);
+}
+.dp-floor[data-tier='3'] {
+  --dp-hue: var(--dp-tier-3);
+}
+.dp-floor[data-tier='special'] {
+  --dp-hue: var(--dp-tier-special);
+}
+/* the path between floors */
+.dp-floor + .dp-floor::before {
+  content: '';
+  position: absolute;
+  left: 41px;
+  top: -13px;
+  width: 2px;
+  height: 14px;
+  background: var(--bi-frame-title-line);
+}
+.dp-floor--branch {
+  margin-left: 48px;
+}
+.dp-floor + .dp-floor--branch::before {
+  left: -7px;
+  height: 40px;
+}
+.dp-floor--branch::after {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 26px;
+  width: 7px;
+  height: 2px;
+  background: var(--bi-frame-title-line);
+}
+.dp-floor--active {
+  box-shadow: inset 0 0 0 2px var(--bi-chrome-accent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--dp-hue) 16%, transparent), transparent 55%),
+    var(--bi-frame-title-bg);
+}
+.dp-floor--locked .dp-floor__name {
+  opacity: 0.8;
+}
+
+.dp-art {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      color-mix(in srgb, var(--dp-hue) 26%, transparent),
+      transparent 70%
+    ),
+    #0d121b;
+  box-shadow: inset 0 0 0 1px var(--bi-art-line, rgba(217, 179, 90, 0.5));
+}
+.dp-art svg {
+  width: 58%;
+  height: 58%;
+  fill: none;
+  stroke: var(--dp-hue);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.dp-floor--locked > .dp-art {
+  filter: grayscale(1) brightness(0.75);
+}
+
+.dp-floor__info {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.dp-floor__name {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.dp-floor__name:focus-visible {
+  outline: 2px solid var(--bi-chrome-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.dp-floor__meta,
+.dp-floor__opens {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.88;
+}
+.dp-floor__opens {
+  color: var(--bi-frame-ink-muted);
+  opacity: 1;
+}
+.dp-floor__locked {
+  font-size: 13px;
+  color: var(--bi-frame-ink-muted);
+  white-space: nowrap;
+}
+.dp-floor__fight {
+  white-space: nowrap;
+}
+
+.dp-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--bi-frame-title-line);
+  white-space: nowrap;
+}
+.dp-tag--tier {
+  color: #11151d;
+  background: var(--dp-hue);
+  box-shadow: none;
+}
+.dp-tag--fighting {
+  color: var(--bi-chrome-bg);
+  background: var(--bi-chrome-accent);
+  box-shadow: none;
+}
+.dp-tag--cleared {
+  color: inherit;
+}
+
+/* ---- the live fight inside the active floor ---- */
+.dp-live {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 18px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+}
+@media (max-width: 1300px) {
+  .dp-live {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.dp-live__fight,
+.dp-live__loot {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-width: 0;
+}
+.dp-live__heading {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dp-meter {
+  display: grid;
+  gap: 4px;
+}
+.dp-meter__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--bi-frame-ink-muted);
+}
+.dp-meter__track {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px var(--bi-frame-title-line);
+  overflow: hidden;
+}
+.dp-meter__track i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--bi-chrome-accent) 70%, #000),
+    var(--bi-chrome-accent)
+  );
+  transition: width 0.2s linear;
+}
+.dp-meter--pity .dp-meter__track i,
+.dp-meter--score .dp-meter__track i {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--dp-hue) 65%, #000), var(--dp-hue));
+}
+@media (prefers-reduced-motion: reduce) {
+  .dp-meter__track i {
+    transition: none;
+  }
+}
+
+.dp-drops {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.dp-drop {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+.dp-drop .dp-art {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+}
+.dp-drop__kind {
+  color: var(--bi-frame-ink-muted);
+}
+.dp-drop--tier {
+  grid-template-columns: 44px minmax(0, 1fr);
+  padding: 3px 6px;
+  border-radius: 6px;
+  color: var(--bi-frame-ink-muted);
+}
+.dp-drop--reached {
+  color: inherit;
+  background: color-mix(in srgb, var(--dp-hue) 18%, transparent);
+}
+
+/* ---- damage column ---- */
+.dp-dps {
+  margin: 0;
+  justify-self: start;
+  font-size: 20px;
+}
+.dp-ups {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+.dp-up {
+  --dp-hue: #c98a5c;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 6px 10px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 10px;
+  background: var(--bi-frame-title-bg);
+  box-shadow: inset 0 0 0 1px var(--bi-frame-title-line);
+  color: var(--bi-frame-title-ink);
+}
+.dp-up[data-ore='iron_ore'] {
+  --dp-hue: #b3c0ce;
+}
+.dp-up[data-ore='crystal_ore'] {
+  --dp-hue: #b7a3ee;
+}
+.dp-up .dp-art {
+  width: 36px;
+  height: 36px;
+}
+.dp-up__info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.dp-up__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.dp-up__meta {
+  font-size: 12px;
+  opacity: 0.88;
+}
+.dp-up__buy {
+  grid-column: 1 / -1;
+  justify-self: stretch;
+}
+.dp-kept {
+  margin: 0;
+  font-size: 12px;
+}
+.dp-wrap .has-tip:focus-visible,
+.dp-wrap .button:focus-visible {
+  outline: 2px solid var(--bi-chrome-accent);
+  outline-offset: 2px;
+}
