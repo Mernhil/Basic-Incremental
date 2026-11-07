@@ -1,11 +1,398 @@
 [
   {
-    "id": "example_cosmetic",
-    "name": "Example Foil Finish",
-    "slot": "cardFinish",
+    "id": "gn_border",
+    "name": "Gilt Hairline",
+    "slot": "border",
+    "rarity": "common",
+    "set": "gilded_nocturne",
+    "exclusiveCard": null,
+    "starter": true,
+    "ownedBuff": { "stat": "damage", "percent": 0 },
+    "levels": [
+      {
+        "tokens": {
+          "border-color": "rgba(217, 179, 90, 0.65)",
+          "border-width": "1px",
+          "radius": "12px",
+          "plate-bg": "rgba(0, 0, 0, 0.3)",
+          "plate-line": "rgba(217, 179, 90, 0.5)",
+          "plate-ink": "#e9eef7",
+          "plate-ink-muted": "#a3b0c6",
+          "art-line": "rgba(217, 179, 90, 0.5)",
+          "panel-bg": "rgba(0, 0, 0, 0.3)",
+          "panel-line": "rgba(217, 179, 90, 0.25)",
+          "panel-ink": "#e9eef7",
+          "panel-ink-muted": "#a3b0c6"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gn_finish",
+    "name": "Matte",
+    "slot": "finish",
+    "rarity": "common",
+    "set": "gilded_nocturne",
+    "exclusiveCard": null,
+    "starter": true,
+    "ownedBuff": { "stat": "damage", "percent": 0 },
+    "levels": [{ "tokens": { "finish-opacity": "0" } }]
+  },
+  {
+    "id": "gn_attack",
+    "name": "Gilt Strike",
+    "slot": "attack",
+    "rarity": "common",
+    "set": "gilded_nocturne",
+    "exclusiveCard": null,
+    "starter": true,
+    "ownedBuff": { "stat": "damage", "percent": 0 },
+    "levels": [
+      {
+        "effects": { "fighting": "slash-sparks", "logging": "slash-chips", "mining": "heavy-hit" },
+        "tokens": {
+          "attack-edge": "#f3dc9a",
+          "attack-glow": "rgba(255, 222, 150, 0.9)",
+          "attack-particle": "#fff6d6"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gn_tick",
+    "name": "Engraved Rise",
+    "slot": "tick",
+    "rarity": "common",
+    "set": "gilded_nocturne",
+    "exclusiveCard": null,
+    "starter": true,
+    "ownedBuff": { "stat": "damage", "percent": 0 },
+    "levels": [
+      {
+        "effect": "rise",
+        "tokens": {
+          "tick-color": "#f3dc9a",
+          "tick-stroke": "#2b1a05",
+          "tick-crit": "#ffb02e",
+          "tick-size": "22px"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gn_number",
+    "name": "Clean Tabular",
+    "slot": "number",
+    "rarity": "common",
+    "set": "gilded_nocturne",
+    "exclusiveCard": null,
+    "starter": true,
+    "ownedBuff": { "stat": "damage", "percent": 0 },
+    "levels": [
+      {
+        "tokens": {
+          "num-font": "'Outfit', 'Segoe UI', sans-serif",
+          "num-weight": "600",
+          "num-color": "#e9eef7"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gn_table",
+    "name": "Light Stone",
+    "slot": "table",
+    "rarity": "common",
+    "set": "gilded_nocturne",
+    "exclusiveCard": null,
+    "starter": true,
+    "ownedBuff": { "stat": "production", "percent": 0 },
+    "levels": [
+      {
+        "tokens": {
+          "table-bg": "#cfd5dd",
+          "table-glow": "rgba(255, 255, 255, 0.55)",
+          "on-table": "#1c2330",
+          "on-table-muted": "#3d4757"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gn_cursor",
+    "name": "Gilded Pointer",
+    "slot": "cursor",
+    "rarity": "common",
+    "set": "gilded_nocturne",
+    "exclusiveCard": null,
+    "starter": true,
+    "ownedBuff": { "stat": "production", "percent": 0 },
+    "levels": [{ "recipes": ["cursor-gilded"] }]
+  },
+
+  {
+    "id": "gt_border",
+    "name": "Gilded Frame",
+    "slot": "border",
+    "rarity": "legendary",
+    "set": "gilded_tradition",
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "damage", "percent": 1 },
+    "levels": [
+      {
+        "recipes": ["frame-tradition"],
+        "tokens": {
+          "border-color": "#d9b35a",
+          "border-width": "2px",
+          "radius": "13px",
+          "plate-bg": "linear-gradient(180deg, #f1d27a, #b98a2a)",
+          "plate-line": "rgba(255, 255, 255, 0.45)",
+          "plate-ink": "#2a1a0c",
+          "plate-ink-muted": "#4a3410",
+          "art-line": "#b98a2a",
+          "panel-bg": "#f4ead2",
+          "panel-line": "rgba(125, 90, 20, 0.55)",
+          "panel-ink": "#2a1a0c",
+          "panel-ink-muted": "#5a4325"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gt_finish",
+    "name": "Diamond Foil",
+    "slot": "finish",
+    "rarity": "legendary",
+    "set": "gilded_tradition",
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "damage", "percent": 1 },
+    "levels": [
+      {
+        "recipes": ["holo-diamond"],
+        "tokens": {
+          "finish-a": "rgba(255, 176, 214, 0.9)",
+          "finish-b": "rgba(142, 233, 255, 0.9)",
+          "finish-c": "rgba(255, 230, 163, 0.85)",
+          "finish-opacity": "0.55",
+          "finish-speed": "6s"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gt_attack",
+    "name": "Gilt Slash",
+    "slot": "attack",
+    "rarity": "legendary",
+    "set": "gilded_tradition",
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "damage", "percent": 1 },
+    "levels": [
+      {
+        "effects": { "fighting": "slash-sparks", "logging": "slash-chips", "mining": "heavy-hit" },
+        "tokens": {
+          "attack-edge": "#fff1c9",
+          "attack-glow": "rgba(255, 196, 90, 1)",
+          "attack-particle": "#ffe08a"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gt_tick",
+    "name": "Gilt Numerals",
+    "slot": "tick",
+    "rarity": "legendary",
+    "set": "gilded_tradition",
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "damage", "percent": 1 },
+    "levels": [
+      {
+        "effect": "rise",
+        "tokens": {
+          "tick-color": "#ffe08a",
+          "tick-stroke": "#3a2204",
+          "tick-crit": "#ff8a3d",
+          "tick-size": "26px"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gt_number",
+    "name": "Heavy Gilt",
+    "slot": "number",
+    "rarity": "legendary",
+    "set": "gilded_tradition",
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "production", "percent": 1 },
+    "levels": [
+      {
+        "tokens": {
+          "num-font": "'Outfit', 'Segoe UI', sans-serif",
+          "num-weight": "800",
+          "num-color": "#ffe7a6"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gt_table",
+    "name": "Ink Navy",
+    "slot": "table",
+    "rarity": "legendary",
+    "set": "gilded_tradition",
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "production", "percent": 1 },
+    "levels": [
+      {
+        "tokens": {
+          "table-bg": "#111a35",
+          "table-glow": "rgba(140, 170, 255, 0.13)",
+          "on-table": "#e9eef7",
+          "on-table-muted": "#a3b0c6"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gt_cursor",
+    "name": "Crimson Pointer",
+    "slot": "cursor",
+    "rarity": "legendary",
+    "set": "gilded_tradition",
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "production", "percent": 1 },
+    "levels": [{ "recipes": ["cursor-crimson"] }]
+  },
+
+  {
+    "id": "gilded_plate",
+    "name": "Gilded Plate",
+    "slot": "border",
     "rarity": "rare",
-    "set": "example_set",
+    "set": null,
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "damage", "percent": 0.5 },
+    "levels": [
+      {
+        "recipes": ["inner-gilt"],
+        "tokens": {
+          "plate-bg": "#d9b35a",
+          "plate-line": "rgba(0, 0, 0, 0)",
+          "plate-ink": "#24170a",
+          "plate-ink-muted": "#4a3410",
+          "art-line": "#d9b35a"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gilded_filigree",
+    "name": "Gilded Filigree",
+    "slot": "border",
+    "rarity": "epic",
+    "set": null,
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "damage", "percent": 1 },
+    "levels": [
+      { "recipes": ["filigree-1"] },
+      { "recipes": ["filigree-2"] },
+      { "recipes": ["filigree-3"] }
+    ]
+  },
+  {
+    "id": "aurora_veil",
+    "name": "Aurora Veil",
+    "slot": "finish",
+    "rarity": "epic",
+    "set": null,
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "production", "percent": 1 },
+    "levels": [
+      {
+        "recipes": ["holo-aurora"],
+        "tokens": {
+          "finish-a": "rgba(142, 233, 255, 0.9)",
+          "finish-b": "rgba(199, 166, 255, 0.9)",
+          "finish-c": "rgba(255, 176, 214, 0.9)",
+          "finish-opacity": "0.3",
+          "finish-speed": "9s"
+        }
+      },
+      { "recipes": ["holo-aurora-flow"], "tokens": { "finish-opacity": "0.45" } },
+      { "recipes": ["holo-sparkle"], "tokens": { "finish-opacity": "0.55" } }
+    ]
+  },
+  {
+    "id": "holo_hex",
+    "name": "Hex Lattice",
+    "slot": "finish",
+    "rarity": "rare",
+    "set": null,
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "damage", "percent": 0.5 },
+    "levels": [
+      {
+        "recipes": ["holo-hex"],
+        "tokens": {
+          "finish-a": "rgba(196, 228, 255, 0.95)",
+          "finish-b": "rgba(255, 214, 238, 0.9)",
+          "finish-c": "rgba(255, 238, 196, 0.9)",
+          "finish-opacity": "0.6",
+          "finish-speed": "5s"
+        }
+      }
+    ]
+  },
+  {
+    "id": "holo_waves",
+    "name": "Liquid Waves",
+    "slot": "finish",
+    "rarity": "rare",
+    "set": null,
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "production", "percent": 0.5 },
+    "levels": [
+      {
+        "recipes": ["holo-waves"],
+        "tokens": {
+          "finish-a": "rgba(142, 233, 255, 0.9)",
+          "finish-b": "rgba(157, 255, 210, 0.85)",
+          "finish-c": "rgba(199, 166, 255, 0.9)",
+          "finish-opacity": "0.5",
+          "finish-speed": "7s"
+        }
+      }
+    ]
+  },
+  {
+    "id": "prism_pointer",
+    "name": "Prism Pointer",
+    "slot": "cursor",
+    "rarity": "epic",
+    "set": null,
+    "exclusiveCard": null,
+    "ownedBuff": { "stat": "production", "percent": 0.5 },
+    "levels": [{ "recipes": ["cursor-prism"] }]
+  },
+  {
+    "id": "ember_crown",
+    "name": "Ember Crown",
+    "slot": "border",
+    "rarity": "mythic",
+    "set": null,
     "exclusiveCard": "example_fighting_main",
-    "ownedBuff": { "stat": "damage", "percent": 1 }
+    "ownedBuff": { "stat": "damage", "percent": 2 },
+    "levels": [
+      {
+        "recipes": ["crown"],
+        "tokens": {
+          "border-color": "#ff8a3d",
+          "plate-line": "rgba(255, 138, 61, 0.75)",
+          "art-line": "rgba(255, 138, 61, 0.6)"
+        }
+      }
+    ]
   }
 ]

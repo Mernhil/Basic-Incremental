@@ -40,7 +40,7 @@ describe('save round-trip', () => {
     expect(loaded.savedAt).toBe(NOW);
     expect(serializeState(loaded.state)).toEqual(serializeState(state));
     expect(loaded.state.damage.eq(new Decimal('1.5e500'))).toBe(true);
-    expect(loaded.state.inventory['example_cosmetic']).toBe(2);
+    expect(loaded.state.inventory['holo_hex']).toBe(2);
     expect(loaded.state.pity['example_boss']).toBe(17);
     expect(loaded.state.bossHp!.eq(state.bossHp!)).toBe(true);
   });

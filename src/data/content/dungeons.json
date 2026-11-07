@@ -10,7 +10,7 @@
       "hpScalingPerPrestige": 0.02
     },
     "drops": {
-      "rare": { "itemId": "example_cosmetic", "chance": 0.005, "pityThreshold": 200 },
+      "rare": { "itemId": "holo_hex", "chance": 0.005, "pityThreshold": 200 },
       "portalResource": { "resource": "example_portal_shard", "min": 1, "max": 3 }
     }
   }

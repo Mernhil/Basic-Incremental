@@ -46,7 +46,16 @@ export const mineSchema = z.strictObject({
 });
 
 export const JOBS = ['mining', 'logging', 'fighting'] as const;
-export const RARITIES = ['common', 'rare', 'epic', 'legendary'] as const;
+export const RARITIES = [
+  'common',
+  'rare',
+  'epic',
+  'legendary',
+  'mythic',
+  'exotic',
+  'void',
+] as const;
+export type Rarity = (typeof RARITIES)[number];
 export const MAIN_ABILITY_KINDS = ['ticks', 'bigHits', 'bursts'] as const;
 export const SUPPORT_EFFECT_KINDS = ['damageBonus', 'productionBonus', 'extraAttack'] as const;
 
@@ -119,29 +128,168 @@ export const dungeonSchema = z.strictObject({
   }),
 });
 
-export const COSMETIC_SLOTS = [
-  'cardBorder',
-  'cardFinish',
-  'attackAnimation',
-  'tickDamageStyle',
-  'numberStyle',
-  'tableBackground',
-] as const;
+// ---- Cosmetics ----------------------------------------------------------------------------
+// The visual language of a cosmetic is data: CSS custom property values ("tokens"), named CSS
+// recipes for things a token cannot express (decorations, patterns), and named animation
+// effects. See docs/COSMETICS.md for the naming rules.
 
-export const cosmeticSchema = z.strictObject({
-  id,
-  name,
-  slot: z.enum(COSMETIC_SLOTS),
-  rarity: z.enum(RARITIES),
-  /** Matching-set bonus applies when every slot is equipped from the same set. */
-  set: id.nullable(),
-  /** Rare cosmetics tied to a single card; null = usable with any card. */
-  exclusiveCard: id.nullable(),
-  /** Small permanent buff granted just for owning it. */
-  ownedBuff: z.strictObject({
-    stat: z.enum(['damage', 'production']),
-    percent: z.number().min(0).max(100),
-  }),
+export const COSMETIC_SLOTS = [
+  'border',
+  'finish',
+  'attack',
+  'tick',
+  'number',
+  'table',
+  'cursor',
+] as const;
+export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
+
+/** Slots drawn per card. Wearing them requires a minimum card rank (see wearRules). */
+export const CARD_SLOTS = ['border', 'finish'] as const satisfies readonly CosmeticSlot[];
+export type CardSlot = (typeof CARD_SLOTS)[number];
+
+/** Token keys each slot may set. Each becomes the CSS variable `--bi-<key>`. */
+export const SLOT_TOKENS = {
+  border: [
+    'border-color',
+    'border-width',
+    'radius',
+    'plate-bg',
+    'plate-line',
+    'plate-ink',
+    'plate-ink-muted',
+    'art-line',
+    'panel-bg',
+    'panel-line',
+    'panel-ink',
+    'panel-ink-muted',
+  ],
+  finish: ['finish-a', 'finish-b', 'finish-c', 'finish-opacity', 'finish-speed'],
+  attack: ['attack-edge', 'attack-glow', 'attack-particle'],
+  tick: ['tick-color', 'tick-stroke', 'tick-crit', 'tick-size'],
+  number: ['num-font', 'num-weight', 'num-color'],
+  table: ['table-bg', 'table-glow', 'on-table', 'on-table-muted'],
+  cursor: [],
+} as const satisfies Record<CosmeticSlot, readonly string[]>;
+
+/** Token keys a rarity may set. Each becomes `--bi-rarity-<key>`. */
+export const RARITY_TOKENS = ['body', 'body-accent', 'neon', 'neon-soft'] as const;
+
+const tokenValue = z
+  .string()
+  .min(1)
+  .max(240)
+  .regex(/^[^;{}<>\\]*$/, 'must not contain ; { } < > or a backslash');
+const recipeId = z
+  .string()
+  .regex(/^[a-z][a-z0-9-]*$/, 'recipe ids are lowercase kebab-case, e.g. "filigree-2"');
+const effectId = recipeId;
+
+const cosmeticLevelSchema = z.strictObject({
+  tokens: z.record(z.string(), tokenValue).default({}),
+  recipes: z.array(recipeId).default([]),
+  /** Attack slot: the animation used for each job. */
+  effects: z.strictObject({ fighting: effectId, mining: effectId, logging: effectId }).optional(),
+  /** Tick slot: the floating-number animation. */
+  effect: effectId.optional(),
+});
+
+export const cosmeticSchema = z
+  .strictObject({
+    id,
+    name,
+    slot: z.enum(COSMETIC_SLOTS),
+    rarity: z.enum(RARITIES),
+    /** Matching-set bonus applies when every item of the set is equipped. */
+    set: id.nullable(),
+    /** Rare cosmetics tied to a single card; null = usable with any card. */
+    exclusiveCard: id.nullable(),
+    /** The one item per slot a new game starts with and falls back to. */
+    starter: z.boolean().default(false),
+    /** Small permanent buff granted just for owning it. */
+    ownedBuff: z.strictObject({
+      stat: z.enum(['damage', 'production']),
+      percent: z.number().min(0).max(100),
+    }),
+    /**
+     * Upgrade levels, lowest first. Level N shows everything from levels 1..N merged, so each
+     * level only lists what it adds or changes.
+     */
+    levels: z.array(cosmeticLevelSchema).min(1).max(10),
+  })
+  .superRefine((c, ctx) => {
+    const allowed = new Set<string>(SLOT_TOKENS[c.slot]);
+    c.levels.forEach((level, i) => {
+      for (const key of Object.keys(level.tokens)) {
+        if (!allowed.has(key)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['levels', i, 'tokens', key],
+            message: `"${key}" is not a ${c.slot} token (allowed: ${[...allowed].join(', ') || 'none'})`,
+          });
+        }
+      }
+    });
+    const first = c.levels[0]!;
+    if (c.slot === 'attack' && !first.effects) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['levels', 0, 'effects'],
+        message: 'attack items need an effect per job',
+      });
+    }
+    if (c.slot === 'tick' && !first.effect) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['levels', 0, 'effect'],
+        message: 'tick items need an effect',
+      });
+    }
+    if (c.exclusiveCard && !(CARD_SLOTS as readonly string[]).includes(c.slot)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['exclusiveCard'],
+        message: `only card slots (${CARD_SLOTS.join(', ')}) can be exclusive to a card`,
+      });
+    }
+    if (c.starter && (c.exclusiveCard || c.levels.length > 1)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['starter'],
+        message: 'a starter item cannot be card-exclusive or have upgrade levels',
+      });
+    }
+  });
+
+/** Rarity colours the card body. One entry per rarity. */
+export const rarityStyleSchema = z
+  .strictObject({
+    id: z.enum(RARITIES),
+    name,
+    tokens: z.record(z.string(), tokenValue).default({}),
+    recipes: z.array(recipeId).default([]),
+  })
+  .superRefine((r, ctx) => {
+    const allowed = new Set<string>(RARITY_TOKENS);
+    for (const key of Object.keys(r.tokens)) {
+      if (!allowed.has(key)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['tokens', key],
+          message: `"${key}" is not a rarity token (allowed: ${RARITY_TOKENS.join(', ')})`,
+        });
+      }
+    }
+  });
+
+/**
+ * Minimum card rank needed to WEAR an item in a card slot (owning it is always allowed).
+ * `exclusive` applies to card-exclusive items.
+ */
+export const wearRulesSchema = z.strictObject({
+  border: rankSchema,
+  finish: rankSchema,
+  exclusive: rankSchema,
 });
 
 export const PORTAL_KINDS = ['cards', 'cosmetics'] as const;
@@ -168,6 +316,8 @@ export const contentSchemas = {
   dungeons: z.array(dungeonSchema),
   cosmetics: z.array(cosmeticSchema),
   portals: z.array(portalSchema),
+  rarities: z.array(rarityStyleSchema),
+  wearRules: wearRulesSchema,
 } as const;
 
 export type Resource = z.output<typeof resourceSchema>;
@@ -177,3 +327,6 @@ export type Card = z.output<typeof cardSchema>;
 export type Dungeon = z.output<typeof dungeonSchema>;
 export type Cosmetic = z.output<typeof cosmeticSchema>;
 export type Portal = z.output<typeof portalSchema>;
+export type CosmeticLevel = z.output<typeof cosmeticLevelSchema>;
+export type RarityStyle = z.output<typeof rarityStyleSchema>;
+export type WearRules = z.output<typeof wearRulesSchema>;
