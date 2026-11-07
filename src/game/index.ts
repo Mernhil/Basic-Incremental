@@ -10,4 +10,5 @@ export * from './offline';
 export * from './migrations';
 export * from './save';
 export * from './theme';
+export * from './modifiers';
 export * from './hpBars';

@@ -5,6 +5,7 @@ import {
   GameLoop,
   SaveError,
   bossMaxHp,
+  collectModifiers,
   createInitialState,
   createSaveText,
   defaultRng,
@@ -17,7 +18,6 @@ import {
   resolveCard,
   resolveGlobal,
   simulateOffline,
-  OFFLINE_CAP_MS,
   type GameState,
   type OfflineSummary,
 } from '../../game';
@@ -54,7 +54,7 @@ function showFatal(root: HTMLElement, error: unknown): void {
 
 function awayLines(summary: OfflineSummary, content: Content): string[] {
   const lines = [COPY.away.duration(formatDuration(summary.elapsedMs))];
-  if (summary.capped) lines.push(COPY.away.capped(formatDuration(OFFLINE_CAP_MS)));
+  if (summary.capped) lines.push(COPY.away.capped(formatDuration(summary.capMs)));
   for (const [id, amount] of Object.entries(summary.gains)) {
     lines.push(COPY.away.gain(formatDecimal(amount), content.resourceById.get(id)?.name ?? id));
   }
@@ -313,7 +313,7 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   const rendered = (): void => {
     const s = loop.state;
     if (dungeon && boss) {
-      const max = bossMaxHp(dungeon, s.prestigeCount);
+      const max = bossMaxHp(dungeon, s.prestigeCount, collectModifiers(s, content));
       const current = s.bossHp ?? max;
       const bars = hpBarState(current, max, dungeon.boss.hpBars);
       hp.update(bars, formatDecimal(current), formatDecimal(max), current.div(max).toNumber());
