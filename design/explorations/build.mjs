@@ -118,6 +118,29 @@ const directions = [
       ['Table', 'Plain (pick below)'],
     ],
   },
+  {
+    file: 'd2-upgrades.html',
+    css: 'd-hybrid.css',
+    extraCss: ['e-upgrades.css'],
+    controls: 'hybrid',
+    layout: 'upgrades',
+    name: 'Upgradable cosmetics',
+    blurb: 'Gilded Nocturne base, two items with three levels each, and the new prismatic tier.',
+    fonts: [
+      face('Outfit', 'outfit', 500),
+      face('Outfit', 'outfit', 600),
+      face('Outfit', 'outfit', 700),
+      face('Outfit', 'outfit', 800),
+    ],
+    slots: [
+      ['Card border', 'Gilded Filigree, levels 1 to 3'],
+      ['Card finish', 'Aurora Foil, levels 1 to 3'],
+      ['Attack animation', 'Gilt slash'],
+      ['Tick damage', 'Engraved rise'],
+      ['Number style', 'Engraved gold'],
+      ['Table', 'Plain (pick below)'],
+    ],
+  },
 ];
 
 // ---- tiny flat emblems used as art placeholders -------------------------------------------
@@ -148,10 +171,20 @@ function stars(tier, count) {
   );
 }
 
-function card({ name, job, role, emblem, tone, tier, count, power, rate, extra = '', finish = '', cls = '' }) {
+function card(opts) {
+  const html = cardHtml(opts);
+  return opts.label
+    ? `<figure class="labeled">${html}<figcaption>${opts.label}</figcaption></figure>`
+    : html;
+}
+
+function cardHtml({ name, job, role, emblem, tone, tier, count, power, rate, extra = '', finish = '', cls = '' }) {
   const six = count === 6 ? ' is-star6' : '';
   return `
   <article class="card rank-${tier}${six} job-${job.toLowerCase()} tone-${tone}${finish ? ` finish-${finish}` : ''} ${cls}">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">${name}</h3><span class="card__job">${role ?? job}</span></header>
     <div class="card__art">${art(emblem)}</div>
     <dl class="card__stats">
@@ -234,6 +267,38 @@ function picker(kind) {
   );
 }
 
+// Sections for the upgradable-cosmetics showcase.
+function upgradeSections() {
+  const section = (id, title, inner) =>
+    `\n  <section aria-labelledby="${id}">\n    <h2 id="${id}" class="section-title">${title}</h2>\n    <div class="row">${inner}</div>\n  </section>`;
+  const edge = (cls, label) =>
+    card({ name: 'Gilded Edge', job: 'Fighting', emblem: 'blade', tone: 'a', tier: 'gold', count: 4, power: '9.6K', rate: '1.0s', cls, label });
+  const fang = (cls, label) =>
+    card({ name: 'Aurora Fang', job: 'Fighting', emblem: 'gem', tone: 'b', tier: 'silver', count: 3, power: '3.3K', rate: '1.1s', cls, label });
+  const prism = (count) =>
+    card({ name: 'Prism Shield', job: 'Fighting', emblem: 'shield', tone: 'd', tier: 'prismatic', count, power: count === 6 ? '88K' : '52K', rate: '0.8s', label: `Prismatic ${count}` });
+
+  const loadout = [
+    card({ name: 'Ember Warden', job: 'Fighting', role: 'Main', emblem: 'blade', tone: 'a', tier: 'prismatic', count: 6, power: '88K', extra: ['Tick', '0.7s'], cls: 'border-filigree-3 finish-aurora-3' }),
+    card({ name: 'Whetstone', job: 'Fighting', role: 'Support', emblem: 'gem', tone: 'b', tier: 'gold', count: 6, power: '+18%', extra: ['Adds', 'Damage'], cls: 'border-filigree-2 finish-aurora-2' }),
+    card({ name: 'Twin Blade', job: 'Fighting', role: 'Support', emblem: 'axe', tone: 'c', tier: 'silver', count: 5, power: '+20%', extra: ['Adds', 'Attack'], cls: 'border-filigree-1 finish-aurora-1' }),
+    card({ name: 'War Drum', job: 'Fighting', role: 'Support', emblem: 'drum', tone: 'd', tier: 'bronze', count: 2, power: '+15%', extra: ['Adds', 'Speed'] }),
+  ].join('');
+
+  return [
+    `\n  <section aria-labelledby="u0">\n    <h2 id="u0" class="section-title">Battle, with upgraded cosmetics equipped</h2>\n    <div class="row row--battle">${boss()}<div class="row">${loadout}</div></div>\n  </section>`,
+    section('u1', 'Prismatic tier: star 1, 3, 5 and 6, next to Gold star 6', [prism(1), prism(3), prism(5), prism(6), card({ name: 'Gilded Edge', job: 'Fighting', emblem: 'blade', tone: 'a', tier: 'gold', count: 6, power: '21.0K', rate: '0.9s', label: 'Gold 6' })].join('')),
+    section('u2', 'Card border: Gilded Filigree, base and levels 1 to 3', [edge('', 'No border item'), edge('border-filigree-1', 'Level 1'), edge('border-filigree-2', 'Level 2'), edge('border-filigree-3', 'Level 3')].join('')),
+    section('u3', 'Card finish: Aurora Foil, base and levels 1 to 3', [fang('', 'No finish item'), fang('finish-aurora-1', 'Level 1'), fang('finish-aurora-2', 'Level 2'), fang('finish-aurora-3', 'Level 3')].join('')),
+    section('u4', 'Everything at once: max cosmetics on every tier', [
+      card({ name: 'Stone Pick', job: 'Mining', emblem: 'pick', tone: 'c', tier: 'bronze', count: 6, power: '980', rate: '3.1/s', cls: 'border-filigree-3 finish-aurora-3', label: 'Bronze 6' }),
+      card({ name: 'Birch Axe', job: 'Logging', emblem: 'axe', tone: 'b', tier: 'silver', count: 6, power: '4.4K', rate: '12/s', cls: 'border-filigree-3 finish-aurora-3', label: 'Silver 6' }),
+      card({ name: 'Gilded Edge', job: 'Fighting', emblem: 'blade', tone: 'a', tier: 'gold', count: 6, power: '21.0K', rate: '0.9s', cls: 'border-filigree-3 finish-aurora-3', label: 'Gold 6' }),
+      card({ name: 'Prism Shield', job: 'Fighting', emblem: 'shield', tone: 'd', tier: 'prismatic', count: 6, power: '88K', rate: '0.7s', cls: 'border-filigree-3 finish-aurora-3', label: 'Prismatic 6' }),
+    ].join('')),
+  ].join('\n');
+}
+
 function page(d) {
   const base = read('base.css');
   const own = [d.css, ...(d.extraCss ?? [])].map(read).join('\n');
@@ -283,6 +348,10 @@ ${own}
     <ul class="slots" aria-label="Cosmetic set">${slotList}</ul>
   </header>
 
+${
+  d.layout === 'upgrades'
+    ? upgradeSections()
+    : `
   <section aria-labelledby="s1">
     <h2 id="s1" class="section-title">Battle</h2>
     <div class="row row--battle">${boss()}<div class="row">${loadout}</div></div>
@@ -296,7 +365,8 @@ ${own}
   <section aria-labelledby="s3">
     <h2 id="s3" class="section-title">Star 5 and star 6, with the shine and a faint frame glow</h2>
     <div class="row">${pair}<div class="row">${extremes}</div></div>
-  </section>
+  </section>`
+}
 </main>
 ${d.controls ? picker(d.controls) : ''}
 </body>

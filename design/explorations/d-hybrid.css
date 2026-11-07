@@ -69,13 +69,51 @@ body[data-ornament='medium'] .card__name { color: #24170a; }
 body[data-ornament='medium'] .card__job { color: #4a3410; }
 body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold), inset 0 0 18px rgba(0, 0, 0, 0.5); }
 
-/* ---- star-6 evolution: hairline takes the tier colour and gains a soft halo ---- */
-.is-star6 { border-color: var(--star); --halo: 0 0 0 1px color-mix(in srgb, var(--star) 40%, transparent), 0 0 22px color-mix(in srgb, var(--star) 28%, transparent); }
-.rank-prismatic.is-star6 { border-color: transparent; }
-.rank-prismatic.is-star6::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; z-index: -1; pointer-events: none;
+/* ---- rank layer ----------------------------------------------------------------------------
+   Rule: rank visuals live OUTSIDE the card edge (rings, aura, motes) and ON the stars. The card's
+   border, plate and art belong to cosmetics, so rank never recolours or replaces them. */
+
+/* star 6 (bronze, silver, gold): a separate ring just outside the card, with a small gap */
+.is-star6 { --halo: 0 0 0 2px var(--table-bg), 0 0 0 3.5px var(--star), 0 0 20px 2px color-mix(in srgb, var(--star) 35%, transparent); }
+.rank-prismatic.is-star6 { --halo: 0 0 #0000; }
+
+/* prismatic: its own tier treatment from star 1, and a much bigger one at star 6 */
+.card__rankfx { inset: -6px; border-radius: 18px; }
+.rank-prismatic .card__rankfx { display: block; }
+.rank-prismatic .card__rankfx::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; opacity: 0.85;
   background: conic-gradient(from var(--angle), #ff5f9e, #ffb347, #f4f46b, #5ff0a8, #5fc6ff, #b48cff, #ff5f9e);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
-  animation: spin 6s linear infinite; }
+  animation: spin 9s linear infinite;
+}
+.rank-prismatic .rank-name { font-weight: 600; color: transparent; background-image: var(--prism); background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text; animation: prism 5s linear infinite; }
+/* a glint that hops between the stars */
+.rank-prismatic .stars::after { content: '✦'; position: absolute; top: -7px; left: 8%; font-size: 10px; letter-spacing: 0; color: #fff;
+  text-shadow: 0 0 6px #fff, 0 0 10px #b48cff; animation: glint-hop 3.2s steps(1) infinite, glint 0.8s ease-in-out infinite alternate; }
+@keyframes glint-hop { 0% { left: 8%; } 25% { left: 46%; } 50% { left: 24%; } 75% { left: 70%; } }
+@keyframes glint { from { opacity: 0.15; transform: scale(0.6) rotate(0deg); } to { opacity: 1; transform: scale(1.15) rotate(45deg); } }
+
+/* prismatic star 6: thick fast ring, a breathing aura behind the card, motes rising along the sides */
+.rank-prismatic.is-star6 .card__rankfx::before { padding: 3px; opacity: 1; animation-duration: 3.5s; }
+.rank-prismatic.is-star6 .card__rankfx::after {
+  content: ''; position: absolute; inset: -12px; border-radius: 30px; padding: 18px;
+  background: conic-gradient(from var(--angle), #ff5f9e, #ffb347, #f4f46b, #5ff0a8, #5fc6ff, #b48cff, #ff5f9e);
+  filter: blur(14px);
+  /* blur first, then cut the card area out so the aura stays behind/around the card */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: spin 3.5s linear infinite, aura 2.2s ease-in-out infinite alternate;
+}
+@keyframes aura { from { opacity: 0.35; } to { opacity: 0.8; } }
+.mote { display: none; }
+.rank-prismatic.is-star6 .mote { display: block; position: absolute; bottom: 4%; width: 4px; height: 4px; border-radius: 50%; background: #fff;
+  box-shadow: 0 0 6px 2px var(--c); animation: mote 3s linear infinite; }
+.rank-prismatic.is-star6 .mote:nth-child(1) { left: -1px; --c: #ff5f9e; animation-delay: 0s; }
+.rank-prismatic.is-star6 .mote:nth-child(2) { right: -1px; --c: #5fc6ff; animation-delay: -0.8s; }
+.rank-prismatic.is-star6 .mote:nth-child(3) { left: -1px; --c: #f4f46b; animation-delay: -1.6s; }
+.rank-prismatic.is-star6 .mote:nth-child(4) { right: -1px; --c: #b48cff; animation-delay: -2.3s; }
+@keyframes mote { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-230px); opacity: 0; } }
+.rank-prismatic.is-star6 .stars__on { filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.55)); }
 @keyframes spin { to { --angle: 360deg; } }
 
 /* ---- finish: Rainbow foil with sparkle (inside the art window only) ---- */

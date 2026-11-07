@@ -47,3 +47,8 @@ node design/explorations/shoot.mjs
 ```bash
 node design/explorations/shoot-options.mjs c2-gilded-nocturne "navy-minimal=table=navy&ornament=minimal" "navy-medium=table=navy&ornament=medium"
 ```
+- `d2-upgrades.html`: two upgradable cosmetics on the hybrid base, three levels each (Gilded Filigree border, Aurora Foil finish), plus the stronger prismatic tier. Every level keeps the one below and adds one visible thing.
+
+### Layer rule used from here on
+
+Rank visuals live outside the card edge (star-6 ring, prismatic ring, aura, motes) and on the stars. Cosmetics live inside the edge (decoration layer, art, finish overlay). The rank footer always sits above the finish overlay, so a cosmetic can never cover the stars.

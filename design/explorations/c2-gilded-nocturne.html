@@ -31,6 +31,14 @@ ul { list-style: none; }
 .card { position: relative; isolation: isolate; width: var(--card-w, 172px); height: var(--card-h, 244px);
   display: flex; flex-direction: column; flex: none; }
 .card--boss { --card-w: 276px; --card-h: 372px; }
+/* layers: rank effects sit behind/around the card; finish and decoration sit over it; the rank
+   footer always stays on top so stars are never covered by a cosmetic */
+.card__rankfx, .card__deco, .card__finish { position: absolute; display: none; pointer-events: none; }
+.card__rankfx { z-index: -1; }
+.card__deco, .card__finish { inset: 0; border-radius: inherit; }
+.card__finish { z-index: 2; }
+.card__deco { z-index: 3; }
+.card__rank { position: relative; z-index: 4; }
 .card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
 .card__art { position: relative; flex: 1; min-height: 0; overflow: hidden; display: grid; place-items: center; }
 .card--boss .art__emblem { width: 70%; height: 70%; }
@@ -81,6 +89,7 @@ ul { list-style: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .tick { opacity: 1; transform: translateY(calc(var(--i, 0) * -26px)); }
   .stars__sheen { background-position: 50% 0; }
+  .mote { display: none !important; }
 }
 
 /* ---- picker (mockup tool only, used by the option pages) ---- */
@@ -90,6 +99,10 @@ ul { list-style: none; }
 .picker legend { float: left; width: 52px; padding: 0; }
 .picker button { padding: 4px 9px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .picker button[aria-pressed='true'] { background: #f1d27a; color: #2a1a0c; border-color: #f1d27a; }
+
+/* labelled cards in showcase rows */
+.labeled { margin: 0; display: grid; gap: 12px; justify-items: center; }
+.labeled figcaption { font-size: 13px; color: var(--on-table-muted, var(--muted, currentColor)); }
 
 /* Direction D: Gilded Nocturne. The Gilded cosmetic items (gilt, foil, slash, engraved numbers)
    on Nocturne's calm structure: dark cards, hairlines, quiet type, no name plate, no parchment box.
@@ -162,13 +175,51 @@ body[data-ornament='medium'] .card__name { color: #24170a; }
 body[data-ornament='medium'] .card__job { color: #4a3410; }
 body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold), inset 0 0 18px rgba(0, 0, 0, 0.5); }
 
-/* ---- star-6 evolution: hairline takes the tier colour and gains a soft halo ---- */
-.is-star6 { border-color: var(--star); --halo: 0 0 0 1px color-mix(in srgb, var(--star) 40%, transparent), 0 0 22px color-mix(in srgb, var(--star) 28%, transparent); }
-.rank-prismatic.is-star6 { border-color: transparent; }
-.rank-prismatic.is-star6::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; z-index: -1; pointer-events: none;
+/* ---- rank layer ----------------------------------------------------------------------------
+   Rule: rank visuals live OUTSIDE the card edge (rings, aura, motes) and ON the stars. The card's
+   border, plate and art belong to cosmetics, so rank never recolours or replaces them. */
+
+/* star 6 (bronze, silver, gold): a separate ring just outside the card, with a small gap */
+.is-star6 { --halo: 0 0 0 2px var(--table-bg), 0 0 0 3.5px var(--star), 0 0 20px 2px color-mix(in srgb, var(--star) 35%, transparent); }
+.rank-prismatic.is-star6 { --halo: 0 0 #0000; }
+
+/* prismatic: its own tier treatment from star 1, and a much bigger one at star 6 */
+.card__rankfx { inset: -6px; border-radius: 18px; }
+.rank-prismatic .card__rankfx { display: block; }
+.rank-prismatic .card__rankfx::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; opacity: 0.85;
   background: conic-gradient(from var(--angle), #ff5f9e, #ffb347, #f4f46b, #5ff0a8, #5fc6ff, #b48cff, #ff5f9e);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
-  animation: spin 6s linear infinite; }
+  animation: spin 9s linear infinite;
+}
+.rank-prismatic .rank-name { font-weight: 600; color: transparent; background-image: var(--prism); background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text; animation: prism 5s linear infinite; }
+/* a glint that hops between the stars */
+.rank-prismatic .stars::after { content: '✦'; position: absolute; top: -7px; left: 8%; font-size: 10px; letter-spacing: 0; color: #fff;
+  text-shadow: 0 0 6px #fff, 0 0 10px #b48cff; animation: glint-hop 3.2s steps(1) infinite, glint 0.8s ease-in-out infinite alternate; }
+@keyframes glint-hop { 0% { left: 8%; } 25% { left: 46%; } 50% { left: 24%; } 75% { left: 70%; } }
+@keyframes glint { from { opacity: 0.15; transform: scale(0.6) rotate(0deg); } to { opacity: 1; transform: scale(1.15) rotate(45deg); } }
+
+/* prismatic star 6: thick fast ring, a breathing aura behind the card, motes rising along the sides */
+.rank-prismatic.is-star6 .card__rankfx::before { padding: 3px; opacity: 1; animation-duration: 3.5s; }
+.rank-prismatic.is-star6 .card__rankfx::after {
+  content: ''; position: absolute; inset: -12px; border-radius: 30px; padding: 18px;
+  background: conic-gradient(from var(--angle), #ff5f9e, #ffb347, #f4f46b, #5ff0a8, #5fc6ff, #b48cff, #ff5f9e);
+  filter: blur(14px);
+  /* blur first, then cut the card area out so the aura stays behind/around the card */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: spin 3.5s linear infinite, aura 2.2s ease-in-out infinite alternate;
+}
+@keyframes aura { from { opacity: 0.35; } to { opacity: 0.8; } }
+.mote { display: none; }
+.rank-prismatic.is-star6 .mote { display: block; position: absolute; bottom: 4%; width: 4px; height: 4px; border-radius: 50%; background: #fff;
+  box-shadow: 0 0 6px 2px var(--c); animation: mote 3s linear infinite; }
+.rank-prismatic.is-star6 .mote:nth-child(1) { left: -1px; --c: #ff5f9e; animation-delay: 0s; }
+.rank-prismatic.is-star6 .mote:nth-child(2) { right: -1px; --c: #5fc6ff; animation-delay: -0.8s; }
+.rank-prismatic.is-star6 .mote:nth-child(3) { left: -1px; --c: #f4f46b; animation-delay: -1.6s; }
+.rank-prismatic.is-star6 .mote:nth-child(4) { right: -1px; --c: #b48cff; animation-delay: -2.3s; }
+@keyframes mote { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-230px); opacity: 0; } }
+.rank-prismatic.is-star6 .stars__on { filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.55)); }
 @keyframes spin { to { --angle: 360deg; } }
 
 /* ---- finish: Rainbow foil with sparkle (inside the art window only) ---- */
@@ -210,6 +261,7 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <ul class="slots" aria-label="Cosmetic set"><li><span>Card border</span> <b>Gilt hairline</b></li><li><span>Card finish</span> <b>Rainbow foil</b></li><li><span>Attack animation</span> <b>Gilt slash</b></li><li><span>Tick damage</span> <b>Engraved rise</b></li><li><span>Number style</span> <b>Engraved gold</b></li><li><span>Table</span> <b>Plain (pick below)</b></li></ul>
   </header>
 
+
   <section aria-labelledby="s1">
     <h2 id="s1" class="section-title">Battle</h2>
     <div class="row row--battle">
@@ -230,6 +282,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     </div>
   </article><div class="row">
   <article class="card rank-gold job-fighting tone-a ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Ember Warden</h3><span class="card__job">Main</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 62 60 50 70 38 60Z"/><rect x="30" y="64" width="40" height="7" rx="2"/><rect x="45" y="70" width="10" height="22" rx="2"/></svg></div>
     <dl class="card__stats">
@@ -239,6 +294,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <footer class="card__rank"><span class="rank-name">Gold</span><span class="stars" role="img" aria-label="Gold, 4 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★</span><span class="stars__off" aria-hidden="true">★★</span></span></footer>
   </article>
   <article class="card rank-silver job-fighting tone-b ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Whetstone</h3><span class="card__job">Support</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70L90 40 50 90 10 40Z"/></svg></div>
     <dl class="card__stats">
@@ -248,6 +306,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <footer class="card__rank"><span class="rank-name">Silver</span><span class="stars" role="img" aria-label="Silver, 3 of 6 stars"><span class="stars__on" aria-hidden="true">★★★</span><span class="stars__sheen" aria-hidden="true">★★★</span><span class="stars__off" aria-hidden="true">★★★</span></span></footer>
   </article>
   <article class="card rank-bronze job-fighting tone-c ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Twin Blade</h3><span class="card__job">Support</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 20C62 8 84 26 76 52 60 44 44 42 30 50Z"/><rect x="26" y="20" width="8" height="72" rx="3"/></svg></div>
     <dl class="card__stats">
@@ -257,6 +318,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <footer class="card__rank"><span class="rank-name">Bronze</span><span class="stars" role="img" aria-label="Bronze, 5 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★★</span><span class="stars__off" aria-hidden="true">★</span></span></footer>
   </article>
   <article class="card rank-silver job-fighting tone-d ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">War Drum</h3><span class="card__job">Support</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="32" rx="34" ry="12"/><path d="M16 32V70C16 78 32 86 50 86S84 78 84 70V32C84 40 68 44 50 44S16 40 16 32Z"/></svg></div>
     <dl class="card__stats">
@@ -271,6 +335,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <h2 id="s2" class="section-title">Ranks</h2>
     <div class="row">
   <article class="card rank-bronze job-mining tone-c ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Stone Pick</h3><span class="card__job">Mining</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M12 40C30 14 70 14 88 40 70 30 30 30 12 40Z"/><rect x="46" y="30" width="8" height="62" rx="3"/></svg></div>
     <dl class="card__stats">
@@ -280,6 +347,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <footer class="card__rank"><span class="rank-name">Bronze</span><span class="stars" role="img" aria-label="Bronze, 3 of 6 stars"><span class="stars__on" aria-hidden="true">★★★</span><span class="stars__sheen" aria-hidden="true">★★★</span><span class="stars__off" aria-hidden="true">★★★</span></span></footer>
   </article>
   <article class="card rank-silver job-logging tone-b ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Birch Axe</h3><span class="card__job">Logging</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 20C62 8 84 26 76 52 60 44 44 42 30 50Z"/><rect x="26" y="20" width="8" height="72" rx="3"/></svg></div>
     <dl class="card__stats">
@@ -289,6 +359,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <footer class="card__rank"><span class="rank-name">Silver</span><span class="stars" role="img" aria-label="Silver, 4 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★</span><span class="stars__off" aria-hidden="true">★★</span></span></footer>
   </article>
   <article class="card rank-gold job-fighting tone-a ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Gilded Edge</h3><span class="card__job">Fighting</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 62 60 50 70 38 60Z"/><rect x="30" y="64" width="40" height="7" rx="2"/><rect x="45" y="70" width="10" height="22" rx="2"/></svg></div>
     <dl class="card__stats">
@@ -298,6 +371,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <footer class="card__rank"><span class="rank-name">Gold</span><span class="stars" role="img" aria-label="Gold, 2 of 6 stars"><span class="stars__on" aria-hidden="true">★★</span><span class="stars__sheen" aria-hidden="true">★★</span><span class="stars__off" aria-hidden="true">★★★★</span></span></footer>
   </article>
   <article class="card rank-prismatic job-fighting tone-d ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Prism Shield</h3><span class="card__job">Fighting</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 84 20V48C84 70 68 84 50 92 32 84 16 70 16 48V20Z"/></svg></div>
     <dl class="card__stats">
@@ -312,6 +388,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <h2 id="s3" class="section-title">Star 5 and star 6, with the shine and a faint frame glow</h2>
     <div class="row">
   <article class="card rank-gold job-fighting tone-a ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Gilded Edge</h3><span class="card__job">Fighting</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 62 60 50 70 38 60Z"/><rect x="30" y="64" width="40" height="7" rx="2"/><rect x="45" y="70" width="10" height="22" rx="2"/></svg></div>
     <dl class="card__stats">
@@ -321,6 +400,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <footer class="card__rank"><span class="rank-name">Gold</span><span class="stars" role="img" aria-label="Gold, 5 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★★</span><span class="stars__off" aria-hidden="true">★</span></span></footer>
   </article>
   <article class="card rank-gold is-star6 job-fighting tone-a ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Gilded Edge</h3><span class="card__job">Fighting</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 62 60 50 70 38 60Z"/><rect x="30" y="64" width="40" height="7" rx="2"/><rect x="45" y="70" width="10" height="22" rx="2"/></svg></div>
     <dl class="card__stats">
@@ -330,6 +412,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <footer class="card__rank"><span class="rank-name">Gold</span><span class="stars" role="img" aria-label="Gold, 6 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★★★</span><span class="stars__off" aria-hidden="true"></span></span></footer>
   </article><div class="row">
   <article class="card rank-bronze is-star6 job-mining tone-c ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Stone Pick</h3><span class="card__job">Mining</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M12 40C30 14 70 14 88 40 70 30 30 30 12 40Z"/><rect x="46" y="30" width="8" height="62" rx="3"/></svg></div>
     <dl class="card__stats">
@@ -339,6 +424,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <footer class="card__rank"><span class="rank-name">Bronze</span><span class="stars" role="img" aria-label="Bronze, 6 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★★★</span><span class="stars__off" aria-hidden="true"></span></span></footer>
   </article>
   <article class="card rank-prismatic is-star6 job-fighting tone-d ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Prism Shield</h3><span class="card__job">Fighting</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 84 20V48C84 70 68 84 50 92 32 84 16 70 16 48V20Z"/></svg></div>
     <dl class="card__stats">
@@ -348,6 +436,9 @@ body[data-ornament='medium'] .card__art { box-shadow: inset 0 0 0 1px var(--gold
     <footer class="card__rank"><span class="rank-name">Prismatic</span><span class="stars" role="img" aria-label="Prismatic, 6 of 6 stars"><span class="stars__on" aria-hidden="true">★★★★★★</span><span class="stars__sheen" aria-hidden="true">★★★★★★</span><span class="stars__off" aria-hidden="true"></span></span></footer>
   </article>
   <article class="card rank-silver job-fighting tone-b finish-holo ">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
     <header class="card__head"><h3 class="card__name">Aurora Fang</h3><span class="card__job">Fighting</span></header>
     <div class="card__art"><svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 16H70L90 40 50 90 10 40Z"/></svg></div>
     <dl class="card__stats">

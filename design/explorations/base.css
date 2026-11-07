@@ -20,6 +20,14 @@ ul { list-style: none; }
 .card { position: relative; isolation: isolate; width: var(--card-w, 172px); height: var(--card-h, 244px);
   display: flex; flex-direction: column; flex: none; }
 .card--boss { --card-w: 276px; --card-h: 372px; }
+/* layers: rank effects sit behind/around the card; finish and decoration sit over it; the rank
+   footer always stays on top so stars are never covered by a cosmetic */
+.card__rankfx, .card__deco, .card__finish { position: absolute; display: none; pointer-events: none; }
+.card__rankfx { z-index: -1; }
+.card__deco, .card__finish { inset: 0; border-radius: inherit; }
+.card__finish { z-index: 2; }
+.card__deco { z-index: 3; }
+.card__rank { position: relative; z-index: 4; }
 .card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
 .card__art { position: relative; flex: 1; min-height: 0; overflow: hidden; display: grid; place-items: center; }
 .card--boss .art__emblem { width: 70%; height: 70%; }
@@ -70,6 +78,7 @@ ul { list-style: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .tick { opacity: 1; transform: translateY(calc(var(--i, 0) * -26px)); }
   .stars__sheen { background-position: 50% 0; }
+  .mote { display: none !important; }
 }
 
 /* ---- picker (mockup tool only, used by the option pages) ---- */
@@ -79,3 +88,7 @@ ul { list-style: none; }
 .picker legend { float: left; width: 52px; padding: 0; }
 .picker button { padding: 4px 9px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .picker button[aria-pressed='true'] { background: #f1d27a; color: #2a1a0c; border-color: #f1d27a; }
+
+/* labelled cards in showcase rows */
+.labeled { margin: 0; display: grid; gap: 12px; justify-items: center; }
+.labeled figcaption { font-size: 13px; color: var(--on-table-muted, var(--muted, currentColor)); }
