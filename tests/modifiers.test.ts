@@ -18,6 +18,7 @@ import {
 import resources from '../src/data/content/resources.json';
 import trees from '../src/data/content/trees.json';
 import mines from '../src/data/content/mines.json';
+import production from '../src/data/content/production.json';
 import cards from '../src/data/content/cards.json';
 import dungeons from '../src/data/content/dungeons.json';
 import cosmetics from '../src/data/content/cosmetics.json';
@@ -89,9 +90,9 @@ describe('computeStat', () => {
     const mods = [
       mod('production.rate', 'flat', '100'),
       mod('combat.damage', 'flat', '1', { dungeon: 'other' }),
-      mod('combat.damage', 'flat', '2', { dungeon: 'example_dungeon' }),
+      mod('combat.damage', 'flat', '2', { dungeon: 'mossy_cellar' }),
     ];
-    const r = computeStat('combat.damage', 0, mods, { dungeon: 'example_dungeon' });
+    const r = computeStat('combat.damage', 0, mods, { dungeon: 'mossy_cellar' });
     expect(r.value.eq(2)).toBe(true);
   });
 
@@ -151,7 +152,7 @@ describe('game numbers go through the pipeline', () => {
     const buffed = freshState();
     buffed.cosmetics.owned['aurora_veil'] = { level: 1, copies: 1 }; // +1% production
     const after = advance(buffed, content, 1000, constantRng(0.5)).state;
-    const wood = 'example_wood';
+    const wood = 'oak_wood';
     expect(approxEq(after.resources[wood]!, base.resources[wood]!.mul(1.01))).toBe(true);
   });
 
@@ -186,6 +187,7 @@ describe('modifier data is validated', () => {
       resources,
       trees,
       mines,
+      production,
       cards,
       dungeons,
       cosmetics,

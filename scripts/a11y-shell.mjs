@@ -18,6 +18,7 @@ const CHECKS = [
   '.shell-level__label',
   '.shell-level__xp',
   '.shell-currency__value',
+  '.shell-currency__name',
   '.shell-rail__label',
   '.shell-page__title',
   '.frame__heading',

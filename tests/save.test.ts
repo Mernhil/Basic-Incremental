@@ -17,7 +17,7 @@ import { constantRng, content, freshState } from './helpers';
 function busyState() {
   let state = advance(freshState(), content, 250_000, constantRng(0.001)).state; // 2 kills, 2 rares
   state = { ...state, damage: new Decimal('1.5e500'), prestigeCount: 3 };
-  state.pity = { example_boss: 17 };
+  state.pity = { root_warden: 17 };
   return state;
 }
 
@@ -41,7 +41,7 @@ describe('save round-trip', () => {
     expect(serializeState(loaded.state)).toEqual(serializeState(state));
     expect(loaded.state.damage.eq(new Decimal('1.5e500'))).toBe(true);
     expect(loaded.state.inventory['holo_hex']).toBe(2);
-    expect(loaded.state.pity['example_boss']).toBe(17);
+    expect(loaded.state.pity['root_warden']).toBe(17);
     expect(loaded.state.bossHp!.eq(state.bossHp!)).toBe(true);
   });
 
@@ -51,16 +51,16 @@ describe('save round-trip', () => {
 
   it('fills in resources that were added to the content after the save', () => {
     const json = JSON.parse(createSaveText(freshState(), NOW));
-    delete json.state.resources['example_ore'];
+    delete json.state.resources['copper_ore'];
     const loaded = readSave(JSON.stringify(json), content);
-    expect(loaded.state.resources['example_ore']!.eq(0)).toBe(true);
+    expect(loaded.state.resources['copper_ore']!.eq(0)).toBe(true);
   });
 
   it('falls back to a valid dungeon if the saved one no longer exists', () => {
     const json = JSON.parse(createSaveText(freshState(), NOW));
     json.state.activeDungeonId = 'deleted_dungeon';
     const loaded = readSave(JSON.stringify(json), content);
-    expect(loaded.state.activeDungeonId).toBe('example_dungeon');
+    expect(loaded.state.activeDungeonId).toBe('mossy_cellar');
   });
 });
 
@@ -175,5 +175,70 @@ describe('save format v2: cosmetics', () => {
     expect(loaded.state.cosmetics.owned['removed_item']).toBeUndefined();
     expect(loaded.state.cosmetics.owned['aurora_veil']!.level).toBe(3);
     expect(loaded.state.cosmetics.loadout.slots.border).toBeUndefined();
+  });
+});
+
+describe('save format v3: production', () => {
+  it('round-trips plots, slots, unlocked trees, mine levels and cleared dungeons', () => {
+    const state = freshState();
+    state.production = {
+      logging: { expansions: 2, plots: ['oak', null, 'ironbark'] },
+      mining: { expansions: 1, plots: ['copper_quarry', 'iron_deeps'] },
+      unlockedTrees: ['ironbark'],
+      mineLevels: { copper_quarry: 4, iron_deeps: 1 },
+    };
+    state.clearedDungeons = ['mossy_cellar'];
+    const loaded = readSave(createSaveText(state, NOW), content);
+    expect(loaded.state.production).toEqual(state.production);
+    expect(loaded.state.clearedDungeons).toEqual(['mossy_cellar']);
+  });
+
+  it('drops removed ids and empties plots whose producer is locked', () => {
+    const json = JSON.parse(createSaveText(freshState(), NOW));
+    json.state.production.logging.plots = ['oak', 'moonwillow', 'removed_tree'];
+    json.state.production.mining.plots = ['iron_deeps'];
+    json.state.production.unlockedTrees = ['removed_tree'];
+    json.state.production.mineLevels = { removed_mine: 3, copper_quarry: 2 };
+    json.state.clearedDungeons = ['removed_dungeon'];
+    const loaded = readSave(JSON.stringify(json), content).state;
+    expect(loaded.production.logging.plots).toEqual(['oak', null, null]);
+    expect(loaded.production.mining.plots).toEqual([null]);
+    expect(loaded.production.unlockedTrees).toEqual([]);
+    expect(loaded.production.mineLevels).toEqual({ copper_quarry: 2 });
+    expect(loaded.clearedDungeons).toEqual([]);
+  });
+
+  it('rejects malformed production data', () => {
+    const json = JSON.parse(createSaveText(freshState(), NOW));
+    json.state.production.logging.expansions = -1;
+    expect(codeOf(() => readSave(JSON.stringify(json), content))).toBe('invalid-format');
+  });
+
+  it('migrates a v0.2 (format 2) save: example content becomes the beta content', () => {
+    const v2 = {
+      version: 2,
+      savedAt: NOW,
+      state: {
+        resources: { example_wood: '1234.5', example_ore: '0', example_portal_shard: '7' },
+        producers: { example_tree: 1 },
+        damage: '1',
+        activeDungeonId: 'example_dungeon',
+        bossHp: '42',
+        pity: { example_boss: 12 },
+        inventory: { holo_hex: 1 },
+        prestigeCount: 0,
+        cosmetics: { loadout: { slots: {}, cards: {} }, owned: {} },
+        stats: { playTimeMs: 1000, bossKills: 3 },
+      },
+    };
+    const { state } = readSave(JSON.stringify(v2), content);
+    expect(state.resources['oak_wood']!.eq(1234.5)).toBe(true);
+    expect(state.resources['moss_sigil']!.eq(7)).toBe(true);
+    expect(state.activeDungeonId).toBe('mossy_cellar');
+    expect(state.pity).toEqual({ root_warden: 12 });
+    expect(state.production.logging).toEqual({ expansions: 0, plots: ['oak'] });
+    expect(state.production.mining).toEqual({ expansions: 0, plots: ['copper_quarry'] });
+    expect(state.clearedDungeons).toEqual([]);
+    expect(serializeState(state).production).toEqual(serializeState(freshState()).production);
   });
 });

@@ -8,7 +8,7 @@ Every tunable number in the game goes through one pipeline (DESIGN.md 11.5), so 
 { "stat": "production.rate", "kind": "percent", "value": "5", "scope": { "job": "logging" } }
 ```
 
-- **stat**: one of `STATS` (production rate, damage, boss HP, drop chance, pity, portal amount, offline cap, XP, loadout cost cap, summon pity, cost multiplier).
+- **stat**: one of `STATS` (production rate, damage, boss HP, drop chance, pity, portal amount, offline cap, XP, loadout cost cap, summon pity, cost multiplier, cost growth, plot/slot capacity, mine level bonus).
 - **kind** and the fixed order they apply in:
   1. `flat`: added (all flats summed)
   2. `percent`: all percents summed, then applied once (`"5"` = +5%)
@@ -31,7 +31,8 @@ New systems add their modifiers inside `collectModifiers`; callers never change.
 
 - `computeStat(stat, base, modifiers, context)` returns the value plus the modifiers that applied, in order, for tooltip breakdowns.
 - `statValue(...)` returns only the value.
-- Game helpers that already use it: `producerRate`, `effectiveDamage`, `bossMaxHp`, `effectiveDrops`, `offlineCapMs`.
+- Game helpers that already use it: `producerRate`, `plotCapacity`, `curvePrice` (expansions, mine levels), `treeUnlockCost`, `effectiveDamage`, `bossMaxHp`, `effectiveDrops`, `offlineCapMs`.
+- Prices: exponential prices read `cost.growth` for the growth factor (never below 1), then every price is scaled by `cost.multiplier` (base 1, never below 0) and rounded up. Both get the job, producer and resource in their context.
 
 ## Adding a stat
 

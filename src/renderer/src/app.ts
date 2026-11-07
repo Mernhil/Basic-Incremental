@@ -15,6 +15,7 @@ import {
   hpBarState,
   importSaveString,
   loadBestSave,
+  producerCounts,
   resolveCard,
   resolveGlobal,
   simulateOffline,
@@ -256,7 +257,7 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
         : '<path d="M14 70 26 38 46 26 70 30 86 52 82 76 54 86 28 84Z"/>'
     }</svg>`;
     const info = h('div', 'prod__info');
-    const plots = loop.state.producers[p.id] ?? 0;
+    const plots = producerCounts(loop.state, content)[p.id] ?? 0;
     const resource = content.resourceById.get(p.resource)?.name ?? p.resource;
     info.append(h('h3', 'prod__name', p.name));
     if (plots > 0) {
@@ -314,8 +315,10 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
       const bars = hpBarState(current, max, dungeon.boss.hpBars);
       hp.update(bars, formatDecimal(current), formatDecimal(max), current.div(max).toNumber());
     }
-    for (const r of content.resources)
-      shell.setCurrency(r.id, formatDecimal(s.resources[r.id] ?? new Decimal(0)));
+    for (const r of content.resources) {
+      const amount = s.resources[r.id] ?? new Decimal(0);
+      shell.setCurrency(r.id, formatDecimal(amount), amount.gt(0));
+    }
     damageValue.textContent = `${formatDecimal(damageStat().value)}/s`;
   };
 
@@ -357,7 +360,7 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
       if (effect) playHit(effect, tile.stage, { rng: defaultRng, target: tile.emblem });
       const producer = [...content.trees, ...content.mines].find((p) => p.id === tile.id)!;
       const gain = producer.baseRate
-        .mul(loop.state.producers[tile.id] ?? 0)
+        .mul(producerCounts(loop.state, content)[tile.id] ?? 0)
         .mul(PRODUCTION_HIT_MS / 1000);
       showTick(tile.stage, `+${formatDecimal(gain)}`, { rng: defaultRng });
     }

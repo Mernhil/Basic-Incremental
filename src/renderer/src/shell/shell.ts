@@ -59,7 +59,8 @@ export interface Shell {
   show(id: PageId): void;
   current(): PageId;
   setLevel(level: number, xpFraction: number, xpText: string): void;
-  setCurrency(id: string, text: string): void;
+  /** Updates a resource chip. Chips stay hidden until the amount is above zero once. */
+  setCurrency(id: string, text: string, positive: boolean): void;
   scrollToTop(): void;
 }
 
@@ -95,17 +96,20 @@ export function createShell(opts: {
   const currencyList = h('ul', 'shell-currencies');
   currencyList.setAttribute('aria-label', COPY.shell.currencies);
   const currencyValues = new Map<string, HTMLElement>();
+  const currencyItems = new Map<string, HTMLElement>();
   for (const c of opts.currencies) {
     const item = h('li', 'shell-currency');
     item.tabIndex = 0;
     const value = h('span', 'shell-currency__value bi-num', '0');
     item.append(
       icon(c.icon, 'shell-icon shell-currency__icon'),
-      h('span', 'sr-only', `${c.name} `),
       value,
+      h('span', 'shell-currency__name', c.name),
     );
     attachTooltip(item, c.tip);
+    item.hidden = true; // shown once the player has some
     currencyValues.set(c.id, value);
+    currencyItems.set(c.id, item);
     currencyList.append(item);
   }
   header.append(brand, level, currencyList);
@@ -189,9 +193,11 @@ export function createShell(opts: {
     scrollToTop() {
       main.scrollTop = 0;
     },
-    setCurrency(id, text) {
+    setCurrency(id, text, positive) {
       const v = currencyValues.get(id);
       if (v && v.textContent !== text) v.textContent = text;
+      const item = currencyItems.get(id);
+      if (item && positive && item.hidden) item.hidden = false;
     },
   };
 }

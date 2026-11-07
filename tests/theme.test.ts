@@ -20,6 +20,7 @@ import { content } from './helpers';
 import resources from '../src/data/content/resources.json';
 import trees from '../src/data/content/trees.json';
 import mines from '../src/data/content/mines.json';
+import production from '../src/data/content/production.json';
 import cards from '../src/data/content/cards.json';
 import dungeons from '../src/data/content/dungeons.json';
 import cosmetics from '../src/data/content/cosmetics.json';
@@ -213,6 +214,7 @@ describe('invalid cosmetic data is rejected', () => {
       resources,
       trees,
       mines,
+      production,
       cards,
       dungeons,
       cosmetics,

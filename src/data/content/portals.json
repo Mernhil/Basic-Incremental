@@ -1,9 +1,9 @@
 [
   {
-    "id": "example_card_portal",
-    "name": "Example Card Portal",
+    "id": "card_portal",
+    "name": "Card Portal",
     "kind": "cards",
-    "cost": { "resource": "example_portal_shard", "amount": "10" },
+    "cost": { "resource": "moss_sigil", "amount": "10" },
     "pool": [
       { "itemId": "example_fighting_main", "rarity": "common", "weight": 90 },
       { "itemId": "example_fighting_support", "rarity": "rare", "weight": 10 }
