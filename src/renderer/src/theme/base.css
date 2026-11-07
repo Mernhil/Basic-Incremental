@@ -68,8 +68,12 @@ body {
   inset: 0;
   border-radius: inherit;
 }
+/* The rarity body sits under everything inside the card. Panels (plate, art, stats) are positioned
+   without a z-index so they create no stacking context: their backgrounds paint under the finish
+   (holo covers the whole card) while their TEXT is lifted above it, so a holo pattern never runs
+   through names or numbers. */
 .bi-card__rarity {
-  z-index: 0;
+  z-index: -1;
   overflow: hidden;
 }
 .bi-card__head,
@@ -77,7 +81,14 @@ body {
 .bi-card__stats,
 .bi-card__hp {
   position: relative;
-  z-index: 1;
+}
+.bi-card__name,
+.bi-card__job,
+.bi-card__stats dt,
+.bi-card__stats dd,
+.bi-hpstack {
+  position: relative;
+  z-index: 3;
 }
 .bi-card__finish {
   z-index: 2;

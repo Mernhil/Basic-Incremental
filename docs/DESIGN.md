@@ -50,6 +50,8 @@ This is a starting point and will be tuned.
 - **Damage** is a stat bought with resources and kept through prestige.
 - **Bosses** are HP walls, auto-fought in parallel with everything else (no active combat input), and they respawn so they can be farmed.
 - Boss HP scales **slowly** with prestige count.
+- Boss HP is shown as **stacked bars** with a **×N** count of bars left (like a fighting-game life gauge). The current bar drains over the colour of the next one. Each boss sets its number of bars.
+- Attacks are automatic. Each hit plays the equipped attack animation and a floating damage number; with reduced motion the hit animations are skipped and numbers simply fade.
 - New, harder **dungeons** unlock with progress.
 - Dungeons drop **rare items** at low odds (e.g. 0.5%) with a **pity counter**, plus **portal resources**.
 
@@ -80,7 +82,12 @@ Bronze ★1–6 → Silver ★1–6 → Gold ★1–6 → Prismatic ★1–6 (ma
 - ★6 of each tier is a **big upgrade plus a visual change**.
 - Star colors follow the tier; **Prismatic stars are animated**.
 - **★6 shine:** at ★6 the stars get a polished light sweep that moves back and forth across the star glyphs in a loop, coloured to the tier. On Prismatic it blends with the animated stars. ★1–5 have no shine.
-- **★6 evolution:** each tier's ★6 adds a small, escalating upgrade to the card's look (Bronze faintest, Prismatic strongest), never a full redesign.
+- **★6 evolution:** each tier's ★6 adds a small, escalating upgrade to the card's look, never a full redesign:
+  - Bronze ★6: shine and one thin ring just outside the card.
+  - Silver ★6: shine and two rings.
+  - Gold ★6: shine, two rings, a gold glow and four corner glints.
+  - Prismatic ★6: shine, a thick fast rainbow ring, a breathing aura behind the card and motes rising along the sides.
+  - Rings carry a thin dark edge so they read on light and dark tables. Reaching ★6 plays a one-time flash.
 - **Prismatic is the top tier for now and must look clearly different from ★1:** its own animated ring and rainbow tier name. Prismatic ★6 adds a much stronger treatment (thick fast ring, aura, rising motes).
 - **Rank visuals never clash with cosmetics:** rank effects sit outside the card edge (rings, aura) and on the stars; cosmetics sit inside the edge. Stars are never covered by a cosmetic.
 - **Duplicates / shards add stars.**
@@ -115,6 +122,8 @@ Bronze ★1–6 → Silver ★1–6 → Gold ★1–6 → Prismatic ★1–6 (ma
 7. Cursor
 
 - Some rare cosmetics are **exclusive to one specific card** and override the global slot on that card only.
+- **Wearing card cosmetics depends on the card's rank.** Any item can be owned (and its owned buff counts), but a card must reach a minimum rank to wear it; below that it shows the starter look for that slot. Starting values: card border from Gold ★1, card finish (holo) from Prismatic ★1, card-exclusive items from Prismatic ★6. Global slots (attack, tick, numbers, table, cursor) are always worn. The thresholds live in data and are expected to be tuned.
+- A holo finish covers the whole card, but card text always stays above it.
 - **Sources:** dungeon drops, cosmetics portal, prestige, achievements.
 - **Owning** an item gives a small permanent buff.
 - **Equipping a matching set** gives an extra bonus; each set must look coherent when fully equipped.

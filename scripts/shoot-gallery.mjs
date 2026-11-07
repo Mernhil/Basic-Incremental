@@ -12,17 +12,46 @@ mkdirSync(out, { recursive: true });
 /** name, picks (testid -> value), what to capture ('evolution' | 'page' | section index) */
 const shots = [
   { name: 'evolution-starter', picks: {}, capture: 0 },
+  { name: 'evolution-dark-table', picks: { 'pick-table': 'gt_table' }, capture: 0 },
   {
-    name: 'evolution-filigree3-aurora3',
+    name: 'set-gilded-tradition',
+    picks: {
+      'pick-border': 'gt_border',
+      'pick-finish': 'gt_finish',
+      'pick-attack': 'gt_attack',
+      'pick-tick': 'gt_tick',
+      'pick-number': 'gt_number',
+      'pick-table': 'gt_table',
+      'pick-cursor': 'gt_cursor',
+    },
+    capture: 0,
+  },
+  {
+    name: 'filigree3-aurora3-mythic',
     picks: {
       'pick-border': 'gilded_filigree',
       'level-border': '3',
       'pick-finish': 'aurora_veil',
       'level-finish': '3',
+      'pick-rarity': 'mythic',
     },
     capture: 0,
   },
-  { name: 'evolution-dark-table', picks: { 'pick-table': 'gt_table' }, capture: 0 },
+  {
+    name: 'crown-waves-void',
+    picks: { 'pick-exclusive': 'ember_crown', 'pick-finish': 'holo_waves', 'pick-rarity': 'void' },
+    capture: 0,
+  },
+  {
+    name: 'plate-hex-exotic-dark',
+    picks: {
+      'pick-border': 'gilded_plate',
+      'pick-finish': 'holo_hex',
+      'pick-rarity': 'exotic',
+      'pick-table': 'gt_table',
+    },
+    capture: 0,
+  },
   { name: 'gold-row-star1-6', picks: {}, capture: 3 },
   { name: 'prismatic-row-star1-6', picks: {}, capture: 4 },
 ];

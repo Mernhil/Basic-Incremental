@@ -25,7 +25,10 @@ function measure(selectors) {
   const parse = (c) => {
     const m = c.match(/rgba?\(([^)]+)\)/);
     if (!m) return null;
-    const p = m[1].split(/[\s,/]+/).filter(Boolean).map(Number);
+    const p = m[1]
+      .split(/[\s,/]+/)
+      .filter(Boolean)
+      .map(Number);
     return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
   };
   const over = (top, bottom) => {
@@ -114,7 +117,8 @@ for (const table of TABLES) {
       const result = await page.evaluate(measure, CHECKS);
       checked++;
       for (const [sel, { ratio, sample }] of Object.entries(result)) {
-        if (ratio < 4.5) failures.push(`${table} + ${border} + ${rarity}: ${sel} ${ratio}:1 (${sample})`);
+        if (ratio < 4.5)
+          failures.push(`${table} + ${border} + ${rarity}: ${sel} ${ratio}:1 (${sample})`);
       }
     }
   }
@@ -122,7 +126,10 @@ for (const table of TABLES) {
 await page.close();
 
 // ---- reduced motion ----
-const rm = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1320, height: 1000 } });
+const rm = await browser.newContext({
+  reducedMotion: 'reduce',
+  viewport: { width: 1320, height: 1000 },
+});
 const rmPage = await rm.newPage();
 await rmPage.goto(url.replace('#', '?rm=1#'));
 await rmPage.waitForSelector('.bi-card');
@@ -131,12 +138,11 @@ await rmPage.selectOption('[data-testid="level-border"]', '3');
 await rmPage.selectOption('[data-testid="pick-finish"]', 'aurora_veil');
 await rmPage.selectOption('[data-testid="level-finish"]', '3');
 await rmPage.waitForTimeout(1500);
-const looping = await rmPage.evaluate(
-  () =>
-    document
-      .getAnimations()
-      .filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations === Infinity)
-      .map((a) => a.animationName ?? 'unknown'),
+const looping = await rmPage.evaluate(() =>
+  document
+    .getAnimations()
+    .filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations === Infinity)
+    .map((a) => a.animationName ?? 'unknown'),
 );
 const hits = await rmPage.evaluate(() => document.querySelectorAll('.bi-fx').length);
 
@@ -148,7 +154,9 @@ for (let i = 0; i < controls + 2; i++) {
   const tag = await rmPage.evaluate(() => {
     const el = document.activeElement;
     const visible = el && getComputedStyle(el).outlineStyle !== 'none';
-    return el ? `${el.tagName}:${el.dataset?.testid ?? el.textContent?.trim().slice(0, 20)}:${visible}` : '';
+    return el
+      ? `${el.tagName}:${el.dataset?.testid ?? el.textContent?.trim().slice(0, 20)}:${visible}`
+      : '';
   });
   reached.add(tag);
 }
@@ -158,5 +166,10 @@ console.log(`Contrast: ${checked} combinations checked, ${failures.length} failu
 for (const f of failures.slice(0, 40)) console.log('  FAIL', f);
 console.log(`Reduced motion: ${looping.length} infinite animations running`, looping.slice(0, 10));
 console.log(`Reduced motion: ${hits} hit effects spawned (expected 0)`);
-console.log(`Keyboard: ${controls} controls, reached ${[...reached].filter(Boolean).length} by Tab`);
-console.log('  without visible focus:', [...reached].filter((t) => t.endsWith(':false')));
+console.log(
+  `Keyboard: ${controls} controls, reached ${[...reached].filter(Boolean).length} by Tab`,
+);
+console.log(
+  '  without visible focus:',
+  [...reached].filter((t) => t.endsWith(':false')),
+);
