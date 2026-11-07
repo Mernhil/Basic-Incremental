@@ -1,4 +1,4 @@
-import type { BurstJob, Content, ProductionJob } from '../data';
+import type { BurstJob, Content, Job, ProductionJob, RankTier } from '../data';
 import { Decimal } from './num';
 import type { CosmeticLoadout } from './theme';
 
@@ -29,6 +29,8 @@ export interface GameState {
   prestigeCount: number;
   stats: GameStats;
   cosmetics: CosmeticState;
+  /** Owned cards, the loadout of each job and shards. See cards.ts. */
+  cards: CardState;
 }
 
 export interface OwnedCosmetic {
@@ -131,6 +133,7 @@ export function createInitialState(content: Content): GameState {
     inventory: {},
     prestigeCount: 0,
     stats: { playTimeMs: 0, bossKills: 0 },
+    cards: initialCards(content),
     cosmetics: {
       loadout: { slots: {}, cards: {} },
       owned: Object.fromEntries(
@@ -152,6 +155,7 @@ export function cloneState(state: GameState): GameState {
     pity: { ...state.pity },
     inventory: { ...state.inventory },
     stats: { ...state.stats },
+    cards: cloneCards(state.cards),
     cosmetics: {
       loadout: {
         slots: { ...state.cosmetics.loadout.slots },
@@ -182,4 +186,76 @@ export function cloneCombat(c: CombatState): CombatState {
 
 export function cloneBursts(b: Record<BurstJob, BurstGauge>): Record<BurstJob, BurstGauge> {
   return { fighting: { ...b.fighting }, logging: { ...b.logging }, mining: { ...b.mining } };
+}
+
+/** One owned card (DESIGN.md 11.9). Each card is owned once; further copies are duplicates. */
+export interface OwnedCard {
+  tier: RankTier;
+  /** 1..6 within the tier. */
+  stars: number;
+  /** 1 up to the level cap of the rank. */
+  level: number;
+  /** XP towards the next level (0 at the level cap). */
+  xp: Decimal;
+  /** Extra copies held, spent on star-ups. */
+  duplicates: number;
+}
+
+/** One job's loadout: 1 main card and 3 support slots (null = empty). */
+export interface CardLoadout {
+  main: string | null;
+  /** Always 3 entries. */
+  supports: (string | null)[];
+}
+
+export interface CardState {
+  /** Card id -> the owned card. */
+  owned: Record<string, OwnedCard>;
+  loadouts: Record<Job, CardLoadout>;
+  /** From duplicates gained once a card is Prismatic ★6 (11.9). */
+  shards: number;
+}
+
+export const SUPPORT_SLOTS = 3;
+
+export function emptyCardLoadout(): CardLoadout {
+  return { main: null, supports: Array<string | null>(SUPPORT_SLOTS).fill(null) };
+}
+
+/** A card as first obtained: Bronze ★1, Lv 1, no XP or duplicates. */
+export function newOwnedCard(): OwnedCard {
+  return { tier: 'bronze', stars: 1, level: 1, xp: new Decimal(0), duplicates: 0 };
+}
+
+/** A new game owns the start cards (cardRules.startCards), each leading its job. */
+export function initialCards(content: Content): CardState {
+  const cards: CardState = {
+    owned: {},
+    loadouts: {
+      mining: emptyCardLoadout(),
+      logging: emptyCardLoadout(),
+      fighting: emptyCardLoadout(),
+    },
+    shards: 0,
+  };
+  for (const id of content.cardRules.startCards) {
+    const card = content.cardById.get(id);
+    if (!card) continue;
+    cards.owned[id] = newOwnedCard();
+    cards.loadouts[card.job].main = id;
+  }
+  return cards;
+}
+
+export function cloneCards(c: CardState): CardState {
+  const loadout = (l: CardLoadout): CardLoadout => ({ main: l.main, supports: [...l.supports] });
+  return {
+    owned: Object.fromEntries(Object.entries(c.owned).map(([id, card]) => [id, { ...card }])),
+    loadouts: {
+      mining: loadout(c.loadouts.mining),
+      logging: loadout(c.loadouts.logging),
+      fighting: loadout(c.loadouts.fighting),
+    },
+    shards: c.shards,
+  };
 }

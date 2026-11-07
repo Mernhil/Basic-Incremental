@@ -38,7 +38,7 @@ const SLOT_LABELS: Record<CosmeticSlot, string> = {
   table: 'Table',
   cursor: 'Cursor',
 };
-const EXCLUSIVE_CARD = 'example_fighting_main';
+const EXCLUSIVE_CARD = 'dawnblade_regent';
 
 interface Shown {
   view: CardView;
@@ -174,12 +174,7 @@ export function renderGallery(root: HTMLElement = document.body): void {
   for (const tier of RANK_TIERS) {
     add(
       `${cap(tier)}: star 1 to 6`,
-      [1, 2, 3, 4, 5, 6].map((stars) => [
-        'example_fighting_support',
-        { tier, stars },
-        'Whetstone',
-        'gem',
-      ]),
+      [1, 2, 3, 4, 5, 6].map((stars) => ['shield_warden', { tier, stars }, 'Whetstone', 'gem']),
     );
   }
 

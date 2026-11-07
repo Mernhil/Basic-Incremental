@@ -182,7 +182,7 @@ export function assignPlot(
 // ---- prices ----------------------------------------------------------------------------------
 
 /** Scales a price by `cost.multiplier` and rounds up to a whole amount. Never negative. */
-function finalPrice(
+export function finalPrice(
   resource: string,
   amount: Decimal,
   modifiers: readonly Modifier[],
@@ -260,7 +260,7 @@ export function canAfford(state: GameState, prices: readonly Price[]): boolean {
 }
 
 /** Clones the state and subtracts the prices. Call only after canAfford. */
-function pay(state: GameState, prices: readonly Price[]): GameState {
+export function pay(state: GameState, prices: readonly Price[]): GameState {
   const next = cloneState(state);
   for (const p of prices) {
     next.resources[p.resource] = (next.resources[p.resource] ?? new Decimal(0)).sub(p.amount);

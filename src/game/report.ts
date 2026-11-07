@@ -19,6 +19,10 @@ export interface TickReport {
   trialAttempts: number;
   /** Best score (0..1) among those attempts; 0 when there were none. */
   trialTopScore: number;
+  /** Cards dropped by boss kills, in order. */
+  cardDrops: CardDrop[];
+  /** Card id -> levels before and after, for cards that levelled up. */
+  cardLevels: Record<string, { from: number; to: number }>;
 }
 
 export function emptyReport(): TickReport {
@@ -32,6 +36,8 @@ export function emptyReport(): TickReport {
     unlockedMines: [],
     trialAttempts: 0,
     trialTopScore: 0,
+    cardDrops: [],
+    cardLevels: {},
   };
 }
 
@@ -47,5 +53,21 @@ export function mergeReports(into: TickReport, add: TickReport): TickReport {
   into.unlockedMines.push(...add.unlockedMines);
   into.trialAttempts += add.trialAttempts;
   into.trialTopScore = Math.max(into.trialTopScore, add.trialTopScore);
+  into.cardDrops.push(...add.cardDrops);
+  for (const [id, change] of Object.entries(add.cardLevels)) {
+    const prev = into.cardLevels[id];
+    into.cardLevels[id] = prev ? { from: prev.from, to: change.to } : { ...change };
+  }
   return into;
 }
+
+/** What a card obtained turned into (DESIGN.md 11.9). */
+export type CardGain =
+  /** A card not owned before, now at Bronze ★1 Lv 1. */
+  | { kind: 'new' }
+  /** Stored on the owned card as a duplicate; `duplicates` is the new count. */
+  | { kind: 'duplicate'; duplicates: number }
+  /** The card is Prismatic ★6: the copy became this many shards. */
+  | { kind: 'shards'; shards: number };
+
+export type CardDrop = CardGain & { cardId: string };

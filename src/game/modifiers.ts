@@ -2,6 +2,7 @@ import type { Content, ModifierData, ModifierKind, ModifierScope, Stat } from '.
 import { Decimal, type DecimalSource } from './num';
 import type { GameState } from './state';
 import { detectSets } from './theme';
+import { cardModifiers } from './cards';
 
 /**
  * The shared modifier pipeline (DESIGN.md 11.5). Every tunable number goes through
@@ -129,6 +130,9 @@ export function collectModifiers(state: GameState, content: Content): Modifier[]
     const set = content.setById.get(status.set);
     if (set) out.push(...set.modifiers.map(withSource({ kind: 'set', id: set.id })));
   }
+
+  // Cards in the loadouts: main abilities (with main growth) and support effects.
+  out.push(...cardModifiers(state, content));
 
   return out;
 }

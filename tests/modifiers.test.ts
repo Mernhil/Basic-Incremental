@@ -20,6 +20,7 @@ import trees from '../src/data/content/trees.json';
 import mines from '../src/data/content/mines.json';
 import production from '../src/data/content/production.json';
 import cards from '../src/data/content/cards.json';
+import cardRules from '../src/data/content/cardRules.json';
 import dungeons from '../src/data/content/dungeons.json';
 import trials from '../src/data/content/trials.json';
 import combat from '../src/data/content/combat.json';
@@ -191,6 +192,7 @@ describe('modifier data is validated', () => {
       mines,
       production,
       cards,
+      cardRules,
       dungeons,
       trials,
       combat,
