@@ -6,6 +6,8 @@ import mines from '../src/data/content/mines.json';
 import production from '../src/data/content/production.json';
 import cards from '../src/data/content/cards.json';
 import dungeons from '../src/data/content/dungeons.json';
+import trials from '../src/data/content/trials.json';
+import combat from '../src/data/content/combat.json';
 import cosmetics from '../src/data/content/cosmetics.json';
 import portals from '../src/data/content/portals.json';
 import rarities from '../src/data/content/rarities.json';
@@ -26,6 +28,8 @@ function raw(overrides: Partial<RawContent> = {}): RawContent {
     production,
     cards,
     dungeons,
+    trials,
+    combat,
     cosmetics,
     portals,
     rarities,
@@ -63,7 +67,12 @@ describe('bundled content', () => {
     ]);
     expect(content.cosmetics.length).toBeGreaterThan(7);
     expect(content.portals).toHaveLength(1);
-    expect(content.dungeons[0]!.boss.hp.eq(100)).toBe(true);
+    expect(content.dungeons.map((d) => d.boss.name)).toEqual([
+      'Root Warden',
+      'Cinder Lich',
+      'Glacier Colossus',
+    ]);
+    expect(content.trials.map((t) => t.name)).toEqual(['The Glimmer Trial']);
   });
 });
 

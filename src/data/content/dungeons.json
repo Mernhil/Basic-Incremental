@@ -3,48 +3,93 @@
     "id": "mossy_cellar",
     "name": "Mossy Cellar",
     "tier": 1,
+    "unlockedBy": null,
+    "killsToClear": 1,
     "boss": {
       "id": "root_warden",
       "name": "Root Warden",
-      "hp": "100",
+      "hp": "60000",
       "hpScalingPerPrestige": 0.02,
       "hpBars": 5
     },
     "drops": {
-      "rare": { "itemId": "holo_hex", "chance": 0.005, "pityThreshold": 200 },
-      "portalResource": { "resource": "moss_sigil", "min": 1, "max": 3 }
+      "rare": {
+        "itemId": "holo_hex",
+        "chance": 0.005,
+        "pityThreshold": 200
+      },
+      "portalResource": {
+        "resource": "moss_sigil",
+        "min": 2,
+        "max": 4
+      },
+      "material": {
+        "resource": "moss_core",
+        "chance": 0.1,
+        "amount": 1
+      }
     }
   },
   {
     "id": "ember_crypt",
     "name": "Ember Crypt",
     "tier": 2,
+    "unlockedBy": "mossy_cellar",
+    "killsToClear": 1,
     "boss": {
       "id": "cinder_lich",
       "name": "Cinder Lich",
-      "hp": "1000",
+      "hp": "4e6",
       "hpScalingPerPrestige": 0.02,
       "hpBars": 8
     },
     "drops": {
-      "rare": { "itemId": "holo_waves", "chance": 0.005, "pityThreshold": 200 },
-      "portalResource": { "resource": "ember_sigil", "min": 1, "max": 3 }
+      "rare": {
+        "itemId": "holo_waves",
+        "chance": 0.005,
+        "pityThreshold": 200
+      },
+      "portalResource": {
+        "resource": "ember_sigil",
+        "min": 1,
+        "max": 3
+      },
+      "material": {
+        "resource": "cinder_core",
+        "chance": 0.1,
+        "amount": 1
+      }
     }
   },
   {
     "id": "frostspire_vault",
     "name": "Frostspire Vault",
     "tier": 3,
+    "unlockedBy": "ember_crypt",
+    "killsToClear": 1,
     "boss": {
       "id": "glacier_colossus",
       "name": "Glacier Colossus",
-      "hp": "10000",
+      "hp": "1.5e8",
       "hpScalingPerPrestige": 0.02,
       "hpBars": 12
     },
     "drops": {
-      "rare": { "itemId": "prism_pointer", "chance": 0.005, "pityThreshold": 200 },
-      "portalResource": { "resource": "frost_sigil", "min": 1, "max": 3 }
+      "rare": {
+        "itemId": "prism_pointer",
+        "chance": 0.005,
+        "pityThreshold": 200
+      },
+      "portalResource": {
+        "resource": "frost_sigil",
+        "min": 1,
+        "max": 3
+      },
+      "material": {
+        "resource": "frost_core",
+        "chance": 0.1,
+        "amount": 1
+      }
     }
   }
 ]

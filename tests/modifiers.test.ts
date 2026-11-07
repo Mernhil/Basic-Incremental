@@ -21,6 +21,8 @@ import mines from '../src/data/content/mines.json';
 import production from '../src/data/content/production.json';
 import cards from '../src/data/content/cards.json';
 import dungeons from '../src/data/content/dungeons.json';
+import trials from '../src/data/content/trials.json';
+import combat from '../src/data/content/combat.json';
 import cosmetics from '../src/data/content/cosmetics.json';
 import portals from '../src/data/content/portals.json';
 import rarities from '../src/data/content/rarities.json';
@@ -190,6 +192,8 @@ describe('modifier data is validated', () => {
       production,
       cards,
       dungeons,
+      trials,
+      combat,
       cosmetics,
       portals,
       rarities,

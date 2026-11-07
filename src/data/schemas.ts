@@ -131,6 +131,23 @@ export const STATS = [
   'production.capacity',
   /** Percent output each mine level adds. Scope: job, producer, resource. */
   'production.levelBonus',
+  /** Damage per second each level of a damage upgrade line adds. Scope: job, resource. */
+  'combat.upgradeGain',
+  /** Chance per kill of the material (Core) drop (clamped to 0..1). Scope: dungeon, resource. */
+  'drops.materialChance',
+  /** Material units per material drop (floored, at least 0). Scope: dungeon, resource. */
+  'drops.materialAmount',
+  /** Seconds between hits (fighting) or harvest ticks (logging, mining), above 0. Scope: job. */
+  'burst.interval',
+  /** Gauge points needed to fire a burst (at least 1). Scope: job. */
+  'burst.size',
+  /** Gauge points each hit / tick adds (at least 0). Supports raise it. Scope: job. */
+  'burst.fill',
+  /** Burst strength: fighting = damage as a multiple of one hit; logging / mining = seconds of
+   *  the job's output harvested at once. Scope: job. */
+  'burst.power',
+  /** Special dungeon reward units per score tier reached (floored). Scope: dungeon, resource. */
+  'trial.reward',
 ] as const;
 export type Stat = (typeof STATS)[number];
 
@@ -203,6 +220,10 @@ export const dungeonSchema = z.strictObject({
   id,
   name,
   tier,
+  /** Dungeon whose clear unlocks this one; null = open from the start. */
+  unlockedBy: id.nullable(),
+  /** Boss kills needed to clear the dungeon (DESIGN.md 11.8: the first kill). */
+  killsToClear: z.number().int().min(1).default(1),
   boss: z.strictObject({
     id,
     name,
@@ -229,6 +250,75 @@ export const dungeonSchema = z.strictObject({
         max: z.number().int().min(0),
       })
       .refine((p) => p.min <= p.max, { message: 'min must not exceed max' }),
+    /** Tier-up material (Core) dropped with `chance` per kill, no pity. */
+    material: z.strictObject({
+      resource: id,
+      chance: z.number().gt(0).max(1),
+      amount: z.number().int().min(1),
+    }),
+  }),
+});
+
+/**
+ * A special dungeon (DESIGN.md 4, 11.8): a strength test. Each attempt lasts `durationSeconds`
+ * against a target with a fixed HP; the score is the share of that HP dealt (capped at 1).
+ * Every tier whose `score` was reached pays its rewards; a score of 1 clears it.
+ */
+export const trialSchema = z
+  .strictObject({
+    id,
+    name,
+    /** Dungeon whose clear unlocks this trial; null = open from the start. */
+    unlockedBy: id.nullable(),
+    durationSeconds: z.number().positive(),
+    target: z.strictObject({ id, name, hp: positiveDecimal }),
+    tiers: z
+      .array(
+        z.strictObject({
+          /** Share of the target HP, 0..1 (0.25 = 25%). */
+          score: z.number().gt(0).max(1),
+          rewards: z.array(costSchema).min(1),
+        }),
+      )
+      .min(1),
+  })
+  .refine((t) => t.tiers.every((entry, i) => i === 0 || entry.score > t.tiers[i - 1]!.score), {
+    message: 'tiers must be in increasing score order',
+    path: ['tiers'],
+  });
+
+/** One job's burst gauge (DESIGN.md 11.3, 11.8). Each value is read through its `burst.*` stat. */
+const burstConfigSchema = z.strictObject({
+  /** Seconds between hits (fighting) or ticks (production). */
+  intervalSeconds: z.number().positive(),
+  /** Gauge points needed to fire. */
+  gaugeSize: z.number().positive(),
+  /** Gauge points per hit / tick. */
+  fill: z.number().min(0),
+  /** Fighting: damage as a multiple of one hit. Production: seconds of the job's output. */
+  power: positiveDecimal,
+});
+
+/** Global combat numbers (combat.json). */
+export const combatSchema = z.strictObject({
+  /** Damage per second before any upgrade. */
+  startingDamage: positiveDecimal,
+  /** Damage upgrade lines, one per ore (DESIGN.md 11.8). Levels are kept through prestige. */
+  damageUpgrades: z
+    .array(
+      z.strictObject({
+        id,
+        name,
+        cost: costCurveSchema,
+        /** Damage per second each level adds, read through `combat.upgradeGain`. */
+        damagePerLevel: positiveDecimal,
+      }),
+    )
+    .min(1),
+  bursts: z.strictObject({
+    fighting: burstConfigSchema,
+    logging: burstConfigSchema,
+    mining: burstConfigSchema,
   }),
 });
 
@@ -449,6 +539,8 @@ export const contentSchemas = {
   production: productionSchema,
   cards: z.array(cardSchema),
   dungeons: z.array(dungeonSchema),
+  trials: z.array(trialSchema),
+  combat: combatSchema,
   cosmetics: z.array(cosmeticSchema),
   portals: z.array(portalSchema),
   rarities: z.array(rarityStyleSchema),
@@ -464,6 +556,11 @@ export type ProductionConfig = z.output<typeof productionSchema>;
 export type ProductionJob = 'logging' | 'mining';
 export type Card = z.output<typeof cardSchema>;
 export type Dungeon = z.output<typeof dungeonSchema>;
+export type Trial = z.output<typeof trialSchema>;
+export type CombatConfig = z.output<typeof combatSchema>;
+export type DamageUpgrade = CombatConfig['damageUpgrades'][number];
+export type BurstConfig = z.output<typeof burstConfigSchema>;
+export type BurstJob = keyof CombatConfig['bursts'];
 export type Cosmetic = z.output<typeof cosmeticSchema>;
 export type Portal = z.output<typeof portalSchema>;
 export type CosmeticLevel = z.output<typeof cosmeticLevelSchema>;
