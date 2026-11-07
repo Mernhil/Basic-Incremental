@@ -15,11 +15,17 @@ import {
   hpBarState,
   importSaveString,
   loadBestSave,
+  PRODUCTION_JOBS,
+  mineLevel,
   producerCounts,
+  producerRate,
+  producersOf,
   resolveCard,
   resolveGlobal,
   simulateOffline,
   type GameState,
+  type Producer,
+  type ProductionJob,
   type OfflineSummary,
 } from '../../game';
 import { COPY } from './copy';
@@ -30,6 +36,7 @@ import { createHpStack } from './ui/hpStack';
 import { createShell, frame, h, PAGES, placeholderPage, type Currency } from './shell/shell';
 import { statTip } from './shell/stats';
 import { attachTooltip } from './shell/tooltip';
+import { createProductionPage } from './pages/production';
 
 const TICK_INTERVAL_MS = 100;
 const AUTOSAVE_INTERVAL_MS = 30_000;
@@ -128,11 +135,21 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
     icon: KIND_ICON[r.kind],
     tip: () => `${r.name}: ${formatDecimal(loop.state.resources[r.id] ?? new Decimal(0))}`,
   }));
-  const shell = createShell({ version, currencies, levelTip: COPY.shell.levelTip });
+  const shell = createShell({
+    version,
+    currencies,
+    levelTip: COPY.shell.levelTip,
+    onShow: (id) => {
+      if (id === 'production') productionPage?.render();
+    },
+  });
   shell.setLevel(1, 0, '');
+  // eslint-disable-next-line prefer-const -- assigned once the Home view exists
+  let productionPage: { render(): void } | undefined;
   const home = shell.page('home');
   for (const p of PAGES) {
-    if (p.id !== 'home' && p.id !== 'settings') placeholderPage(shell.page(p.id), p.id);
+    if (p.id !== 'home' && p.id !== 'settings' && p.id !== 'production')
+      placeholderPage(shell.page(p.id), p.id);
   }
   const app = shell.notices;
 
@@ -234,55 +251,72 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   loadout.body.append(fit);
   table.append(loadout.el);
 
-  // production
+  // production: the active plots and slots; managed on the Production page
   const production = frame(COPY.table.production);
   production.el.classList.add('production');
   const tiles = h('div', 'production__tiles');
-  const producerTiles: Array<{
+  const manage = h('button', 'button', COPY.home.manageProduction);
+  manage.type = 'button';
+  manage.addEventListener('click', () => shell.show('production'));
+  production.body.append(tiles, manage);
+  home.append(production.el);
+  type ProducerTile = {
     stage: HTMLElement;
     emblem: SVGElement;
-    job: 'logging' | 'mining';
-    id: string;
-  }> = [];
-  const producers = [
-    ...content.trees.map((p) => ({ p, job: 'logging' as const, emblem: 'tree' })),
-    ...content.mines.map((p) => ({ p, job: 'mining' as const, emblem: 'rock' })),
-  ];
-  for (const { p, job, emblem } of producers) {
-    const tile = h('article', 'prod');
-    const stage = h('div', 'prod__stage');
-    stage.innerHTML = `<svg class="bi-card__emblem prod__emblem" viewBox="0 0 100 100" aria-hidden="true">${
-      emblem === 'tree'
-        ? '<path d="M50 10 76 46H62L82 70H18L38 46H24Z"/><path d="M44 70H56V90H44Z"/>'
-        : '<path d="M14 70 26 38 46 26 70 30 86 52 82 76 54 86 28 84Z"/>'
-    }</svg>`;
-    const info = h('div', 'prod__info');
-    const plots = producerCounts(loop.state, content)[p.id] ?? 0;
-    const resource = content.resourceById.get(p.resource)?.name ?? p.resource;
-    info.append(h('h3', 'prod__name', p.name));
-    if (plots > 0) {
-      info.append(
-        h('p', 'prod__meta', COPY.table.plots(plots)),
-        h(
-          'p',
-          'prod__meta bi-num',
-          `${resource} ${COPY.table.perSecond(formatDecimal(p.baseRate.mul(plots)))}`,
-        ),
-      );
-      producerTiles.push({ stage, emblem: stage.querySelector('svg')!, job, id: p.id });
-    } else {
-      tile.classList.add('prod--locked');
-      const by =
-        'unlockedByDungeon' in p && p.unlockedByDungeon
-          ? content.dungeonById.get(p.unlockedByDungeon)?.name
-          : null;
-      info.append(h('p', 'prod__meta', by ? COPY.table.locked(by) : COPY.table.plots(0)));
+    producer: Producer;
+    job: ProductionJob;
+  };
+  let producerTiles: ProducerTile[] = [];
+  const buildHomeProduction = (): void => {
+    const s = loop.state;
+    const mods = collectModifiers(s, content);
+    const counts = producerCounts(s, content, mods);
+    producerTiles = [];
+    tiles.replaceChildren();
+    for (const job of PRODUCTION_JOBS) {
+      for (const p of producersOf(content, job)) {
+        const count = counts[p.id] ?? 0;
+        if (count === 0) continue;
+        const tile = h('article', 'prod');
+        const stage = h('div', 'prod__stage');
+        stage.innerHTML = `<svg class="bi-card__emblem prod__emblem" viewBox="0 0 100 100" aria-hidden="true">${
+          job === 'logging'
+            ? '<path d="M50 10 76 46H62L82 70H18L38 46H24Z"/><path d="M44 70H56V90H44Z"/>'
+            : '<path d="M14 70 26 38 46 26 70 30 86 52 82 76 54 86 28 84Z"/>'
+        }</svg>`;
+        const info = h('div', 'prod__info');
+        const resource = content.resourceById.get(p.resource)?.name ?? p.resource;
+        const level = job === 'mining' ? mineLevel(s, p.id) : 0;
+        const rate = producerRate(p, job, mods, level).mul(count);
+        info.append(
+          h('h3', 'prod__name', p.name),
+          h(
+            'p',
+            'prod__meta',
+            job === 'logging' ? COPY.table.plots(count) : COPY.table.slots(count),
+          ),
+          h('p', 'prod__meta bi-num', `${resource} ${COPY.table.perSecond(formatDecimal(rate))}`),
+        );
+        tile.append(stage, info);
+        tiles.append(tile);
+        producerTiles.push({ stage, emblem: stage.querySelector('svg')!, producer: p, job });
+      }
     }
-    tile.append(stage, info);
-    tiles.append(tile);
-  }
-  production.body.append(tiles);
-  home.append(production.el);
+    if (producerTiles.length === 0)
+      tiles.append(h('p', 'frame__muted', COPY.home.nothingProducing));
+  };
+  buildHomeProduction();
+
+  productionPage = createProductionPage(shell.page('production'), {
+    content,
+    state: () => loop.state,
+    apply: (next) => {
+      loop.state = next;
+      buildHomeProduction();
+      rendered();
+      void save(); // purchases are saved right away, not at the next autosave
+    },
+  });
 
   // save tools (Settings page)
   const toolsFrame = frame(COPY.save.heading);
@@ -320,6 +354,7 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
       shell.setCurrency(r.id, formatDecimal(amount), amount.gt(0));
     }
     damageValue.textContent = `${formatDecimal(damageStat().value)}/s`;
+    if (shell.current() === 'production') productionPage?.render();
   };
 
   const save = async (): Promise<void> => {
@@ -355,12 +390,14 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   }
   window.setInterval(() => {
     if (document.hidden) return;
+    const mods = collectModifiers(loop.state, content);
+    const counts = producerCounts(loop.state, content, mods);
     for (const tile of producerTiles) {
       const effect = attack()?.[tile.job];
       if (effect) playHit(effect, tile.stage, { rng: defaultRng, target: tile.emblem });
-      const producer = [...content.trees, ...content.mines].find((p) => p.id === tile.id)!;
-      const gain = producer.baseRate
-        .mul(producerCounts(loop.state, content)[tile.id] ?? 0)
+      const level = tile.job === 'mining' ? mineLevel(loop.state, tile.producer.id) : 0;
+      const gain = producerRate(tile.producer, tile.job, mods, level)
+        .mul(counts[tile.producer.id] ?? 0)
         .mul(PRODUCTION_HIT_MS / 1000);
       showTick(tile.stage, `+${formatDecimal(gain)}`, { rng: defaultRng });
     }
