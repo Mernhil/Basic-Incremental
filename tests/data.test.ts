@@ -122,9 +122,9 @@ describe('card ranks and portals', () => {
   it('catches portal cost and pool problems', () => {
     const bad = raw();
     const portal = (bad.portals as PortalRaw[])[0]!;
-    portal['cost'].resource = 'example_wood';
-    portal['pool'][0].itemId = 'example_cosmetic'; // a cosmetic in a cards portal
-    portal['pool'][1].itemId = 'missing_card';
+    portal.cost.resource = 'example_wood';
+    portal.pool[0]!.itemId = 'example_cosmetic'; // a cosmetic in a cards portal
+    portal.pool[1]!.itemId = 'missing_card';
     const issues = issuesFor(bad);
     expect(issues.some((i) => i.includes('is wood, expected portal'))).toBe(true);
     expect(
