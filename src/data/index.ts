@@ -2,9 +2,11 @@ import { COSMETIC_SLOTS, RARITIES, contentSchemas } from './schemas';
 import type {
   Card,
   Cosmetic,
+  CosmeticSet,
   CosmeticSlot,
   Dungeon,
   Mine,
+  ModifierData,
   Portal,
   Rarity,
   RarityStyle,
@@ -21,6 +23,7 @@ import cosmeticsJson from './content/cosmetics.json';
 import portalsJson from './content/portals.json';
 import raritiesJson from './content/rarities.json';
 import wearRulesJson from './content/wearRules.json';
+import setsJson from './content/sets.json';
 
 export * from './schemas';
 
@@ -34,11 +37,13 @@ export interface Content {
   portals: Portal[];
   rarities: RarityStyle[];
   wearRules: WearRules;
+  sets: CosmeticSet[];
   resourceById: ReadonlyMap<string, Resource>;
   dungeonById: ReadonlyMap<string, Dungeon>;
   cardById: ReadonlyMap<string, Card>;
   cosmeticById: ReadonlyMap<string, Cosmetic>;
   rarityById: ReadonlyMap<Rarity, RarityStyle>;
+  setById: ReadonlyMap<string, CosmeticSet>;
   /** The starter item of each slot (validated: exactly one per slot). */
   starterBySlot: Readonly<Record<CosmeticSlot, Cosmetic>>;
 }
@@ -76,10 +81,22 @@ export function validateContent(raw: RawContent): Content {
   }
   if (issues.length > 0) throw new ContentValidationError(issues);
 
-  const { resources, trees, mines, cards, dungeons, cosmetics, portals, rarities, wearRules } =
-    parsed;
+  const {
+    resources,
+    trees,
+    mines,
+    cards,
+    dungeons,
+    cosmetics,
+    portals,
+    rarities,
+    wearRules,
+    sets,
+  } = parsed;
   checkReferences({ resources, trees, mines, cards, dungeons, cosmetics, portals }, issues);
   checkCosmetics(cosmetics, rarities, issues);
+  checkSets(cosmetics, sets, issues);
+  checkModifiers({ resources, trees, mines, dungeons, portals, cosmetics, sets }, issues);
   if (issues.length > 0) throw new ContentValidationError(issues);
 
   const starterBySlot = Object.fromEntries(
@@ -96,11 +113,13 @@ export function validateContent(raw: RawContent): Content {
     portals,
     rarities,
     wearRules,
+    sets,
     resourceById: new Map(resources.map((r) => [r.id, r])),
     dungeonById: new Map(dungeons.map((d) => [d.id, d])),
     cardById: new Map(cards.map((x) => [x.id, x])),
     cosmeticById: new Map(cosmetics.map((x) => [x.id, x])),
     rarityById: new Map(rarities.map((r) => [r.id, r])),
+    setById: new Map(sets.map((x) => [x.id, x])),
     starterBySlot,
   };
 }
@@ -134,6 +153,49 @@ function checkCosmetics(cosmetics: Cosmetic[], rarities: RarityStyle[], issues: 
       issues.push(`rarities.json: rarity "${rarity}" needs exactly one entry, found ${count}`);
     }
   }
+}
+
+function checkSets(cosmetics: Cosmetic[], sets: CosmeticSet[], issues: string[]): void {
+  const ids = new Set<string>();
+  sets.forEach((set, i) => {
+    if (ids.has(set.id)) issues.push(`sets.json › [${i}] › id: duplicate id "${set.id}"`);
+    ids.add(set.id);
+    if (!cosmetics.some((c) => c.set === set.id)) {
+      issues.push(`sets.json › [${i}] › id: no cosmetic belongs to set "${set.id}"`);
+    }
+  });
+  cosmetics.forEach((c, i) => {
+    if (c.set && !ids.has(c.set)) {
+      issues.push(`cosmetics.json › [${i}] › set: unknown set "${c.set}" (add it to sets.json)`);
+    }
+  });
+}
+
+/** Modifier scopes must name things that exist, so a typo never silently disables a buff. */
+function checkModifiers(
+  c: Pick<Content, 'resources' | 'trees' | 'mines' | 'dungeons' | 'portals' | 'cosmetics' | 'sets'>,
+  issues: string[],
+): void {
+  const known = {
+    producer: new Set([...c.trees, ...c.mines].map((x) => x.id)),
+    resource: new Set(c.resources.map((x) => x.id)),
+    dungeon: new Set(c.dungeons.map((x) => x.id)),
+    portal: new Set(c.portals.map((x) => x.id)),
+  };
+  const check = (where: string, modifiers: ModifierData[]): void => {
+    modifiers.forEach((m, j) => {
+      for (const key of ['producer', 'resource', 'dungeon', 'portal'] as const) {
+        const value = m.scope?.[key];
+        if (value !== undefined && !known[key].has(value)) {
+          issues.push(`${where} › [${j}] › scope › ${key}: unknown ${key} "${value}"`);
+        }
+      }
+    });
+  };
+  c.cosmetics.forEach((x, i) =>
+    check(`cosmetics.json › [${i}] › ownedModifiers`, x.ownedModifiers),
+  );
+  c.sets.forEach((x, i) => check(`sets.json › [${i}] › modifiers`, x.modifiers));
 }
 
 function checkReferences(
@@ -259,5 +321,6 @@ export function loadContent(): Content {
     portals: portalsJson,
     rarities: raritiesJson,
     wearRules: wearRulesJson,
+    sets: setsJson,
   });
 }

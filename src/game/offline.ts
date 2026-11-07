@@ -2,10 +2,22 @@ import type { Content } from '../data';
 import { Decimal } from './num';
 import type { Rng } from './rng';
 import type { GameState } from './state';
+import { collectModifiers, statValue } from './modifiers';
 import { advanceChunked } from './tick';
 
-/** Offline progress is capped at 8 hours. */
+/** Base offline cap (8 hours). The offline.capHours modifiers can raise it. */
 export const OFFLINE_CAP_MS = 8 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+
+/** The offline cap for this state, after modifiers. Never below zero. */
+export function offlineCapMs(state: GameState, content: Content): number {
+  const hours = statValue(
+    'offline.capHours',
+    OFFLINE_CAP_MS / HOUR_MS,
+    collectModifiers(state, content),
+  );
+  return Math.max(0, hours.toNumber()) * HOUR_MS;
+}
 /** Below this, nothing is simulated and no summary is shown. */
 export const MIN_OFFLINE_MS = 10_000;
 const OFFLINE_CHUNK_MS = 60_000;
@@ -15,6 +27,8 @@ export interface OfflineSummary {
   elapsedMs: number;
   /** Time actually simulated (elapsed, capped). */
   simulatedMs: number;
+  /** The cap that applied. */
+  capMs: number;
   capped: boolean;
   /** Resource id -> amount gained while away (only positive gains). */
   gains: Record<string, Decimal>;
@@ -36,7 +50,8 @@ export function simulateOffline(
     return { state, summary: null };
   }
 
-  const simulatedMs = Math.min(elapsedMs, OFFLINE_CAP_MS);
+  const capMs = offlineCapMs(state, content);
+  const simulatedMs = Math.min(elapsedMs, capMs);
   const result = advanceChunked(state, content, simulatedMs, rng, OFFLINE_CHUNK_MS);
 
   const gains: Record<string, Decimal> = {};
@@ -50,7 +65,8 @@ export function simulateOffline(
     summary: {
       elapsedMs,
       simulatedMs,
-      capped: elapsedMs > OFFLINE_CAP_MS,
+      capMs,
+      capped: elapsedMs > capMs,
       gains,
       bossKills: result.report.bossKills,
       drops: result.report.drops,

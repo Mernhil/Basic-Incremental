@@ -26,6 +26,7 @@ import cosmetics from '../src/data/content/cosmetics.json';
 import portals from '../src/data/content/portals.json';
 import rarities from '../src/data/content/rarities.json';
 import wearRules from '../src/data/content/wearRules.json';
+import sets from '../src/data/content/sets.json';
 
 const MAIN = 'example_fighting_main';
 const r = (tier: Rank['tier'], stars: number): Rank => ({ tier, stars });
@@ -218,6 +219,7 @@ describe('invalid cosmetic data is rejected', () => {
       portals,
       rarities,
       wearRules,
+      sets,
     });
   const issues = (input: RawContent): string[] => {
     try {

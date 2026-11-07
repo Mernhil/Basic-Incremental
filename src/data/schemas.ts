@@ -59,6 +59,68 @@ export type Rarity = (typeof RARITIES)[number];
 export const MAIN_ABILITY_KINDS = ['ticks', 'bigHits', 'bursts'] as const;
 export const SUPPORT_EFFECT_KINDS = ['damageBonus', 'productionBonus', 'extraAttack'] as const;
 
+// ---- modifiers ---------------------------------------------------------------------------------
+
+/**
+ * Every tunable number in the game. Each one is computed by the modifier pipeline
+ * (src/game/modifiers.ts) from a base value plus modifiers from skill trees, owned items, sets,
+ * cards and prestige. Add a stat here before data can target it.
+ */
+export const STATS = [
+  /** Output per second of one plot/slot. Scope: job, producer, resource. */
+  'production.rate',
+  /** Damage per second dealt to bosses. Scope: dungeon. */
+  'combat.damage',
+  /** Boss max HP. Scope: dungeon. */
+  'combat.bossHp',
+  /** Chance per kill of the rare drop (clamped to 0..1). Scope: dungeon. */
+  'drops.rareChance',
+  /** Kills without the rare drop before it is guaranteed (rounded, at least 1). Scope: dungeon. */
+  'drops.pityThreshold',
+  /** Portal resource units per kill. Scope: dungeon, resource. */
+  'drops.portalAmount',
+  /** Offline progress cap in hours. */
+  'offline.capHours',
+  /** Account XP gained. Scope: job. */
+  'xp.account',
+  /** Card XP gained. Scope: job. */
+  'xp.card',
+  /** Loadout cost cap. Scope: job. */
+  'loadout.costCap',
+  /** Summons without the pity rarity before it is guaranteed. Scope: portal. */
+  'summon.pityThreshold',
+  /** Multiplier on resource costs (1 = normal price). Scope: resource. */
+  'cost.multiplier',
+] as const;
+export type Stat = (typeof STATS)[number];
+
+/**
+ * How a modifier combines. Applied in this fixed order:
+ * base -> flat (summed) -> percent (summed, then applied once) -> mult (multiplied together)
+ * -> set (last one wins, replaces the value) -> min / max (floors and caps).
+ */
+export const MODIFIER_KINDS = ['flat', 'percent', 'mult', 'set', 'min', 'max'] as const;
+export type ModifierKind = (typeof MODIFIER_KINDS)[number];
+
+/** Narrows a modifier to part of the game. Every key given must match; none = applies everywhere. */
+export const modifierScopeSchema = z.strictObject({
+  job: z.enum(JOBS).optional(),
+  producer: z.string().optional(),
+  resource: z.string().optional(),
+  dungeon: z.string().optional(),
+  portal: z.string().optional(),
+});
+export type ModifierScope = z.output<typeof modifierScopeSchema>;
+
+export const modifierSchema = z.strictObject({
+  stat: z.enum(STATS),
+  kind: z.enum(MODIFIER_KINDS),
+  /** "5" with kind percent = +5%; "2" with kind mult = x2; "-1" with kind flat = -1. */
+  value: decimal,
+  scope: modifierScopeSchema.optional(),
+});
+export type ModifierData = z.output<typeof modifierSchema>;
+
 export const RANK_TIERS = ['bronze', 'silver', 'gold', 'prismatic'] as const;
 export const MAX_STARS = 6;
 export const rankSchema = z.strictObject({
@@ -208,11 +270,8 @@ export const cosmeticSchema = z
     exclusiveCard: id.nullable(),
     /** The one item per slot a new game starts with and falls back to. */
     starter: z.boolean().default(false),
-    /** Small permanent buff granted just for owning it. */
-    ownedBuff: z.strictObject({
-      stat: z.enum(['damage', 'production']),
-      percent: z.number().min(0).max(100),
-    }),
+    /** Small permanent buffs granted just for owning it (worn or not). */
+    ownedModifiers: z.array(modifierSchema).default([]),
     /**
      * Upgrade levels, lowest first. Level N shows everything from levels 1..N merged, so each
      * level only lists what it adds or changes.
@@ -310,6 +369,13 @@ export const portalSchema = z.strictObject({
   pity: z.strictObject({ rarity: z.enum(RARITIES), threshold: z.number().int().min(1) }),
 });
 
+/** Bonus for equipping every item of a cosmetic set. */
+export const cosmeticSetSchema = z.strictObject({
+  id,
+  name,
+  modifiers: z.array(modifierSchema).default([]),
+});
+
 export const contentSchemas = {
   resources: z.array(resourceSchema),
   trees: z.array(treeSchema),
@@ -320,6 +386,7 @@ export const contentSchemas = {
   portals: z.array(portalSchema),
   rarities: z.array(rarityStyleSchema),
   wearRules: wearRulesSchema,
+  sets: z.array(cosmeticSetSchema),
 } as const;
 
 export type Resource = z.output<typeof resourceSchema>;
@@ -332,3 +399,4 @@ export type Portal = z.output<typeof portalSchema>;
 export type CosmeticLevel = z.output<typeof cosmeticLevelSchema>;
 export type RarityStyle = z.output<typeof rarityStyleSchema>;
 export type WearRules = z.output<typeof wearRulesSchema>;
+export type CosmeticSet = z.output<typeof cosmeticSetSchema>;

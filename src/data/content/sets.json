@@ -1,0 +1,15 @@
+[
+  {
+    "id": "gilded_nocturne",
+    "name": "Gilded Nocturne",
+    "modifiers": []
+  },
+  {
+    "id": "gilded_tradition",
+    "name": "Gilded Tradition",
+    "modifiers": [
+      { "stat": "combat.damage", "kind": "percent", "value": "3" },
+      { "stat": "production.rate", "kind": "percent", "value": "3" }
+    ]
+  }
+]

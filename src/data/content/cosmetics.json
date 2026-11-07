@@ -7,10 +7,7 @@
     "set": "gilded_nocturne",
     "exclusiveCard": null,
     "starter": true,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 0
-    },
+    "ownedModifiers": [],
     "levels": [
       {
         "tokens": {
@@ -38,10 +35,7 @@
     "set": "gilded_nocturne",
     "exclusiveCard": null,
     "starter": true,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 0
-    },
+    "ownedModifiers": [],
     "levels": [
       {
         "tokens": {
@@ -58,10 +52,7 @@
     "set": "gilded_nocturne",
     "exclusiveCard": null,
     "starter": true,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 0
-    },
+    "ownedModifiers": [],
     "levels": [
       {
         "effects": {
@@ -85,10 +76,7 @@
     "set": "gilded_nocturne",
     "exclusiveCard": null,
     "starter": true,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 0
-    },
+    "ownedModifiers": [],
     "levels": [
       {
         "effect": "rise",
@@ -109,10 +97,7 @@
     "set": "gilded_nocturne",
     "exclusiveCard": null,
     "starter": true,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 0
-    },
+    "ownedModifiers": [],
     "levels": [
       {
         "tokens": {
@@ -131,10 +116,7 @@
     "set": "gilded_nocturne",
     "exclusiveCard": null,
     "starter": true,
-    "ownedBuff": {
-      "stat": "production",
-      "percent": 0
-    },
+    "ownedModifiers": [],
     "levels": [
       {
         "tokens": {
@@ -154,10 +136,7 @@
     "set": "gilded_nocturne",
     "exclusiveCard": null,
     "starter": true,
-    "ownedBuff": {
-      "stat": "production",
-      "percent": 0
-    },
+    "ownedModifiers": [],
     "levels": [
       {
         "recipes": ["cursor-gilded"]
@@ -171,10 +150,13 @@
     "rarity": "legendary",
     "set": "gilded_tradition",
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 1
-    },
+    "ownedModifiers": [
+      {
+        "stat": "combat.damage",
+        "kind": "percent",
+        "value": "1"
+      }
+    ],
     "levels": [
       {
         "recipes": ["frame-tradition"],
@@ -202,10 +184,13 @@
     "rarity": "legendary",
     "set": "gilded_tradition",
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 1
-    },
+    "ownedModifiers": [
+      {
+        "stat": "combat.damage",
+        "kind": "percent",
+        "value": "1"
+      }
+    ],
     "levels": [
       {
         "recipes": ["holo-diamond"],
@@ -226,10 +211,13 @@
     "rarity": "legendary",
     "set": "gilded_tradition",
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 1
-    },
+    "ownedModifiers": [
+      {
+        "stat": "combat.damage",
+        "kind": "percent",
+        "value": "1"
+      }
+    ],
     "levels": [
       {
         "effects": {
@@ -252,10 +240,13 @@
     "rarity": "legendary",
     "set": "gilded_tradition",
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 1
-    },
+    "ownedModifiers": [
+      {
+        "stat": "combat.damage",
+        "kind": "percent",
+        "value": "1"
+      }
+    ],
     "levels": [
       {
         "effect": "rise",
@@ -275,10 +266,13 @@
     "rarity": "legendary",
     "set": "gilded_tradition",
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "production",
-      "percent": 1
-    },
+    "ownedModifiers": [
+      {
+        "stat": "production.rate",
+        "kind": "percent",
+        "value": "1"
+      }
+    ],
     "levels": [
       {
         "tokens": {
@@ -296,10 +290,13 @@
     "rarity": "legendary",
     "set": "gilded_tradition",
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "production",
-      "percent": 1
-    },
+    "ownedModifiers": [
+      {
+        "stat": "production.rate",
+        "kind": "percent",
+        "value": "1"
+      }
+    ],
     "levels": [
       {
         "tokens": {
@@ -318,10 +315,13 @@
     "rarity": "legendary",
     "set": "gilded_tradition",
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "production",
-      "percent": 1
-    },
+    "ownedModifiers": [
+      {
+        "stat": "production.rate",
+        "kind": "percent",
+        "value": "1"
+      }
+    ],
     "levels": [
       {
         "recipes": ["cursor-crimson"]
@@ -335,10 +335,13 @@
     "rarity": "rare",
     "set": null,
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 0.5
-    },
+    "ownedModifiers": [
+      {
+        "stat": "combat.damage",
+        "kind": "percent",
+        "value": "0.5"
+      }
+    ],
     "levels": [
       {
         "recipes": ["inner-gilt"],
@@ -359,10 +362,13 @@
     "rarity": "epic",
     "set": null,
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 1
-    },
+    "ownedModifiers": [
+      {
+        "stat": "combat.damage",
+        "kind": "percent",
+        "value": "1"
+      }
+    ],
     "levels": [
       {
         "recipes": ["filigree-1"]
@@ -382,10 +388,13 @@
     "rarity": "epic",
     "set": null,
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "production",
-      "percent": 1
-    },
+    "ownedModifiers": [
+      {
+        "stat": "production.rate",
+        "kind": "percent",
+        "value": "1"
+      }
+    ],
     "levels": [
       {
         "recipes": ["holo-aurora"],
@@ -418,10 +427,13 @@
     "rarity": "rare",
     "set": null,
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 0.5
-    },
+    "ownedModifiers": [
+      {
+        "stat": "combat.damage",
+        "kind": "percent",
+        "value": "0.5"
+      }
+    ],
     "levels": [
       {
         "recipes": ["holo-hex"],
@@ -442,10 +454,13 @@
     "rarity": "rare",
     "set": null,
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "production",
-      "percent": 0.5
-    },
+    "ownedModifiers": [
+      {
+        "stat": "production.rate",
+        "kind": "percent",
+        "value": "0.5"
+      }
+    ],
     "levels": [
       {
         "recipes": ["holo-waves"],
@@ -466,10 +481,13 @@
     "rarity": "epic",
     "set": null,
     "exclusiveCard": null,
-    "ownedBuff": {
-      "stat": "production",
-      "percent": 0.5
-    },
+    "ownedModifiers": [
+      {
+        "stat": "production.rate",
+        "kind": "percent",
+        "value": "0.5"
+      }
+    ],
     "levels": [
       {
         "recipes": ["cursor-prism"]
@@ -483,10 +501,13 @@
     "rarity": "mythic",
     "set": null,
     "exclusiveCard": "example_fighting_main",
-    "ownedBuff": {
-      "stat": "damage",
-      "percent": 2
-    },
+    "ownedModifiers": [
+      {
+        "stat": "combat.damage",
+        "kind": "percent",
+        "value": "2"
+      }
+    ],
     "levels": [
       {
         "recipes": ["crown"],

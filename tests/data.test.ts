@@ -9,6 +9,7 @@ import cosmetics from '../src/data/content/cosmetics.json';
 import portals from '../src/data/content/portals.json';
 import rarities from '../src/data/content/rarities.json';
 import wearRules from '../src/data/content/wearRules.json';
+import sets from '../src/data/content/sets.json';
 
 type PortalRaw = {
   cost: { resource: string };
@@ -27,6 +28,7 @@ function raw(overrides: Partial<RawContent> = {}): RawContent {
     portals,
     rarities,
     wearRules,
+    sets,
     ...overrides,
   });
 }
