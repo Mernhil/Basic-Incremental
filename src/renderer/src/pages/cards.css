@@ -138,7 +138,7 @@
   transform-origin: top left;
 }
 .cp-fit--locked > .bi-card {
-  filter: grayscale(1) brightness(0.42);
+  filter: grayscale(1) brightness(0.55);
 }
 
 .cp-badge,
@@ -307,12 +307,12 @@
   flex-wrap: wrap;
   gap: 8px;
 }
-.button--ghost {
+.button.button--ghost {
   background: transparent;
   color: var(--bi-frame-ink);
   box-shadow: inset 0 0 0 1px var(--bi-frame-title-line);
 }
-.button--ghost:hover:not(:disabled) {
+.button.button--ghost:hover:not(:disabled) {
   box-shadow: inset 0 0 0 1.5px var(--bi-chrome-accent);
 }
 
@@ -342,7 +342,7 @@
 .cp-slot:first-child .cp-slot__label {
   color: var(--bi-chrome-accent);
 }
-.cp-slot__remove {
+.button.cp-slot__remove {
   font-size: 12px;
   padding: 4px 10px;
 }

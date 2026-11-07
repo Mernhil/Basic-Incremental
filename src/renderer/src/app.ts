@@ -45,6 +45,8 @@ import { statTip } from './shell/stats';
 import { attachTooltip } from './shell/tooltip';
 import { createProductionPage } from './pages/production';
 import { createDungeonsPage } from './pages/dungeons';
+import { createCardsPage } from './pages/cards';
+import { createCardsModel } from './pages/cardsAdapter';
 
 const TICK_INTERVAL_MS = 100;
 const AUTOSAVE_INTERVAL_MS = 30_000;
@@ -152,6 +154,7 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
     onShow: (id) => {
       if (id === 'production') productionPage?.render();
       if (id === 'dungeons') dungeonsPage?.render();
+      if (id === 'cards') cardsPage?.render();
     },
   });
   shell.setLevel(1, 0, '');
@@ -159,9 +162,17 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   let productionPage: { render(): void } | undefined;
   // eslint-disable-next-line prefer-const -- assigned once the Home view exists
   let dungeonsPage: { render(): void } | undefined;
+  // eslint-disable-next-line prefer-const -- assigned once the Home view exists
+  let cardsPage: { render(): void } | undefined;
   const home = shell.page('home');
   for (const p of PAGES) {
-    if (p.id !== 'home' && p.id !== 'settings' && p.id !== 'production' && p.id !== 'dungeons')
+    if (
+      p.id !== 'home' &&
+      p.id !== 'settings' &&
+      p.id !== 'production' &&
+      p.id !== 'dungeons' &&
+      p.id !== 'cards'
+    )
       placeholderPage(shell.page(p.id), p.id);
   }
   const app = shell.notices;
@@ -346,6 +357,16 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
       void save(); // purchases are saved right away, not at the next autosave
     },
   });
+  cardsPage = createCardsPage(shell.page('cards'), {
+    content,
+    model: createCardsModel(content),
+    state: () => loop.state,
+    apply: (next) => {
+      loop.state = next;
+      rendered();
+      void save();
+    },
+  });
   dungeonsPage = createDungeonsPage(shell.page('dungeons'), {
     content,
     state: () => loop.state,
@@ -403,6 +424,7 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
     buildLoadout();
     if (shell.current() === 'production') productionPage?.render();
     if (shell.current() === 'dungeons') dungeonsPage?.render();
+    if (shell.current() === 'cards') cardsPage?.render();
   };
 
   /** Steps the loop and announces first clears. */

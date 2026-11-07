@@ -190,6 +190,34 @@ export const COPY = {
     emptySlot: 'Empty',
     chooseCard: 'Choose a card',
     jobLoadout: (job: string) => `${job} loadout`,
+    nextStar: (stars: number, tier: string) => `Next star: ${tier} ★${stars}`,
+    nextTier: (tier: string) => `Tier-up to ${tier} ★1`,
+    starNote: (cap: number) => `Adds a little power and raises the level cap to ${cap}.`,
+    starSixNote: (cap: number) =>
+      `★6 is a big power step and evolves the card's look. The level cap rises to ${cap}.`,
+    tierNote: (tier: string, cap: number) =>
+      `A big power step, ${tier.toLowerCase()} stars, and the level cap rises to ${cap}. Level carries over.`,
+    addStar: (price: string) => `Add star · ${price}`,
+    tierUp: (price: string) => `Tier up · ${price}`,
+    req: {
+      level: 'At its level cap',
+      levelValue: (have: string, need: string) => `Lv ${have} / ${need}`,
+      duplicate: 'Duplicate',
+      duplicates: (n: number) => (n === 1 ? '1 duplicate' : `${n} duplicates`),
+      of: (have: string, need: string) => `${have} of ${need}`,
+    },
+    reasons: {
+      unknown: "That card couldn't be found.",
+      'not-owned': "You don't own this card yet.",
+      'wrong-job': 'This card belongs to another job.',
+      duplicate: 'This card is already in that loadout.',
+      'over-cost-cap':
+        'That loadout would go over its cost cap. Remove a card or pick a cheaper one.',
+      'invalid-slot': 'This card is not in a loadout.',
+      unavailable: 'There is no upgrade for this card right now.',
+      requirements: 'Some requirements are not met yet.',
+      full: 'All 3 support slots are full. Remove a support first.',
+    },
   },
   dungeons: {
     listTitle: 'Dungeons',
