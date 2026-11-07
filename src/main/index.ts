@@ -5,6 +5,12 @@ import { IPC_CHANNELS } from '../preload/api';
 import { setupSaveIpc, saveBeforeClose } from './saves';
 import { setupAutoUpdates } from './updater';
 
+// Dev builds keep their own saves and settings, so running from source never touches the
+// installed game's save (which may be an older version that cannot read a newer save format).
+if (!app.isPackaged) {
+  app.setPath('userData', join(app.getPath('appData'), 'basic-incremental-dev'));
+}
+
 function createWindow(): void {
   const win = new BrowserWindow({
     width: 1280,
