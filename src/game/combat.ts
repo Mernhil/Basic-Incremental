@@ -338,6 +338,43 @@ export function signatureDamage(dps: Decimal, stats: BurstStats): Decimal {
   return hitDamage(dps, stats).mul(stats.power);
 }
 
+/**
+ * Average damage per second including signature attacks: a burst fires every size/fill hits and
+ * adds `power` hits' worth of damage, so it adds dps * power * fill / size on average.
+ */
+export function averageDamage(dps: Decimal, stats: BurstStats): Decimal {
+  if (stats.fill <= 0) return dps;
+  return dps.mul(stats.power.mul(stats.fill / stats.size).add(1));
+}
+
+/** Average seconds to defeat a dungeon's boss from full HP, or null when no damage is dealt. */
+export function secondsPerKill(
+  state: GameState,
+  content: Content,
+  dungeonId: string,
+  modifiers: readonly Modifier[] = collectModifiers(state, content),
+): number | null {
+  const dungeon = content.dungeonById.get(dungeonId);
+  if (!dungeon) return null;
+  const dps = effectiveDamage(state, content, dungeonId, modifiers);
+  if (dps.lte(0)) return null;
+  const avg = averageDamage(dps, burstStats(content, 'fighting', modifiers));
+  return bossMaxHp(dungeon, state.prestigeCount, modifiers).div(avg).toNumber();
+}
+
+/** What clearing a dungeon or special dungeon for the first time opens. */
+export function clearUnlocks(
+  content: Content,
+  id: string,
+): { dungeons: string[]; mines: string[] } {
+  return {
+    dungeons: [...content.dungeons, ...content.trials]
+      .filter((d) => d.unlockedBy === id)
+      .map((d) => d.id),
+    mines: content.mines.filter((m) => m.unlockedByDungeon === id).map((m) => m.id),
+  };
+}
+
 // ---- special dungeons ------------------------------------------------------------------------
 
 /** Share of the target's HP dealt, 0..1. */
