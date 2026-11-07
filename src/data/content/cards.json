@@ -1,0 +1,18 @@
+[
+  {
+    "id": "example_fighting_main",
+    "name": "Example Fighter",
+    "job": "fighting",
+    "rarity": "common",
+    "role": "main",
+    "mainAbility": { "kind": "ticks", "multiplier": "1", "intervalSeconds": 1 }
+  },
+  {
+    "id": "example_fighting_support",
+    "name": "Example Sidekick",
+    "job": "fighting",
+    "rarity": "rare",
+    "role": "support",
+    "supportEffect": { "kind": "damageBonus", "value": "0.1" }
+  }
+]

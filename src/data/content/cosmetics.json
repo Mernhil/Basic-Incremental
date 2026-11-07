@@ -1,0 +1,11 @@
+[
+  {
+    "id": "example_cosmetic",
+    "name": "Example Foil Finish",
+    "slot": "cardFinish",
+    "rarity": "rare",
+    "set": "example_set",
+    "exclusiveCard": "example_fighting_main",
+    "ownedBuff": { "stat": "damage", "percent": 1 }
+  }
+]

@@ -1,0 +1,5 @@
+[
+  { "id": "example_wood", "name": "Example Wood", "kind": "wood", "tier": 1 },
+  { "id": "example_ore", "name": "Example Ore", "kind": "ore", "tier": 1 },
+  { "id": "example_portal_shard", "name": "Example Portal Shard", "kind": "portal", "tier": 1 }
+]

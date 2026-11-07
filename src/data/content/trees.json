@@ -1,0 +1,11 @@
+[
+  {
+    "id": "example_tree",
+    "name": "Example Tree",
+    "tier": 1,
+    "resource": "example_wood",
+    "baseRate": "1",
+    "startPlots": 1,
+    "cost": [{ "resource": "example_wood", "amount": "50" }]
+  }
+]

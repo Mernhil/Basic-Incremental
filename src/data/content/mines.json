@@ -1,0 +1,12 @@
+[
+  {
+    "id": "example_mine",
+    "name": "Example Mine",
+    "tier": 1,
+    "resource": "example_ore",
+    "baseRate": "0.5",
+    "startPlots": 0,
+    "cost": [{ "resource": "example_ore", "amount": "100" }],
+    "unlockedByDungeon": "example_dungeon"
+  }
+]
