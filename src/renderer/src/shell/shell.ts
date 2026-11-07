@@ -170,8 +170,8 @@ export function createShell(opts: {
   // Start every launch at the top of the page.
   requestAnimationFrame(() => (main.scrollTop = 0));
 
-  // Below this width the sidebar shows icons only.
-  const narrow = window.matchMedia('(max-width: 1000px)');
+  // Below this width the sidebar shows icons only (the window can shrink to 1024px).
+  const narrow = window.matchMedia('(max-width: 1120px)');
   const applyNarrow = (): void => {
     el.classList.toggle('shell--narrow', narrow.matches);
   };
