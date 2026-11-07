@@ -28,7 +28,8 @@ for (const [name, hash] of combos) {
     for (const a of document.getAnimations()) {
       a.pause();
       const n = a.animationName;
-      a.currentTime = hit.has(n) ? 160 : n === 'tick-rise' ? 600 : 1200;
+      const frame = a.effect?.target?.closest?.('[data-t]');
+      a.currentTime = frame ? Number(frame.dataset.t) : hit.has(n) ? 160 : n === 'tick-rise' ? 600 : 1200;
     }
   });
   await page.screenshot({ path: join(out, `${pageName}-${name}.png`), fullPage: true });

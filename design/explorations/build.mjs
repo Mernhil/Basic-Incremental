@@ -141,6 +141,27 @@ const directions = [
       ['Table', 'Plain (pick below)'],
     ],
   },
+  {
+    file: 'd3-attacks-holo-rarity.html',
+    css: 'd-hybrid.css',
+    extraCss: ['f-attacks.css'],
+    controls: 'hybrid',
+    layout: 'attacks',
+    name: 'Attacks, holo and rarity',
+    blurb: 'Starter attack per job, quieter animated holos, rarity colours and the cursor slot.',
+    fonts: [
+      face('Outfit', 'outfit', 500),
+      face('Outfit', 'outfit', 600),
+      face('Outfit', 'outfit', 700),
+      face('Outfit', 'outfit', 800),
+    ],
+    slots: [
+      ['Attack animation', 'Slash (fighting, logging), Heavy hit (mining)'],
+      ['Card finish', 'Four holo candidates'],
+      ['Cursor', 'Gilded pointer'],
+      ['Table', 'Plain (pick below)'],
+    ],
+  },
 ];
 
 // ---- tiny flat emblems used as art placeholders -------------------------------------------
@@ -152,6 +173,8 @@ const emblems = {
   gem: '<path d="M30 16H70L90 40 50 90 10 40Z"/>',
   drum: '<ellipse cx="50" cy="32" rx="34" ry="12"/><path d="M16 32V70C16 78 32 86 50 86S84 78 84 70V32C84 40 68 44 50 44S16 40 16 32Z"/>',
   golem: '<rect x="22" y="20" width="56" height="48" rx="8"/><rect x="34" y="72" width="12" height="18" rx="3"/><rect x="54" y="72" width="12" height="18" rx="3"/>',
+  rock: '<path d="M14 70 26 38 46 26 70 30 86 52 82 76 54 86 28 84Z"/><path d="M40 44 52 52 46 64M62 42 70 56"/>',
+  tree: '<path d="M50 10 76 46H62L82 70H18L38 46H24Z"/><rect x="44" y="70" width="12" height="20" rx="2"/>',
 };
 const art = (kind) =>
   `<svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true">${emblems[kind]}</svg>`;
@@ -178,10 +201,10 @@ function card(opts) {
     : html;
 }
 
-function cardHtml({ name, job, role, emblem, tone, tier, count, power, rate, extra = '', finish = '', cls = '' }) {
+function cardHtml({ name, job, role, emblem, tone, tier, count, power, rate, extra = '', finish = '', cls = '', rar = '' }) {
   const six = count === 6 ? ' is-star6' : '';
   return `
-  <article class="card rank-${tier}${six} job-${job.toLowerCase()} tone-${tone}${finish ? ` finish-${finish}` : ''} ${cls}">
+  <article class="card rank-${tier}${six} job-${job.toLowerCase()} tone-${tone}${finish ? ` finish-${finish}` : ''}${rar ? ` rar-${rar}` : ''} ${cls}">
     <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
     <span class="card__finish" aria-hidden="true"></span>
     <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
@@ -265,6 +288,83 @@ function picker(kind) {
     (hybrid ? ornament : fonts) +
     `</aside><script>${PICKER_SCRIPT}</script>`
   );
+}
+
+// Freezes every animation inside an element with data-t at that many milliseconds, so a
+// filmstrip of the same attack can show several moments side by side.
+const FRAME_SCRIPT = `
+for (const el of document.querySelectorAll('[data-t]')) {
+  for (const a of el.getAnimations({ subtree: true })) {
+    a.pause();
+    a.currentTime = Number(el.dataset.t);
+  }
+}`;
+
+// One attack "stage": the boss art window with three automatic hits per 2.4 s cycle.
+// Each hit has its own angle and position (in game these would be randomised per hit).
+const HITS = [
+  { dx: -12, dy: -16, r: -28, d: 0 },
+  { dx: 16, dy: 18, r: 18, d: 0.6 },
+  { dx: 4, dy: -2, r: -68, d: 1.2 },
+];
+const PARTICLES = [
+  [-34, -26],
+  [30, -30],
+  [-26, 28],
+  [38, 22],
+];
+
+function stage(kind, t) {
+  const emblem = kind === 'mining' ? 'rock' : kind === 'logging' ? 'tree' : 'golem';
+  const hits = HITS.map(({ dx, dy, r, d }) => {
+    const parts = PARTICLES.map(([sx, sy]) => `<i class="p" style="--sx:${sx}px;--sy:${sy}px"></i>`).join('');
+    const body =
+      kind === 'mining'
+        ? `<i class="dust"></i><i class="flash"></i><i class="burst"></i><i class="ring"></i>${parts}`
+        : `<i class="slash"></i>${parts}`;
+    return `<div class="hit" style="--dx:${dx}px;--dy:${dy}px;--r:${r}deg;--d:${d}s">${body}</div>`;
+  }).join('');
+  return `<div class="stage stage--${kind}"${t === undefined ? '' : ` data-t="${t}"`}>${art(emblem)}${hits}</div>`;
+}
+
+function attackSections() {
+  const section = (id, title, inner, note = '') =>
+    `\n  <section aria-labelledby="${id}">\n    <h2 id="${id}" class="section-title">${title}</h2>${note ? `\n    <p class="note">${note}</p>` : ''}\n    <div class="row">${inner}</div>\n  </section>`;
+  const fig = (inner, label) => `<figure class="labeled">${inner}<figcaption>${label}</figcaption></figure>`;
+  const strip = (kind) =>
+    [
+      fig(stage(kind), 'Live'),
+      fig(stage(kind, 12), 'Appears'),
+      fig(stage(kind, 90), 'Full'),
+      fig(stage(kind, 300), 'Fading'),
+      fig(stage(kind, 640), 'Next hit, new angle'),
+    ].join('');
+  const silver = (finish, label) =>
+    card({ name: 'Aurora Fang', job: 'Fighting', emblem: 'gem', tone: 'b', tier: 'silver', count: 3, power: '3.3K', rate: '1.1s', cls: finish, label, rar: 'epic' });
+  const rarities = [
+    ['common', 'Common'],
+    ['rare', 'Rare'],
+    ['epic', 'Epic'],
+    ['legendary', 'Legendary'],
+    ['mythic', 'Mythic (neon pink)'],
+    ['exotic', 'Exotic (neon orange)'],
+    ['void', 'Void (metallic black)'],
+  ];
+  const cursors = [
+    ['cursor-starter', 'Gilded pointer (starter)'],
+    ['cursor-prism', 'Prism pointer (unlockable example)'],
+  ]
+    .map(([cls, label]) => fig(`<div class="cursor-tile"><i class="cursor-preview ${cls}"></i></div>`, label))
+    .join('');
+
+  return [
+    section('a1', 'Fighting: slash at changing angles, with sparks', strip('fighting'), 'Three automatic hits, then a short pause. Each slash appears, thins and fades in about a quarter of a second.'),
+    section('a2', 'Mining: a heavy hit (shockwave, cracks, rock chips, dust)', strip('mining')),
+    section('a3', 'Logging: the same slash, with wood chips', strip('logging')),
+    section('h1', 'Holo finishes: animated, quieter, patterned', [silver('', 'No finish'), silver('finish-etched', 'Etched lines'), silver('finish-glitter', 'Starlight grain'), silver('finish-shards', 'Prism shards'), silver('finish-moire', 'Moiré rings')].join(''), 'Colour only appears where the moving light crosses the pattern; the rest stays silver.'),
+    section('r1', 'Rarity colours the card body', rarities.map(([r, label]) => card({ name: 'Gilded Edge', job: 'Fighting', emblem: 'blade', tone: 'a', tier: 'gold', count: 4, power: '9.6K', rate: '1.0s', rar: r, label })).join('')),
+    section('c1', 'Cursor (new cosmetic slot)', cursors, 'The starter cursor is active on this page.'),
+  ].join('\n');
 }
 
 // Sections for the upgradable-cosmetics showcase.
@@ -351,7 +451,9 @@ ${own}
 ${
   d.layout === 'upgrades'
     ? upgradeSections()
-    : `
+    : d.layout === 'attacks'
+      ? attackSections()
+      : `
   <section aria-labelledby="s1">
     <h2 id="s1" class="section-title">Battle</h2>
     <div class="row row--battle">${boss()}<div class="row">${loadout}</div></div>
@@ -369,6 +471,7 @@ ${
 }
 </main>
 ${d.controls ? picker(d.controls) : ''}
+${d.layout === 'attacks' ? `<script>${FRAME_SCRIPT}</script>` : ''}
 </body>
 </html>
 `;

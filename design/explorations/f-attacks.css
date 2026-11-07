@@ -1,0 +1,157 @@
+/* Starter attack animations, quieter holo finishes, rarity colours and the cursor slot.
+   Layered over d-hybrid.css (Gilded Nocturne). */
+
+.note { margin: -6px 0 14px; max-width: 70ch; font-size: 14px; color: var(--on-table-muted); }
+.row { gap: 26px; }
+.labeled { gap: 12px; }
+
+/* ===== attack stage ======================================================================= */
+.stage { --size: 200px; position: relative; width: var(--size); height: var(--size); flex: none; overflow: hidden; border-radius: 10px;
+  display: grid; place-items: center; box-shadow: inset 0 0 0 1px rgba(217, 179, 90, 0.5);
+  background: radial-gradient(circle at 50% 42%, rgba(147, 166, 187, 0.22), transparent 70%), #0d121b; }
+.stage .art__emblem { width: 50%; height: 50%; }
+.hit { position: absolute; inset: 0; pointer-events: none; }
+.hit > * { position: absolute; left: 50%; top: 50%; opacity: 0; }
+.stage--fighting, .stage--logging { --glow: rgba(255, 222, 150, 0.9); --edge: #f3dc9a; }
+.stage--logging { --glow: rgba(214, 255, 190, 0.8); --edge: #e7f5c8; }
+.stage--fighting .hit, .stage--logging .hit { filter: drop-shadow(0 0 5px var(--glow)); }
+
+/* the slash: a crescent blade-light that draws in, thins and fades */
+.slash { width: 168px; height: 26px; margin: -13px 0 0 -84px;
+  background: linear-gradient(90deg, transparent 2%, rgba(255, 255, 255, 0.95) 30%, var(--edge) 68%, transparent 98%);
+  clip-path: polygon(0% 64%, 14% 38%, 32% 20%, 50% 13%, 68% 20%, 86% 38%, 100% 64%, 86% 52%, 68% 42%, 50% 39%, 32% 42%, 14% 52%);
+  transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scaleX(0);
+  animation: slash 2.4s cubic-bezier(0.2, 0.75, 0.25, 1) var(--d) infinite; }
+@keyframes slash {
+  0% { opacity: 1; transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(0.1, 1); }
+  4% { opacity: 1; transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(1, 1); }
+  11% { opacity: 0.85; transform: translate(calc(var(--dx) + 3px), calc(var(--dy) + 3px)) rotate(var(--r)) scale(1.06, 0.5); }
+  19%, 100% { opacity: 0; transform: translate(calc(var(--dx) + 5px), calc(var(--dy) + 5px)) rotate(var(--r)) scale(1.1, 0.12); }
+}
+
+/* sparks (fighting) */
+.p { width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: #fff6d6; box-shadow: 0 0 6px 1px var(--glow, #fff);
+  transform: translate(var(--dx), var(--dy)); animation: spark 2.4s ease-out var(--d) infinite; }
+@keyframes spark {
+  0%, 2% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1); }
+  4% { opacity: 1; }
+  16%, 100% { opacity: 0; transform: translate(calc(var(--dx) + var(--sx)), calc(var(--dy) + var(--sy))) scale(0.3); }
+}
+
+/* wood chips (logging): tumble out and fall */
+.stage--logging .p { width: 7px; height: 3px; border-radius: 1px; background: #c99a5b; box-shadow: 0 0 0 1px rgba(60, 35, 10, 0.5); animation-name: chip; }
+@keyframes chip {
+  0%, 2% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(0deg); }
+  4% { opacity: 1; }
+  15% { opacity: 1; transform: translate(calc(var(--dx) + var(--sx)), calc(var(--dy) + var(--sy))) rotate(200deg); }
+  32%, 100% { opacity: 0; transform: translate(calc(var(--dx) + var(--sx) * 1.4), calc(var(--dy) + var(--sy) + 48px)) rotate(420deg); }
+}
+
+/* heavy hit (mining): shockwave ring, crack burst, dust, rock chips */
+.ring { width: 40px; height: 40px; margin: -20px; border-radius: 50%; border: 3px solid #fff1c9;
+  box-shadow: 0 0 12px rgba(255, 196, 110, 0.75), inset 0 0 8px rgba(255, 196, 110, 0.6);
+  transform: translate(var(--dx), var(--dy)) scale(0.2); animation: ring 2.4s cubic-bezier(0.1, 0.7, 0.3, 1) var(--d) infinite; }
+@keyframes ring {
+  0% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(0.2); }
+  13%, 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(2.3); }
+}
+.burst { width: 96px; height: 96px; margin: -48px;
+  background: repeating-conic-gradient(from var(--r), #fff3d0 0 4deg, transparent 4deg 40deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 26%, #000 28% 47%, transparent 50%); mask: radial-gradient(circle, transparent 0 26%, #000 28% 47%, transparent 50%);
+  transform: translate(var(--dx), var(--dy)) scale(0.5); animation: burst 2.4s ease-out var(--d) infinite; }
+@keyframes burst {
+  0% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(0.5); }
+  6% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(1); }
+  13%, 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.25); }
+}
+.dust { width: 84px; height: 84px; margin: -42px; border-radius: 50%; filter: blur(5px);
+  background: radial-gradient(circle, rgba(190, 186, 176, 0.6), transparent 70%);
+  transform: translate(var(--dx), var(--dy)) scale(0.4); animation: dust 2.4s ease-out var(--d) infinite; }
+@keyframes dust {
+  0% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.4); }
+  3% { opacity: 0.8; }
+  30%, 100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) - 10px)) scale(1.7); }
+}
+.stage--mining .p { width: 7px; height: 6px; margin: -3px; border-radius: 1px; background: #9a9ca6; box-shadow: none;
+  clip-path: polygon(0 30%, 40% 0, 100% 20%, 80% 100%, 20% 90%); animation-name: chip; }
+
+/* the target reacts on each hit (hits at 0, 0.6 and 1.2 s of the 2.4 s cycle) */
+.stage--fighting .art__emblem, .stage--logging .art__emblem { animation: flinch 2.4s ease-out infinite; }
+@keyframes flinch {
+  0%, 25%, 50% { filter: brightness(2) drop-shadow(0 0 8px #fff); transform: translateX(3px); }
+  5%, 30%, 55% { filter: none; transform: translateX(-2px); }
+  9%, 34%, 59%, 100% { filter: none; transform: none; }
+}
+.stage--mining .art__emblem { animation: thud 2.4s ease-out infinite; transform-origin: 50% 85%; }
+@keyframes thud {
+  0%, 25%, 50% { transform: scale(1.1, 0.84); filter: brightness(1.8); }
+  4%, 29%, 54% { transform: scale(0.95, 1.06); filter: none; }
+  8%, 33%, 58%, 100% { transform: none; filter: none; }
+}
+.stage--mining { animation: shake 2.4s linear infinite; }
+@keyframes shake {
+  0%, 25%, 50% { transform: translate(0, 3px); }
+  2%, 27%, 52% { transform: translate(-2px, -2px); }
+  4%, 29%, 54% { transform: translate(1px, 1px); }
+  6%, 31%, 56%, 100% { transform: none; }
+}
+
+/* ===== holo finishes: colour only where moving light meets the pattern =================== */
+.card[class*='finish-'] .card__art::after { content: ''; position: absolute; inset: 0; z-index: 2; mix-blend-mode: screen; pointer-events: none;
+  background:
+    linear-gradient(110deg, transparent 28%, rgba(196, 228, 255, 0.9) 43%, rgba(255, 214, 238, 0.9) 50%, rgba(255, 238, 196, 0.85) 57%, transparent 72%) 0 0 / 300% 100% no-repeat,
+    rgba(255, 255, 255, 0.06);
+  animation: holo-sweep 4.6s ease-in-out infinite alternate; }
+@keyframes holo-sweep { from { background-position: 100% 0, 0 0; } to { background-position: 0% 0, 0 0; } }
+
+.finish-etched .card__art::after {
+  -webkit-mask: repeating-linear-gradient(62deg, #000 0 1px, transparent 1px 4px); mask: repeating-linear-gradient(62deg, #000 0 1px, transparent 1px 4px); }
+
+.finish-glitter .card__art::after {
+  --dots: radial-gradient(circle, #000 0 1px, transparent 1.6px) 0 0 / 13px 11px, radial-gradient(circle, #000 0 1.2px, transparent 1.8px) 6px 5px / 17px 19px;
+  -webkit-mask: var(--dots); mask: var(--dots);
+  animation: holo-sweep 4.6s ease-in-out infinite alternate, glitter 1.3s steps(2) infinite; }
+@keyframes glitter { 50% { filter: brightness(1.5) hue-rotate(25deg); } }
+
+.finish-shards .card__art::after {
+  --facets: repeating-conic-gradient(from 8deg at 32% 28%, #000 0 1.5deg, transparent 1.5deg 9deg, rgba(0, 0, 0, 0.5) 9deg 10deg, transparent 10deg 17deg);
+  -webkit-mask: var(--facets); mask: var(--facets); animation-duration: 6s; }
+
+.finish-moire .card__art::after {
+  --rings: repeating-radial-gradient(circle at 12% 115%, #000 0 1px, transparent 1px 5px), repeating-radial-gradient(circle at 88% 115%, #000 0 1px, transparent 1px 5px);
+  -webkit-mask: var(--rings); mask: var(--rings); animation-duration: 5.5s; }
+
+/* ===== rarity colours the card body ======================================================= */
+.card.rar-common { --frame: #2a2f38; }
+.card.rar-rare { --frame: #16294d; }
+.card.rar-epic { --frame: #2c1a4f; }
+.card.rar-legendary { --frame: #4a2b0d; }
+/* advanced rarities: neon tubes inside the body, and black chrome */
+.card.rar-mythic, .card.rar-exotic { --frame: #1d0d19; background-image: radial-gradient(130% 70% at 50% -10%, var(--neon-soft), transparent 60%);
+  --ornament: inset 0 0 0 3px var(--frame), inset 0 0 0 4.5px var(--neon), inset 0 0 16px var(--neon-soft); }
+.card.rar-mythic { --neon: #ff3fb4; --neon-soft: rgba(255, 63, 180, 0.42); }
+.card.rar-exotic { --frame: #1f1108; --neon: #ff8a1f; --neon-soft: rgba(255, 138, 31, 0.42); }
+.card.rar-mythic .card__head, .card.rar-exotic .card__head { box-shadow: inset 0 0 0 1px var(--neon), 0 0 10px var(--neon-soft); }
+.card.rar-void { --frame: #060708; --ornament: inset 0 0 0 3px var(--frame), inset 0 0 0 4px rgba(220, 228, 240, 0.45);
+  background-image: linear-gradient(125deg, #060708 0%, #3a3f49 16%, #060708 30%, #6b7280 46%, #0c0d10 58%, #2f333b 78%, #060708 100%);
+  background-size: 220% 100%; animation: chrome 7s ease-in-out infinite alternate; }
+@keyframes chrome { from { background-position: 0% 0; } to { background-position: 100% 0; } }
+
+.card.rar-void .card__head { box-shadow: inset 0 0 0 1px rgba(220, 228, 240, 0.55); }
+
+/* impact flash at the centre of a heavy hit */
+.flash { width: 70px; height: 70px; margin: -35px; border-radius: 50%; background: radial-gradient(circle, #fff 0 18%, rgba(255, 214, 140, 0.8) 34%, transparent 70%);
+  transform: translate(var(--dx), var(--dy)) scale(0.5); animation: flash-pop 2.4s ease-out var(--d) infinite; }
+@keyframes flash-pop { 0% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(0.5); } 7%, 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.5); } }
+.ring { border-width: 4px; }
+
+/* ===== cursor slot ======================================================================== */
+:root {
+  --cursor-starter: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M4 3 L25 15 L15 17 L11 27 Z' fill='%231a1410' stroke='%23f3dc9a' stroke-width='2' stroke-linejoin='round'/><path d='M8 8 L18 14' stroke='%23d9b35a' stroke-width='1' opacity='.7'/></svg>");
+  --cursor-prism: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23ff5f9e'/><stop offset='.35' stop-color='%23f4f46b'/><stop offset='.65' stop-color='%235fc6ff'/><stop offset='1' stop-color='%23b48cff'/></linearGradient></defs><path d='M4 3 L25 15 L15 17 L11 27 Z' fill='%23100c18' stroke='url(%23g)' stroke-width='2.4' stroke-linejoin='round'/></svg>");
+}
+body.dir { cursor: var(--cursor-starter) 4 3, auto; }
+.cursor-tile { display: grid; place-items: center; width: 140px; height: 110px; border-radius: 10px; background: #0d121b; box-shadow: inset 0 0 0 1px rgba(217, 179, 90, 0.4); }
+.cursor-preview { display: block; width: 64px; height: 64px; background: center / contain no-repeat; }
+.cursor-starter { background-image: var(--cursor-starter); }
+.cursor-prism { background-image: var(--cursor-prism); }

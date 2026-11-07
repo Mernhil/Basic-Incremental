@@ -52,3 +52,4 @@ node design/explorations/shoot-options.mjs c2-gilded-nocturne "navy-minimal=tabl
 ### Layer rule used from here on
 
 Rank visuals live outside the card edge (star-6 ring, prismatic ring, aura, motes) and on the stars. Cosmetics live inside the edge (decoration layer, art, finish overlay). The rank footer always sits above the finish overlay, so a cosmetic can never cover the stars.
+- `d3-attacks-holo-rarity.html`: starter attack per job (slash at changing angles for fighting and logging, heavy hit for mining) with filmstrips of key moments, four quieter animated holo finishes, a rarity colour ladder (common to void), and the cursor slot.
