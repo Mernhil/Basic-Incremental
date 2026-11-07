@@ -1,11 +1,12 @@
 import { contentSchemas } from './schemas';
-import type { Card, Cosmetic, Dungeon, Mine, Resource, Tree } from './schemas';
+import type { Card, Cosmetic, Dungeon, Mine, Portal, Resource, Tree } from './schemas';
 import resourcesJson from './content/resources.json';
 import treesJson from './content/trees.json';
 import minesJson from './content/mines.json';
 import cardsJson from './content/cards.json';
 import dungeonsJson from './content/dungeons.json';
 import cosmeticsJson from './content/cosmetics.json';
+import portalsJson from './content/portals.json';
 
 export * from './schemas';
 
@@ -16,6 +17,7 @@ export interface Content {
   cards: Card[];
   dungeons: Dungeon[];
   cosmetics: Cosmetic[];
+  portals: Portal[];
   resourceById: ReadonlyMap<string, Resource>;
   dungeonById: ReadonlyMap<string, Dungeon>;
 }
@@ -53,8 +55,8 @@ export function validateContent(raw: RawContent): Content {
   }
   if (issues.length > 0) throw new ContentValidationError(issues);
 
-  const { resources, trees, mines, cards, dungeons, cosmetics } = parsed;
-  checkReferences({ resources, trees, mines, cards, dungeons, cosmetics }, issues);
+  const { resources, trees, mines, cards, dungeons, cosmetics, portals } = parsed;
+  checkReferences({ resources, trees, mines, cards, dungeons, cosmetics, portals }, issues);
   if (issues.length > 0) throw new ContentValidationError(issues);
 
   return {
@@ -64,13 +66,17 @@ export function validateContent(raw: RawContent): Content {
     cards,
     dungeons,
     cosmetics,
+    portals,
     resourceById: new Map(resources.map((r) => [r.id, r])),
     dungeonById: new Map(dungeons.map((d) => [d.id, d])),
   };
 }
 
 function checkReferences(
-  c: Pick<Content, 'resources' | 'trees' | 'mines' | 'cards' | 'dungeons' | 'cosmetics'>,
+  c: Pick<
+    Content,
+    'resources' | 'trees' | 'mines' | 'cards' | 'dungeons' | 'cosmetics' | 'portals'
+  >,
   issues: string[],
 ): void {
   const duplicates = (file: string, items: { id: string }[]): void => {
@@ -86,6 +92,7 @@ function checkReferences(
   duplicates('cards', c.cards);
   duplicates('dungeons', c.dungeons);
   duplicates('cosmetics', c.cosmetics);
+  duplicates('portals', c.portals);
 
   const resources = new Map(c.resources.map((r) => [r.id, r]));
   const cardIds = new Set(c.cards.map((x) => x.id));
@@ -146,6 +153,27 @@ function checkReferences(
     }
   });
 
+  c.portals.forEach((portal, i) => {
+    const res = resources.get(portal.cost.resource);
+    if (!res) {
+      issues.push(
+        `portals.json › [${i}] › cost › resource: unknown resource "${portal.cost.resource}"`,
+      );
+    } else if (res.kind !== 'portal') {
+      issues.push(
+        `portals.json › [${i}] › cost › resource: "${portal.cost.resource}" is ${res.kind}, expected portal`,
+      );
+    }
+    const valid = portal.kind === 'cards' ? cardIds : cosmeticIds;
+    portal.pool.forEach((entry, j) => {
+      if (!valid.has(entry.itemId)) {
+        issues.push(
+          `portals.json › [${i}] › pool › [${j}] › itemId: "${entry.itemId}" is not a known ${portal.kind === 'cards' ? 'card' : 'cosmetic'}`,
+        );
+      }
+    });
+  });
+
   c.cosmetics.forEach((cosmetic, i) => {
     if (cosmetic.exclusiveCard && !cardIds.has(cosmetic.exclusiveCard)) {
       issues.push(
@@ -164,5 +192,6 @@ export function loadContent(): Content {
     cards: cardsJson,
     dungeons: dungeonsJson,
     cosmetics: cosmeticsJson,
+    portals: portalsJson,
   });
 }

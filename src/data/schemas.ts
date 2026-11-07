@@ -50,7 +50,22 @@ export const RARITIES = ['common', 'rare', 'epic', 'legendary'] as const;
 export const MAIN_ABILITY_KINDS = ['ticks', 'bigHits', 'bursts'] as const;
 export const SUPPORT_EFFECT_KINDS = ['damageBonus', 'productionBonus', 'extraAttack'] as const;
 
-const cardBase = { id, name, job: z.enum(JOBS), rarity: z.enum(RARITIES) };
+export const RANK_TIERS = ['bronze', 'silver', 'gold', 'prismatic'] as const;
+export const MAX_STARS = 6;
+export const rankSchema = z.strictObject({
+  tier: z.enum(RANK_TIERS),
+  stars: z.number().int().min(1).max(MAX_STARS),
+});
+export type Rank = z.output<typeof rankSchema>;
+
+const cardBase = {
+  id,
+  name,
+  job: z.enum(JOBS),
+  rarity: z.enum(RARITIES),
+  /** Rank a newly obtained copy starts at (Bronze ★1 unless stated). */
+  startRank: rankSchema.default({ tier: 'bronze', stars: 1 }),
+};
 
 export const cardSchema = z.discriminatedUnion('role', [
   z.strictObject({
@@ -129,6 +144,22 @@ export const cosmeticSchema = z.strictObject({
   }),
 });
 
+export const PORTAL_KINDS = ['cards', 'cosmetics'] as const;
+
+export const portalSchema = z.strictObject({
+  id,
+  name,
+  kind: z.enum(PORTAL_KINDS),
+  /** Portal resource (from specific dungeons) spent per summon, and how much. */
+  cost: z.strictObject({ resource: id, amount: positiveDecimal }),
+  /** The pool: one entry per item, picked by weight. Items must match the portal kind. */
+  pool: z
+    .array(z.strictObject({ itemId: id, rarity: z.enum(RARITIES), weight: z.number().positive() }))
+    .min(1),
+  /** Guarantee: after this many summons without this rarity or better, the next one is it. */
+  pity: z.strictObject({ rarity: z.enum(RARITIES), threshold: z.number().int().min(1) }),
+});
+
 export const contentSchemas = {
   resources: z.array(resourceSchema),
   trees: z.array(treeSchema),
@@ -136,6 +167,7 @@ export const contentSchemas = {
   cards: z.array(cardSchema),
   dungeons: z.array(dungeonSchema),
   cosmetics: z.array(cosmeticSchema),
+  portals: z.array(portalSchema),
 } as const;
 
 export type Resource = z.output<typeof resourceSchema>;
@@ -144,3 +176,4 @@ export type Mine = z.output<typeof mineSchema>;
 export type Card = z.output<typeof cardSchema>;
 export type Dungeon = z.output<typeof dungeonSchema>;
 export type Cosmetic = z.output<typeof cosmeticSchema>;
+export type Portal = z.output<typeof portalSchema>;

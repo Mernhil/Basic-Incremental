@@ -5,7 +5,11 @@
     "job": "fighting",
     "rarity": "common",
     "role": "main",
-    "mainAbility": { "kind": "ticks", "multiplier": "1", "intervalSeconds": 1 }
+    "mainAbility": {
+      "kind": "ticks",
+      "multiplier": "1",
+      "intervalSeconds": 1
+    }
   },
   {
     "id": "example_fighting_support",
@@ -13,6 +17,13 @@
     "job": "fighting",
     "rarity": "rare",
     "role": "support",
-    "supportEffect": { "kind": "damageBonus", "value": "0.1" }
+    "supportEffect": {
+      "kind": "damageBonus",
+      "value": "0.1"
+    },
+    "startRank": {
+      "tier": "silver",
+      "stars": 2
+    }
   }
 ]
