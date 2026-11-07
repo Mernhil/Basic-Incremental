@@ -22,6 +22,7 @@ import trees from '../src/data/content/trees.json';
 import mines from '../src/data/content/mines.json';
 import production from '../src/data/content/production.json';
 import cards from '../src/data/content/cards.json';
+import cardRules from '../src/data/content/cardRules.json';
 import dungeons from '../src/data/content/dungeons.json';
 import trials from '../src/data/content/trials.json';
 import combat from '../src/data/content/combat.json';
@@ -31,7 +32,7 @@ import rarities from '../src/data/content/rarities.json';
 import wearRules from '../src/data/content/wearRules.json';
 import sets from '../src/data/content/sets.json';
 
-const MAIN = 'example_fighting_main';
+const MAIN = 'dawnblade_regent';
 const r = (tier: Rank['tier'], stars: number): Rank => ({ tier, stars });
 const cardAt = (rank: Rank, id = MAIN) => ({ id, rank, rarity: 'epic' as const });
 
@@ -74,7 +75,7 @@ describe('equipping', () => {
       equipProblem(content, 'border', { id: 'gilded_filigree', level: 4 }),
       equipProblem(content, 'border', { id: 'gilded_filigree', level: 0 }),
       equipProblem(content, 'border', { id: 'ember_crown', level: 1 }),
-      equipProblem(content, 'border', { id: 'ember_crown', level: 1 }, 'example_fighting_support'),
+      equipProblem(content, 'border', { id: 'ember_crown', level: 1 }, 'shield_warden'),
       equipProblem(content, 'table', { id: 'gt_table', level: 1 }, MAIN),
     ];
     for (const problem of bad) expect(problem).toBeTypeOf('string');
@@ -120,11 +121,7 @@ describe('card-exclusive overrides', () => {
     expect(own.slots.border.cosmetic.id).toBe('ember_crown');
     expect(own.recipes).toContain('crown');
 
-    const other = resolveCard(
-      content,
-      withGlobal,
-      cardAt(r('prismatic', 6), 'example_fighting_support'),
-    );
+    const other = resolveCard(content, withGlobal, cardAt(r('prismatic', 6), 'shield_warden'));
     expect(other.slots.border.cosmetic.id).toBe('gilded_plate');
   });
 
@@ -218,6 +215,7 @@ describe('invalid cosmetic data is rejected', () => {
       mines,
       production,
       cards,
+      cardRules,
       dungeons,
       trials,
       combat,

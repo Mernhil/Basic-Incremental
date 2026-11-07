@@ -1,6 +1,7 @@
-import { COSMETIC_SLOTS, RARITIES, contentSchemas } from './schemas';
+import { COSMETIC_SLOTS, JOBS, RANK_TIERS, RARITIES, contentSchemas } from './schemas';
 import type {
   Card,
+  CardRules,
   CombatConfig,
   Cosmetic,
   CosmeticSet,
@@ -22,6 +23,7 @@ import treesJson from './content/trees.json';
 import minesJson from './content/mines.json';
 import productionJson from './content/production.json';
 import cardsJson from './content/cards.json';
+import cardRulesJson from './content/cardRules.json';
 import dungeonsJson from './content/dungeons.json';
 import trialsJson from './content/trials.json';
 import combatJson from './content/combat.json';
@@ -39,6 +41,8 @@ export interface Content {
   mines: Mine[];
   production: ProductionConfig;
   cards: Card[];
+  /** Card progression numbers (levels, star-ups, tier-ups, costs, drops). */
+  cardRules: CardRules;
   dungeons: Dungeon[];
   /** Special dungeons (strength tests). Their ids share the dungeon id space. */
   trials: Trial[];
@@ -100,6 +104,7 @@ export function validateContent(raw: RawContent): Content {
     mines,
     production,
     cards,
+    cardRules,
     dungeons,
     trials,
     combat,
@@ -114,7 +119,11 @@ export function validateContent(raw: RawContent): Content {
   checkProduction({ resources, trees, mines, production }, issues);
   checkCosmetics(cosmetics, rarities, issues);
   checkSets(cosmetics, sets, issues);
-  checkModifiers({ resources, trees, mines, dungeons, trials, portals, cosmetics, sets }, issues);
+  checkCards({ resources, cards, cardRules }, issues);
+  checkModifiers(
+    { resources, trees, mines, dungeons, trials, portals, cosmetics, sets, cards, cardRules },
+    issues,
+  );
   if (issues.length > 0) throw new ContentValidationError(issues);
 
   const starterBySlot = Object.fromEntries(
@@ -127,6 +136,7 @@ export function validateContent(raw: RawContent): Content {
     mines,
     production,
     cards,
+    cardRules,
     dungeons,
     trials,
     combat,
@@ -257,7 +267,16 @@ function checkSets(cosmetics: Cosmetic[], sets: CosmeticSet[], issues: string[])
 function checkModifiers(
   c: Pick<
     Content,
-    'resources' | 'trees' | 'mines' | 'dungeons' | 'trials' | 'portals' | 'cosmetics' | 'sets'
+    | 'resources'
+    | 'trees'
+    | 'mines'
+    | 'dungeons'
+    | 'trials'
+    | 'portals'
+    | 'cosmetics'
+    | 'sets'
+    | 'cards'
+    | 'cardRules'
   >,
   issues: string[],
 ): void {
@@ -281,6 +300,48 @@ function checkModifiers(
     check(`cosmetics.json › [${i}] › ownedModifiers`, x.ownedModifiers),
   );
   c.sets.forEach((x, i) => check(`sets.json › [${i}] › modifiers`, x.modifiers));
+  c.cards.forEach((x, i) => {
+    check(`cards.json › [${i}] › main › modifiers`, x.main.modifiers);
+    check(`cards.json › [${i}] › support › modifiers`, x.support.modifiers);
+  });
+  for (const job of JOBS) {
+    check(`cardRules.json › mainGrowth › ${job}`, c.cardRules.mainGrowth[job]);
+  }
+}
+
+/** Start cards, star-up and tier-up materials must exist; start cards lead distinct jobs. */
+function checkCards(c: Pick<Content, 'resources' | 'cards' | 'cardRules'>, issues: string[]): void {
+  const resources = new Set(c.resources.map((r) => r.id));
+  const cards = new Map(c.cards.map((x) => [x.id, x]));
+  const jobs = new Set<string>();
+  c.cardRules.startCards.forEach((id, i) => {
+    const where = `cardRules.json › startCards › [${i}]`;
+    const card = cards.get(id);
+    if (!card) return issues.push(`${where}: unknown card "${id}"`);
+    if (jobs.has(card.job)) issues.push(`${where}: a start card already leads ${card.job}`);
+    jobs.add(card.job);
+  });
+  const checkResource = (where: string, id: string): void => {
+    if (!resources.has(id)) issues.push(`${where}: unknown resource "${id}"`);
+  };
+  for (const tier of RANK_TIERS) {
+    const step = c.cardRules.starUp.tiers[tier];
+    checkResource(`cardRules.json › starUp › tiers › ${tier} › resource`, step.resource);
+    const caps = c.cardRules.levelCaps[tier];
+    if (caps.some((cap, i) => i > 0 && cap < caps[i - 1]!)) {
+      issues.push(`cardRules.json › levelCaps › ${tier}: caps must not go down`);
+    }
+  }
+  for (const tier of ['bronze', 'silver', 'gold'] as const) {
+    for (const job of JOBS) {
+      c.cardRules.tierUp[tier][job].forEach((cost, i) =>
+        checkResource(
+          `cardRules.json › tierUp › ${tier} › ${job} › [${i}] › resource`,
+          cost.resource,
+        ),
+      );
+    }
+  }
 }
 
 /** Dungeons, trials and damage upgrades must point at existing things of the right kind. */
@@ -451,6 +512,7 @@ export function loadContent(): Content {
     mines: minesJson,
     production: productionJson,
     cards: cardsJson,
+    cardRules: cardRulesJson,
     dungeons: dungeonsJson,
     trials: trialsJson,
     combat: combatJson,

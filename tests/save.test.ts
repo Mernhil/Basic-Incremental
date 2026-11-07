@@ -11,11 +11,11 @@ import {
   SaveError,
   serializeState,
 } from '../src/game';
-import { constantRng, content, freshState } from './helpers';
+import { constantRng, bareState, content, freshState } from './helpers';
 
 /** A state with non-trivial values everywhere. */
 function busyState() {
-  const strong = freshState();
+  const strong = bareState();
   strong.combat.damageLevels = { copper_edge: 4999 };
   // 5000 dps for 25 s plus one signature attack: 175,000 damage = 2 kills (2 rares) of 60,000 HP.
   let state = advance(strong, content, 25_000, constantRng(0.001)).state;
@@ -157,7 +157,7 @@ describe('save format v2: cosmetics', () => {
     state.cosmetics.owned['gilded_filigree'] = { level: 3, copies: 4 };
     state.cosmetics.loadout = {
       slots: { border: { id: 'gilded_filigree', level: 3 } },
-      cards: { example_fighting_main: { border: { id: 'ember_crown', level: 1 } } },
+      cards: { dawnblade_regent: { border: { id: 'ember_crown', level: 1 } } },
     };
     const loaded = readSave(createSaveText(state, NOW), content);
     expect(loaded.state.cosmetics).toEqual(state.cosmetics);

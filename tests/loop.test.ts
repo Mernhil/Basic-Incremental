@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { approxEq, GameLoop, MAX_STEP_MS } from '../src/game';
-import { constantRng, content, freshState } from './helpers';
+import { constantRng, bareState, content, freshState } from './helpers';
 
-function run(frameMs: number, totalMs: number): GameLoop {
-  const loop = new GameLoop(freshState(), content, constantRng(0.5), 0);
+function run(frameMs: number, totalMs: number, start = bareState): GameLoop {
+  const loop = new GameLoop(start(), content, constantRng(0.5), 0);
   for (let t = frameMs; t <= totalMs; t += frameMs) loop.step(t);
   loop.step(totalMs);
   return loop;
@@ -21,8 +21,26 @@ describe('GameLoop', () => {
     }
   });
 
+  it('is independent of frame rate while cards level up', () => {
+    const single = run(60_000, 60_000, freshState);
+    const feller = single.state.cards.owned['apprentice_feller']!;
+    expect(feller.level).toBeGreaterThan(3); // the main growth changed the rate along the way
+    for (const frameMs of [16, 250, 1000, 7000]) {
+      const loop = run(frameMs, 60_000, freshState);
+      for (const id of ['oak_wood', 'copper_ore']) {
+        expect(approxEq(loop.state.resources[id]!, single.state.resources[id]!)).toBe(true);
+      }
+      expect(approxEq(loop.state.bossHp!, single.state.bossHp!)).toBe(true);
+      for (const [id, card] of Object.entries(single.state.cards.owned)) {
+        const other = loop.state.cards.owned[id]!;
+        expect(other.level).toBe(card.level);
+        expect(approxEq(other.xp, card.xp)).toBe(true);
+      }
+    }
+  });
+
   it('never runs backwards when the clock jumps back', () => {
-    const loop = new GameLoop(freshState(), content, constantRng(0.5), 10_000);
+    const loop = new GameLoop(bareState(), content, constantRng(0.5), 10_000);
     loop.step(20_000);
     const before = loop.state;
     loop.step(5_000);

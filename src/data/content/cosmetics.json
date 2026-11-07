@@ -538,7 +538,7 @@
     "slot": "border",
     "rarity": "mythic",
     "set": null,
-    "exclusiveCard": "example_fighting_main",
+    "exclusiveCard": "dawnblade_regent",
     "ownedModifiers": [
       {
         "stat": "combat.damage",

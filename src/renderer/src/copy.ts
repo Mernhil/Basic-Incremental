@@ -47,6 +47,7 @@ export const COPY = {
     main: 'Main',
     support: 'Support',
     emptySlot: 'Empty support slot',
+    emptyMain: 'No main card',
     plots: (n: number) => (n === 1 ? '1 plot' : `${n} plots`),
     slots: (n: number) => (n === 1 ? '1 slot' : `${n} slots`),
     locked: (by: string) => `Unlocks from ${by}`,

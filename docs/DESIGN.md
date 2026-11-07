@@ -281,6 +281,35 @@ Decided with the user for Phase 5. Numbers live in data and will be tuned.
 - **Burst gauge.** The fighting job hits once per main-card interval (1 s while no card is equipped). Each hit fills the gauge by 1; at 20 the signature attack fires and deals **10× a hit** on top of the normal damage. Supports raise the fill per hit through modifiers.
 - **Harvest burst.** Each production job ticks once per second; each tick fills that job's gauge by 1; at 30 a bonus harvest gives **10 s of the job's output** from every plot / slot at once.
 
+### 11.9 Card rules
+
+Decided with the user for Phase 6 (roles, star and tier-up requirements, start). Numbers live in data and will be tuned.
+
+- **Any card in any slot.** Every card has a **main ability** (used when it leads its job) and a **support effect** (used in one of the 3 support slots). A card only goes into its own job's loadout, and once per loadout.
+- **Start.** A new game owns the three Common cards (Ember Squire, Apprentice Feller, Cave Digger) at Bronze ★1, Lv 1, each leading its job. Until the Summon portals arrive, every boss kill has a small chance (1%) to drop a random card, weighted towards lower rarities.
+- **Collection.** Each card is owned once, with its tier, stars, level and XP. Further copies are stored on it as **duplicates**.
+- **Levels (11.2).** Cards in a loadout gain XP by doing their job: fighting cards per boss kill (more for harder dungeons), logging and mining cards per unit harvested. The cap is 20 at Bronze ★1 and rises by 4 per star (Bronze ★6 = 40, Silver ★1–6 = 40–60, and so on). Each level adds a little to the main ability's power and the support effect's strength.
+- **Star-up** (★n → ★n+1 within a tier) needs **one duplicate**, the card **at its level cap** and **materials**: the tier's Core (Bronze: Moss Core, Silver: Cinder Core, Gold and Prismatic: Frost Core). The amount grows per star, and the step to **★6, which brings the visual evolution, costs about three times the step before it**. Each star adds a little power; ★6 adds a big step.
+- **Tier-up** (★6 → next tier ★1) needs the card **at its level cap** and: Bronze → Silver: Moss Cores + Ironwood (logging) or Iron Ore (mining, fighting); Silver → Gold: Cinder Cores + Moonwood or Crystal Ore; Gold → Prismatic: Frost Cores + Frost Sigils. Level and XP carry over, and the new tier raises the cap. Each tier adds a big power step.
+- **Shards.** A duplicate gained once a card is Prismatic ★6 turns into shards, more for higher rarities (Common 1, Rare 2, Epic 4, Legendary 8, Mythic 15, Exotic 25, Void 40).
+- **Cost (11.4).** By rarity: Common 2, Rare 3, Epic 5, Legendary 8, Mythic 12, Exotic 16, Void 20. Each job's cap is 6 at account level 1 and grows by 2 per level (`loadout.costCap`). The main card must fit; a loadout over the cap cannot be saved.
+- **Abilities.** Fighting mains shape how damage is dealt (steady ticks, fast hits that fill the gauge quickly, slow heavy hits with a stronger signature attack). Production mains shape output (steady, bigger harvest bursts, faster gauges). Supports add a percentage bonus or a gauge, drop or material bonus. All card effects go through the modifier pipeline with source kind `card`.
+
+| Job      | Card              | Rarity    | Main ability                                       | Support effect                     |
+| -------- | ----------------- | --------- | -------------------------------------------------- | ---------------------------------- |
+| Fighting | Ember Squire      | Common    | Steady hits every 1 s                              | +5% damage                         |
+| Fighting | Shield Warden     | Rare      | Steady hits every 1 s, +10% damage                 | +1 burst fill per hit              |
+| Fighting | Storm Duelist     | Epic      | Fast hits every 0.5 s, gauge fills twice as fast   | +12% damage                        |
+| Fighting | Dawnblade Regent  | Legendary | Heavy hits every 2 s, signature attack ×15         | +15% damage, +10% rare drop chance |
+| Logging  | Apprentice Feller | Common    | Steady output                                      | +5% logging                        |
+| Logging  | Grove Keeper      | Rare      | +10% logging                                       | +1 harvest-burst fill per tick     |
+| Logging  | Elder Treant      | Epic      | Harvest bursts give 15 s of output instead of 10 s | +12% logging                       |
+| Logging  | Moonwood Dryad    | Mythic    | +30% logging, harvest gauge fills faster           | +20% logging                       |
+| Mining   | Cave Digger       | Common    | Steady output                                      | +5% mining                         |
+| Mining   | Gem Cutter        | Rare      | +10% mining                                        | +1 harvest-burst fill per tick     |
+| Mining   | Geode Golem       | Legendary | Harvest bursts give 15 s of output, +15% mining    | +15% mining                        |
+| Mining   | Core Titan        | Exotic    | +40% mining, harvest gauge fills faster            | +25% mining, +5% Core drop chance  |
+
 ## 12. Defaults for underspecified points
 
 Points the decisions above leave open. These defaults apply until changed.

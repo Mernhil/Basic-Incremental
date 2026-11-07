@@ -1,10 +1,13 @@
-import { ContentValidationError, loadContent, type Card, type Content } from '../../data';
+import { ContentValidationError, loadContent, type Content } from '../../data';
 import {
   Decimal,
   GameLoop,
   SaveError,
-  baseDamage,
   bossMaxHp,
+  burstStats,
+  cardInfo,
+  effectiveDamage,
+  hitDamage,
   collectModifiers,
   damageStat as combatDamageStat,
   createInitialState,
@@ -24,7 +27,9 @@ import {
   resolveCard,
   resolveGlobal,
   simulateOffline,
+  type CardRole,
   type GameState,
+  type Modifier,
   type Producer,
   type ProductionJob,
   type OfflineSummary,
@@ -67,35 +72,36 @@ function awayLines(summary: OfflineSummary, content: Content): string[] {
     const name = content.cosmeticById.get(id)?.name ?? content.cardById.get(id)?.name ?? id;
     lines.push(COPY.away.drop(name, count));
   }
+  for (const drop of summary.cardDrops) {
+    lines.push(COPY.away.drop(content.cardById.get(drop.cardId)?.name ?? drop.cardId, 1));
+  }
   return lines;
 }
 
-const SUPPORT_LABELS = {
-  damageBonus: 'Damage',
-  productionBonus: 'Production',
-  extraAttack: 'Extra hits',
-} as const;
-
-function loadoutProps(content: Content, state: GameState, card: Card): CardProps {
-  const rank = card.startRank; // per-card ranks arrive with the card system
+/** A fighting loadout card on Home. Null when the card is unknown or not owned. */
+function loadoutProps(
+  content: Content,
+  state: GameState,
+  cardId: string,
+  role: CardRole,
+  mods: Modifier[],
+): CardProps | null {
+  const info = cardInfo(state, content, cardId, mods);
+  if (!info?.owned || !info.rank) return null;
+  const { card, rank } = info;
+  const level = { label: 'Level', value: `${info.owned.level}/${info.levelCap}` };
   const stats: CardProps['stats'] =
-    card.role === 'main'
+    role === 'main'
       ? [
-          {
-            label: 'Damage',
-            value: `${formatDecimal(baseDamage(state, content).mul(card.mainAbility.multiplier))}/s`,
-          },
-          { label: 'Hits every', value: `${card.mainAbility.intervalSeconds}s` },
+          level,
+          { label: 'Hits every', value: `${burstStats(content, 'fighting', mods).interval}s` },
         ]
-      : [
-          { label: 'Bonus', value: `+${formatDecimal(card.supportEffect.value.mul(100))}%` },
-          { label: 'To', value: SUPPORT_LABELS[card.supportEffect.kind] },
-        ];
+      : [level, { label: 'Bonus', value: card.support.description }];
   return {
     name: card.name,
-    label: card.role === 'main' ? COPY.table.main : COPY.table.support,
+    label: role === 'main' ? COPY.table.main : COPY.table.support,
     job: card.job,
-    emblem: card.role === 'main' ? 'blade' : 'gem',
+    emblem: role === 'main' ? 'blade' : 'gem',
     rank,
     stats,
     theme: resolveCard(content, state.cosmetics.loadout, {
@@ -247,21 +253,28 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   const loadout = frame(COPY.table.loadout);
   loadout.el.classList.add('table__loadout');
   const slots = h('div', 'loadout');
-  const main = content.cards.find((c) => c.job === 'fighting' && c.role === 'main');
-  const supports = content.cards
-    .filter((c) => c.job === 'fighting' && c.role === 'support')
-    .slice(0, 3);
-  const cardViews: Array<{ view: CardView; card: Card }> = [];
-  for (const card of [main, ...supports]) {
-    if (!card) continue;
-    const view = createCard(loadoutProps(content, loop.state, card));
-    cardViews.push({ view, card });
-    slots.append(view.el);
-  }
-  for (let i = supports.length; i < 3; i++) {
-    const empty = h('div', 'slot-empty', COPY.table.emptySlot);
-    slots.append(empty);
-  }
+  // Rebuilt whenever the fighting loadout or one of its cards' rank / level changes.
+  let loadoutKey = '';
+  const buildLoadout = (): void => {
+    const s = loop.state;
+    const { main, supports } = s.cards.loadouts.fighting;
+    const key = JSON.stringify(
+      [main, ...supports].map((id) => {
+        const owned = id ? s.cards.owned[id] : undefined;
+        return owned ? [id, owned.tier, owned.stars, owned.level] : null;
+      }),
+    );
+    if (key === loadoutKey) return;
+    loadoutKey = key;
+    const mods = collectModifiers(s, content);
+    const views = [main, ...supports].map((id, i) => {
+      const props = id ? loadoutProps(content, s, id, i === 0 ? 'main' : 'support', mods) : null;
+      if (props) return createCard(props).el;
+      return h('div', 'slot-empty', i === 0 ? COPY.table.emptyMain : COPY.table.emptySlot);
+    });
+    slots.replaceChildren(...views);
+  };
+  buildLoadout();
   const fit = h('div', 'loadout-fit');
   fit.append(slots);
   loadout.body.append(fit);
@@ -387,6 +400,7 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
       shell.setCurrency(r.id, formatDecimal(amount), amount.gt(0));
     }
     damageValue.textContent = `${formatDecimal(damageStat().value)}/s`;
+    buildLoadout();
     if (shell.current() === 'production') productionPage?.render();
     if (shell.current() === 'dungeons') dungeonsPage?.render();
   };
@@ -427,19 +441,20 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
 
   // Visual hits follow the main card's rhythm; damage itself is continuous in the game loop.
   const attack = () => resolveGlobal(content, loop.state.cosmetics.loadout).attack.visual.effects;
-  if (main && main.role === 'main') {
-    window.setInterval(() => {
-      const view = boss;
-      if (document.hidden || !view) return;
+  const hitLoop = (): void => {
+    const mods = collectModifiers(loop.state, content);
+    const stats = burstStats(content, 'fighting', mods);
+    const view = boss;
+    if (!document.hidden && view && loop.state.activeDungeonId) {
       const effect = attack()?.fighting;
       if (effect)
         playHit(effect, view.art, { rng: defaultRng, target: view.art.querySelector('svg') });
-      const dealt = baseDamage(loop.state, content)
-        .mul(main.mainAbility.multiplier)
-        .mul(main.mainAbility.intervalSeconds);
+      const dealt = hitDamage(effectiveDamage(loop.state, content, undefined, mods), stats);
       showTick(view.art, formatDecimal(dealt), { rng: defaultRng });
-    }, main.mainAbility.intervalSeconds * 1000);
-  }
+    }
+    window.setTimeout(hitLoop, stats.interval * 1000);
+  };
+  hitLoop();
   window.setInterval(() => {
     if (document.hidden) return;
     const mods = collectModifiers(loop.state, content);
@@ -479,7 +494,7 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
       if (!window.confirm(COPY.save.importConfirm)) return;
       loop.reset(imported.state, Date.now());
       applyGlobalTheme(content, loop.state.cosmetics.loadout);
-      for (const { view, card } of cardViews) view.update(loadoutProps(content, loop.state, card));
+      buildLoadout();
       saveText.value = '';
       message.textContent = COPY.save.imported;
       void save();

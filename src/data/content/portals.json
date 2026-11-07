@@ -5,8 +5,18 @@
     "kind": "cards",
     "cost": { "resource": "moss_sigil", "amount": "10" },
     "pool": [
-      { "itemId": "example_fighting_main", "rarity": "common", "weight": 90 },
-      { "itemId": "example_fighting_support", "rarity": "rare", "weight": 10 }
+      { "itemId": "ember_squire", "rarity": "common", "weight": 30 },
+      { "itemId": "apprentice_feller", "rarity": "common", "weight": 30 },
+      { "itemId": "cave_digger", "rarity": "common", "weight": 30 },
+      { "itemId": "shield_warden", "rarity": "rare", "weight": 10 },
+      { "itemId": "grove_keeper", "rarity": "rare", "weight": 10 },
+      { "itemId": "gem_cutter", "rarity": "rare", "weight": 10 },
+      { "itemId": "storm_duelist", "rarity": "epic", "weight": 4 },
+      { "itemId": "elder_treant", "rarity": "epic", "weight": 4 },
+      { "itemId": "dawnblade_regent", "rarity": "legendary", "weight": 1.5 },
+      { "itemId": "geode_golem", "rarity": "legendary", "weight": 1.5 },
+      { "itemId": "moonwood_dryad", "rarity": "mythic", "weight": 0.6 },
+      { "itemId": "core_titan", "rarity": "exotic", "weight": 0.3 }
     ],
     "pity": { "rarity": "rare", "threshold": 30 }
   }

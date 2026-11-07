@@ -88,8 +88,7 @@ export const RARITIES = [
   'void',
 ] as const;
 export type Rarity = (typeof RARITIES)[number];
-export const MAIN_ABILITY_KINDS = ['ticks', 'bigHits', 'bursts'] as const;
-export const SUPPORT_EFFECT_KINDS = ['damageBonus', 'productionBonus', 'extraAttack'] as const;
+export type Job = (typeof JOBS)[number];
 
 // ---- modifiers ---------------------------------------------------------------------------------
 
@@ -107,6 +106,8 @@ export const STATS = [
   'combat.bossHp',
   /** Chance per kill of the rare drop (clamped to 0..1). Scope: dungeon. */
   'drops.rareChance',
+  /** Chance per boss kill of a random card (clamped to 0..1). Scope: dungeon. */
+  'drops.cardChance',
   /** Kills without the rare drop before it is guaranteed (rounded, at least 1). Scope: dungeon. */
   'drops.pityThreshold',
   /** Portal resource units per kill. Scope: dungeon, resource. */
@@ -186,35 +187,127 @@ export const rankSchema = z.strictObject({
 });
 export type Rank = z.output<typeof rankSchema>;
 
-const cardBase = {
+/**
+ * A card modifier: a normal modifier plus how it grows with the card's power (level, stars and
+ * tier, see cardRules.json). `full` multiplies the bonus by the power (flat and percent values;
+ * for mult, the part above 1); `none` keeps it fixed. Default: `full` for flat and percent,
+ * `none` for the rest (mult, set, min, max).
+ */
+export const CARD_SCALES = ['full', 'none'] as const;
+export type CardScale = (typeof CARD_SCALES)[number];
+export const cardModifierSchema = modifierSchema
+  .extend({ scale: z.enum(CARD_SCALES).optional() })
+  .transform((m) => ({
+    ...m,
+    scale: m.scale ?? (m.kind === 'flat' || m.kind === 'percent' ? 'full' : 'none'),
+  }));
+export type CardModifierData = z.output<typeof cardModifierSchema>;
+
+const cardEffectSchema = z.strictObject({
+  /** Player-facing summary, e.g. "Fast hits every 0.5 s". */
+  description: z.string().min(1),
+  modifiers: z.array(cardModifierSchema).default([]),
+});
+export type CardEffect = z.output<typeof cardEffectSchema>;
+
+/**
+ * A collectible card (DESIGN.md 5, 11.9). Every card can lead its job (`main`) or sit in one of
+ * its 3 support slots (`support`); only the effect of the slot it is in applies.
+ */
+export const cardSchema = z.strictObject({
   id,
   name,
   job: z.enum(JOBS),
   rarity: z.enum(RARITIES),
-  /** Rank a newly obtained copy starts at (Bronze ★1 unless stated). */
-  startRank: rankSchema.default({ tier: 'bronze', stars: 1 }),
-};
+  /** Used when the card leads its job's loadout. */
+  main: cardEffectSchema,
+  /** Used when the card is in one of the 3 support slots. */
+  support: cardEffectSchema,
+});
 
-export const cardSchema = z.discriminatedUnion('role', [
+const count = z.number().int().min(0);
+const atLeastOne = decimal.refine((d) => d.gte(1), { message: 'must be at least 1' });
+const perTier = <T extends z.ZodType>(schema: T) =>
+  z.strictObject({ bronze: schema, silver: schema, gold: schema, prismatic: schema });
+const perRarity = <T extends z.ZodType>(schema: T) =>
   z.strictObject({
-    ...cardBase,
-    role: z.literal('main'),
-    /** How the job's base power is delivered. */
-    mainAbility: z.strictObject({
-      kind: z.enum(MAIN_ABILITY_KINDS),
-      multiplier: positiveDecimal,
-      intervalSeconds: z.number().positive(),
-    }),
+    common: schema,
+    rare: schema,
+    epic: schema,
+    legendary: schema,
+    mythic: schema,
+    exotic: schema,
+    void: schema,
+  });
+const perJob = <T extends z.ZodType>(schema: T) =>
+  z.strictObject({ mining: schema, logging: schema, fighting: schema });
+
+/** Card progression numbers (cardRules.json; DESIGN.md 11.2, 11.4, 11.9). All tunable. */
+export const cardRulesSchema = z.strictObject({
+  /** Cards a new game owns at Bronze ★1 Lv 1, each leading its job (at most one per job). */
+  startCards: z.array(id),
+  /** Loadout cost of a card, by rarity (11.4). */
+  cost: perRarity(count),
+  /** Each job's cost cap before `loadout.costCap` modifiers: base + perLevel × (account level − 1). */
+  costCap: z.strictObject({ base: count, perLevel: count }),
+  /** Level cap at each star (★1..★6) of each tier. */
+  levelCaps: perTier(z.array(z.number().int().min(1)).length(MAX_STARS)),
+  /** XP from level L to L + 1 = base × growth^(L − 1). */
+  xpCurve: z.strictObject({ base: positiveDecimal, growth: atLeastOne }),
+  /**
+   * Fighting cards: XP per boss kill = perKill × tierGrowth^(dungeon tier − 1). Production
+   * cards: XP per unit harvested, per job. Both then go through `xp.card` (scope: job).
+   */
+  xp: z.strictObject({
+    perKill: positiveDecimal,
+    tierGrowth: atLeastOne,
+    perUnit: z.strictObject({ logging: decimal, mining: decimal }),
   }),
-  z.strictObject({
-    ...cardBase,
-    role: z.literal('support'),
-    supportEffect: z.strictObject({
-      kind: z.enum(SUPPORT_EFFECT_KINDS),
-      value: positiveDecimal,
-    }),
+  /**
+   * Card power, which scales `full` card modifiers and the main growth:
+   * (1 + perLevel × (level − 1)) × (1 + perStar × (stars − 1), + star6Bonus at ★6) × tier.
+   */
+  power: z.strictObject({
+    perLevel: z.number().min(0),
+    perStar: z.number().min(0),
+    star6Bonus: z.number().min(0),
+    tier: perTier(z.number().positive()),
   }),
-]);
+  /**
+   * What a main card adds to its job as it grows (11.2: base power, gauge speed). Each value is
+   * multiplied by (power − 1): a Bronze ★1 Lv 1 main adds nothing; every level, star and tier
+   * adds more.
+   */
+  mainGrowth: perJob(z.array(modifierSchema)),
+  /**
+   * Star-up (★n → ★n+1): duplicates used, plus per tier the Core and its amount for each of the
+   * 5 steps (★1→2 … ★5→6). The card must be at its level cap.
+   */
+  starUp: z.strictObject({
+    duplicates: z.number().int().min(0),
+    tiers: perTier(
+      z.strictObject({ resource: id, amounts: z.array(positiveDecimal).length(MAX_STARS - 1) }),
+    ),
+  }),
+  /** Tier-up (★6 → next tier ★1), keyed by the tier being left, per job. The card must be at
+   *  its level cap. Prismatic is the top tier. */
+  tierUp: z.strictObject({
+    bronze: perJob(z.array(costSchema).min(1)),
+    silver: perJob(z.array(costSchema).min(1)),
+    gold: perJob(z.array(costSchema).min(1)),
+  }),
+  /** Base health of a card by rarity, multiplied by its power (DESIGN.md 11.10). The fighting
+   *  loadout's health pool sums its cards. */
+  health: perRarity(positiveDecimal),
+  /** Shards for a duplicate gained once the card is Prismatic ★6, by rarity. */
+  shards: perRarity(count),
+  /** Random card on boss kills (until summon portals): `chance` per kill (`drops.cardChance`),
+   *  then one card picked with its rarity's weight. */
+  drop: z.strictObject({
+    chance: z.number().min(0).max(1),
+    weights: perRarity(z.number().min(0)),
+  }),
+});
 
 export const dungeonSchema = z.strictObject({
   id,
@@ -538,6 +631,7 @@ export const contentSchemas = {
   mines: z.array(mineSchema),
   production: productionSchema,
   cards: z.array(cardSchema),
+  cardRules: cardRulesSchema,
   dungeons: z.array(dungeonSchema),
   trials: z.array(trialSchema),
   combat: combatSchema,
@@ -555,6 +649,8 @@ export type CostCurve = z.output<typeof costCurveSchema>;
 export type ProductionConfig = z.output<typeof productionSchema>;
 export type ProductionJob = 'logging' | 'mining';
 export type Card = z.output<typeof cardSchema>;
+export type CardRules = z.output<typeof cardRulesSchema>;
+export type RankTier = (typeof RANK_TIERS)[number];
 export type Dungeon = z.output<typeof dungeonSchema>;
 export type Trial = z.output<typeof trialSchema>;
 export type CombatConfig = z.output<typeof combatSchema>;
