@@ -3,6 +3,7 @@ import { ContentValidationError, loadContent, validateContent, type RawContent }
 import resources from '../src/data/content/resources.json';
 import trees from '../src/data/content/trees.json';
 import mines from '../src/data/content/mines.json';
+import production from '../src/data/content/production.json';
 import cards from '../src/data/content/cards.json';
 import dungeons from '../src/data/content/dungeons.json';
 import cosmetics from '../src/data/content/cosmetics.json';
@@ -22,6 +23,7 @@ function raw(overrides: Partial<RawContent> = {}): RawContent {
     resources,
     trees,
     mines,
+    production,
     cards,
     dungeons,
     cosmetics,
@@ -44,13 +46,21 @@ function issuesFor(input: RawContent): string[] {
 }
 
 describe('bundled content', () => {
-  it('validates and exposes one of each entry', () => {
+  it('validates and exposes the beta content (DESIGN.md 11.6)', () => {
     const content = loadContent();
     expect(content.resources.length).toBeGreaterThanOrEqual(3);
-    expect(content.trees).toHaveLength(1);
-    expect(content.mines).toHaveLength(1);
+    expect(content.trees.map((t) => t.name)).toEqual(['Oak', 'Ironbark', 'Moonwillow']);
+    expect(content.mines.map((m) => [m.name, m.unlockedByDungeon])).toEqual([
+      ['Copper Quarry', null],
+      ['Iron Deeps', 'mossy_cellar'],
+      ['Crystal Grotto', 'ember_crypt'],
+    ]);
     expect(content.cards.map((c) => c.role).sort()).toEqual(['main', 'support']);
-    expect(content.dungeons).toHaveLength(1);
+    expect(content.dungeons.map((d) => [d.name, d.boss.name])).toEqual([
+      ['Mossy Cellar', 'Root Warden'],
+      ['Ember Crypt', 'Cinder Lich'],
+      ['Frostspire Vault', 'Glacier Colossus'],
+    ]);
     expect(content.cosmetics.length).toBeGreaterThan(7);
     expect(content.portals).toHaveLength(1);
     expect(content.dungeons[0]!.boss.hp.eq(100)).toBe(true);
@@ -94,12 +104,12 @@ describe('content validation errors', () => {
 
   it('catches wrong resource kinds and duplicate ids', () => {
     const base = raw();
-    (base.mines as Record<string, unknown>[])[0]!['resource'] = 'example_wood';
+    (base.mines as Record<string, unknown>[])[0]!['resource'] = 'oak_wood';
     const list = base.resources as object[];
     const bad = { ...base, resources: [...list, list[0]!] };
     const issues = issuesFor(bad);
     expect(issues.some((i) => i.includes('is wood, expected ore'))).toBe(true);
-    expect(issues.some((i) => i.includes('duplicate id "example_wood"'))).toBe(true);
+    expect(issues.some((i) => i.includes('duplicate id "oak_wood"'))).toBe(true);
   });
 
   it('requires a message that explains the whole failure', () => {
@@ -132,7 +142,7 @@ describe('card ranks and portals', () => {
   it('catches portal cost and pool problems', () => {
     const bad = raw();
     const portal = (bad.portals as PortalRaw[])[0]!;
-    portal.cost.resource = 'example_wood';
+    portal.cost.resource = 'oak_wood';
     portal.pool[0]!.itemId = 'holo_hex'; // a cosmetic in a cards portal
     portal.pool[1]!.itemId = 'missing_card';
     const issues = issuesFor(bad);

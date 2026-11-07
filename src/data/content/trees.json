@@ -1,11 +1,26 @@
 [
   {
-    "id": "example_tree",
-    "name": "Example Tree",
+    "id": "oak",
+    "name": "Oak",
     "tier": 1,
-    "resource": "example_wood",
+    "resource": "oak_wood",
     "baseRate": "1",
-    "startPlots": 1,
-    "cost": [{ "resource": "example_wood", "amount": "50" }]
+    "unlockCost": []
+  },
+  {
+    "id": "ironbark",
+    "name": "Ironbark",
+    "tier": 2,
+    "resource": "ironwood",
+    "baseRate": "0.5",
+    "unlockCost": [{ "resource": "oak_wood", "amount": "500" }]
+  },
+  {
+    "id": "moonwillow",
+    "name": "Moonwillow",
+    "tier": 3,
+    "resource": "moonwood",
+    "baseRate": "0.25",
+    "unlockCost": [{ "resource": "ironwood", "amount": "2000" }]
   }
 ]

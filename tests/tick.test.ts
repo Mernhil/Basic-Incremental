@@ -15,13 +15,13 @@ const rng = constantRng(0.5);
 describe('advance (tick math)', () => {
   it('produces rate * plots * seconds', () => {
     const { state } = advance(freshState(), content, 10_000, rng);
-    expect(state.resources['example_wood']!.eq(10)).toBe(true);
-    expect(state.resources['example_ore']!.eq(0)).toBe(true);
+    expect(state.resources['oak_wood']!.eq(10)).toBe(true);
+    expect(state.resources['copper_ore']!.eq(5)).toBe(true); // 1 slot * 0.5/s
 
     const triple = freshState();
-    triple.producers['example_tree'] = 3;
+    triple.production.logging = { expansions: 2, plots: ['oak', 'oak', 'oak'] };
     const result = advance(triple, content, 10_000, rng);
-    expect(result.state.resources['example_wood']!.eq(30)).toBe(true);
+    expect(result.state.resources['oak_wood']!.eq(30)).toBe(true);
   });
 
   it('applies damage to the boss without killing it', () => {
@@ -35,7 +35,7 @@ describe('advance (tick math)', () => {
     expect(report.bossKills).toBe(1);
     expect(state.stats.bossKills).toBe(1);
     // rng 0.5 -> 1 + floor(0.5 * 3) = 2 portal shards
-    expect(state.resources['example_portal_shard']!.eq(2)).toBe(true);
+    expect(state.resources['moss_sigil']!.eq(2)).toBe(true);
     expect(state.bossHp!.eq(100)).toBe(true);
   });
 
@@ -55,7 +55,7 @@ describe('advance (tick math)', () => {
   it('does not mutate the previous state', () => {
     const start = freshState();
     advance(start, content, 100_000, rng);
-    expect(start.resources['example_wood']!.eq(0)).toBe(true);
+    expect(start.resources['oak_wood']!.eq(0)).toBe(true);
     expect(start.bossHp).toBeNull();
     expect(start.stats.bossKills).toBe(0);
   });
@@ -79,7 +79,7 @@ describe('advance (tick math)', () => {
     const coarse = advanceChunked(freshState(), content, total, rng, 1000).state;
     const fine = advanceChunked(freshState(), content, total, rng, 16).state;
     for (const other of [coarse, fine]) {
-      expect(approxEq(other.resources['example_wood']!, whole.resources['example_wood']!)).toBe(
+      expect(approxEq(other.resources['oak_wood']!, whole.resources['oak_wood']!)).toBe(
         true,
       );
       expect(approxEq(other.bossHp!, whole.bossHp!)).toBe(true);

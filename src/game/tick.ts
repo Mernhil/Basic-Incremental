@@ -1,7 +1,8 @@
-import type { Content, Dungeon, Mine, Tree } from '../data';
+import type { Content, Dungeon } from '../data';
 import { rollBossDrop } from './drops';
 import { collectModifiers, statValue, type Modifier } from './modifiers';
 import { Decimal } from './num';
+import { productionPerSecond } from './production';
 import type { Rng } from './rng';
 import { cloneState, type GameState } from './state';
 
@@ -54,20 +55,6 @@ export function effectiveDamage(
   return Decimal.max(dps, 0);
 }
 
-/** Output per second of one plot/slot running this producer, after modifiers. */
-export function producerRate(
-  producer: Tree | Mine,
-  job: 'logging' | 'mining',
-  modifiers: readonly Modifier[],
-): Decimal {
-  const rate = statValue('production.rate', producer.baseRate, modifiers, {
-    job,
-    producer: producer.id,
-    resource: producer.resource,
-  });
-  return Decimal.max(rate, 0);
-}
-
 /** The dungeon's drop table after modifiers (chance clamped to 0..1, pity at least 1). */
 export function effectiveDrops(dungeon: Dungeon, modifiers: readonly Modifier[]): Dungeon['drops'] {
   const ctx = { job: 'fighting' as const, dungeon: dungeon.id };
@@ -108,17 +95,10 @@ export function advance(
   const modifiers = collectModifiers(state, content);
   next.stats.playTimeMs += dtMs;
 
-  // Production: every plot/slot running a tree or mine yields baseRate per second.
-  const producers = [
-    ...content.trees.map((p) => [p, 'logging'] as const),
-    ...content.mines.map((p) => [p, 'mining'] as const),
-  ];
-  for (const [producer, job] of producers) {
-    const plots = next.producers[producer.id] ?? 0;
-    if (plots <= 0) continue;
-    const gained = producerRate(producer, job, modifiers).mul(plots).mul(seconds);
-    const current = next.resources[producer.resource] ?? new Decimal(0);
-    next.resources[producer.resource] = current.add(gained);
+  // Production: every active plot/slot yields its producer's rate per second.
+  for (const [resource, perSecond] of Object.entries(productionPerSecond(state, content, modifiers))) {
+    const current = next.resources[resource] ?? new Decimal(0);
+    next.resources[resource] = current.add(perSecond.mul(seconds));
   }
 
   // Combat: the boss is auto-fought in parallel and respawns for farming.

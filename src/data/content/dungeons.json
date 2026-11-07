@@ -1,18 +1,50 @@
 [
   {
-    "id": "example_dungeon",
-    "name": "Example Dungeon",
+    "id": "mossy_cellar",
+    "name": "Mossy Cellar",
     "tier": 1,
     "boss": {
-      "id": "example_boss",
-      "name": "Example Boss",
+      "id": "root_warden",
+      "name": "Root Warden",
       "hp": "100",
       "hpScalingPerPrestige": 0.02,
       "hpBars": 5
     },
     "drops": {
       "rare": { "itemId": "holo_hex", "chance": 0.005, "pityThreshold": 200 },
-      "portalResource": { "resource": "example_portal_shard", "min": 1, "max": 3 }
+      "portalResource": { "resource": "moss_sigil", "min": 1, "max": 3 }
+    }
+  },
+  {
+    "id": "ember_crypt",
+    "name": "Ember Crypt",
+    "tier": 2,
+    "boss": {
+      "id": "cinder_lich",
+      "name": "Cinder Lich",
+      "hp": "1000",
+      "hpScalingPerPrestige": 0.02,
+      "hpBars": 8
+    },
+    "drops": {
+      "rare": { "itemId": "holo_waves", "chance": 0.005, "pityThreshold": 200 },
+      "portalResource": { "resource": "ember_sigil", "min": 1, "max": 3 }
+    }
+  },
+  {
+    "id": "frostspire_vault",
+    "name": "Frostspire Vault",
+    "tier": 3,
+    "boss": {
+      "id": "glacier_colossus",
+      "name": "Glacier Colossus",
+      "hp": "10000",
+      "hpScalingPerPrestige": 0.02,
+      "hpBars": 12
+    },
+    "drops": {
+      "rare": { "itemId": "prism_pointer", "chance": 0.005, "pityThreshold": 200 },
+      "portalResource": { "resource": "frost_sigil", "min": 1, "max": 3 }
     }
   }
 ]

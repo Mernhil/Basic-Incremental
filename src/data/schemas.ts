@@ -23,7 +23,17 @@ export const resourceSchema = z.strictObject({
 
 const costSchema = z.strictObject({ resource: id, amount: positiveDecimal });
 
-/** Shared by trees (logging) and mines (mining). Producers sit in plots/slots. */
+/**
+ * An exponential price: the n-th purchase (0-based) costs base * growth^n of `resource`.
+ * Read through the modifier pipeline: growth via `cost.growth`, the result via `cost.multiplier`.
+ */
+export const costCurveSchema = z.strictObject({
+  resource: id,
+  base: positiveDecimal,
+  growth: decimal.refine((d) => d.gte(1), { message: 'must be at least 1' }),
+});
+
+/** Shared by trees (logging) and mines (mining). Producers run in plots/slots. */
 const producerFields = {
   id,
   name,
@@ -32,17 +42,39 @@ const producerFields = {
   resource: id,
   /** Output per second for each plot/slot running it. */
   baseRate: positiveDecimal,
-  /** Plots/slots running this producer in a brand-new game. */
-  startPlots: z.number().int().min(0).default(0),
-  cost: z.array(costSchema),
 };
 
-export const treeSchema = z.strictObject(producerFields);
+export const treeSchema = z.strictObject({
+  ...producerFields,
+  /** Wood paid once to unlock this tree kind (kept through prestige). Empty = unlocked from the start. */
+  unlockCost: z.array(costSchema),
+});
 
 export const mineSchema = z.strictObject({
   ...producerFields,
-  /** Dungeon whose expedition unlocks this mine type; null = available from the start. */
+  /** Dungeon whose clear unlocks this mine type; null = available from the start. */
   unlockedByDungeon: id.nullable(),
+  /** Mine levels, bought with ore and reset on prestige. Each level adds `ratePercent`% output. */
+  level: z.strictObject({
+    cost: costCurveSchema,
+    /** Percent output per level for this mine type, read through `production.levelBonus`. */
+    ratePercent: decimal.refine((d) => d.gte(0), { message: 'must not be negative' }),
+  }),
+});
+
+/** Plot (logging) / slot (mining) capacity for one production job. */
+const jobProductionSchema = z.strictObject({
+  /** Plots/slots in a brand-new game (and after a prestige). */
+  startPlots: z.number().int().min(0),
+  /** Tree/mine placed in every starting plot/slot. Must be available from the start. */
+  startProducer: id,
+  /** Price of each extra plot/slot. */
+  expansion: costCurveSchema,
+});
+
+export const productionSchema = z.strictObject({
+  logging: jobProductionSchema,
+  mining: jobProductionSchema,
 });
 
 export const JOBS = ['mining', 'logging', 'fighting'] as const;
@@ -89,8 +121,16 @@ export const STATS = [
   'loadout.costCap',
   /** Summons without the pity rarity before it is guaranteed. Scope: portal. */
   'summon.pityThreshold',
-  /** Multiplier on resource costs (1 = normal price). Scope: resource. */
+  /** Multiplier on resource costs (1 = normal price). Scope: job, producer, resource. */
   'cost.multiplier',
+  /** Growth factor of exponential prices (plot/slot expansions, mine levels; at least 1).
+   *  Scope: job, producer, resource. */
+  'cost.growth',
+  /** Plots (logging) / slots (mining) available: start + bought expansions (floored, at least 0).
+   *  Scope: job. */
+  'production.capacity',
+  /** Percent output each mine level adds. Scope: job, producer, resource. */
+  'production.levelBonus',
 ] as const;
 export type Stat = (typeof STATS)[number];
 
@@ -380,6 +420,7 @@ export const contentSchemas = {
   resources: z.array(resourceSchema),
   trees: z.array(treeSchema),
   mines: z.array(mineSchema),
+  production: productionSchema,
   cards: z.array(cardSchema),
   dungeons: z.array(dungeonSchema),
   cosmetics: z.array(cosmeticSchema),
@@ -392,6 +433,9 @@ export const contentSchemas = {
 export type Resource = z.output<typeof resourceSchema>;
 export type Tree = z.output<typeof treeSchema>;
 export type Mine = z.output<typeof mineSchema>;
+export type CostCurve = z.output<typeof costCurveSchema>;
+export type ProductionConfig = z.output<typeof productionSchema>;
+export type ProductionJob = 'logging' | 'mining';
 export type Card = z.output<typeof cardSchema>;
 export type Dungeon = z.output<typeof dungeonSchema>;
 export type Cosmetic = z.output<typeof cosmeticSchema>;
