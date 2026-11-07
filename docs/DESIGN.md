@@ -18,16 +18,21 @@ Two production jobs, **mining** and **logging**. Each produces its own resources
 
 - Production runs on a limited, expandable number of plots (logging) or slots (mining).
 - The player decides what to put in them; expanding capacity is a core progression lever.
+- **Reassigning is free:** any unlocked tree kind / mine type can be put in any plot / slot, or the plot emptied, at any time and at no cost. Capacity is what the player pays for.
+- **Expansion prices are exponential:** the n-th extra plot / slot costs `base × growth^n` (base and growth in data; skills and prestige can soften the growth). A new plot / slot starts empty.
 
 ### Logging
 
 - Starts with **one tree plot**.
 - Upgrades add more plots and unlock new **tree kinds**; each tree kind yields a different wood.
+- Plot expansions are paid in **Oak Wood**. Each tree kind is unlocked once with the wood of the tier below (Ironbark with Oak Wood, Moonwillow with Ironwood).
 
 ### Mining
 
 - Works the same way as logging (limited slots, upgrades add capacity, higher mine types yield different ores).
 - **New mine types are unlocked via dungeon expeditions.**
+- Starts with **one mine slot** (Copper Quarry). Slot expansions are paid in **Copper Ore**.
+- **Mine levels:** each mine type also has a level, bought with its own ore on an exponential curve; every level adds a percentage to that mine's output. Slots and mine levels both reset on prestige.
 
 ### Resource uses (starting point)
 
