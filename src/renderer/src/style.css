@@ -49,3 +49,88 @@ p {
   font-weight: 600;
   cursor: pointer;
 }
+
+main {
+  width: min(560px, 92vw);
+  padding: 1rem 0 5rem;
+}
+
+pre {
+  margin: 0;
+  font-family: Consolas, 'Cascadia Mono', monospace;
+  font-size: 0.9rem;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.status {
+  margin: 1.25rem 0;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  background: #23262d;
+}
+
+.panel {
+  margin: 1rem 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid #5b6b8c;
+  border-radius: 8px;
+  background: #232a3a;
+  text-align: left;
+}
+
+.panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.fatal {
+  margin: 1rem 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid #a33;
+  border-radius: 8px;
+  background: #3a1f1f;
+}
+
+.warning {
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  background: #3a331f;
+  opacity: 1;
+}
+
+.tools {
+  display: grid;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.tools textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.4rem;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background: #15171b;
+  color: inherit;
+  font-family: Consolas, monospace;
+}
+
+.message {
+  min-height: 1.2em;
+  font-size: 0.85rem;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button {
+  padding: 0.3rem 0.8rem;
+  border: 0;
+  border-radius: 6px;
+  background: #4a5873;
+  color: #fff;
+  cursor: pointer;
+}

@@ -1,0 +1,68 @@
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+} from 'node:fs';
+import { join } from 'node:path';
+
+export interface SaveFiles {
+  /** Raw text of the main save, or null if it does not exist / cannot be read. */
+  primary: string | null;
+  /** Raw text of the previous save, or null. */
+  backup: string | null;
+}
+
+export interface SaveStore {
+  read(): SaveFiles;
+  write(text: string): void;
+}
+
+function readOrNull(path: string): string | null {
+  try {
+    return readFileSync(path, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+function isJson(text: string | null): boolean {
+  if (text === null) return false;
+  try {
+    JSON.parse(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Stores the save as `save.json` inside `dir`. Writes are atomic (temp file + rename), and the
+ * previous save is copied to `save.bak.json` first, so a crash mid-write never loses both.
+ * The backup is only replaced by a previous save that is itself valid JSON, so a corrupted
+ * main file can never overwrite a good backup.
+ */
+export function createSaveStore(dir: string): SaveStore {
+  const primaryPath = join(dir, 'save.json');
+  const backupPath = join(dir, 'save.bak.json');
+  const tempPath = join(dir, 'save.json.tmp');
+  const corruptPath = join(dir, 'save.corrupt.json');
+
+  return {
+    read() {
+      return { primary: readOrNull(primaryPath), backup: readOrNull(backupPath) };
+    },
+    write(text) {
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(tempPath, text, 'utf8');
+      if (existsSync(primaryPath)) {
+        // A good previous save becomes the backup; a damaged one is kept aside for recovery
+        // instead of being silently destroyed.
+        copyFileSync(primaryPath, isJson(readOrNull(primaryPath)) ? backupPath : corruptPath);
+      }
+      renameSync(tempPath, primaryPath);
+    },
+  };
+}

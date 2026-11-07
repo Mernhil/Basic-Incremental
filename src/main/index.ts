@@ -1,7 +1,8 @@
 import { join } from 'node:path';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
-import { GAME_TITLE } from '../game';
+import { GAME_TITLE } from '../game/meta';
 import { IPC_CHANNELS } from '../preload/api';
+import { setupSaveIpc, saveBeforeClose } from './saves';
 import { setupAutoUpdates } from './updater';
 
 function createWindow(): void {
@@ -20,6 +21,7 @@ function createWindow(): void {
   });
 
   win.on('ready-to-show', () => win.show());
+  saveBeforeClose(win);
 
   // Never open new Electron windows; send external links to the default browser.
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -38,6 +40,7 @@ function createWindow(): void {
 
 void app.whenReady().then(() => {
   ipcMain.handle(IPC_CHANNELS.getVersion, () => app.getVersion());
+  setupSaveIpc();
   createWindow();
 
   try {

@@ -13,6 +13,29 @@
     <main>
       <h1 id="title"></h1>
       <p id="version"></p>
+
+      <pre id="fatal" class="fatal" hidden></pre>
+      <p id="warning" class="warning" hidden></p>
+
+      <section id="away" class="panel" hidden>
+        <h2>While you were away</h2>
+        <pre id="away-text"></pre>
+        <button id="away-close" type="button">OK</button>
+      </section>
+
+      <pre id="status" class="status"></pre>
+
+      <section id="save-tools" class="tools" hidden>
+        <button id="export-btn" type="button">Export save</button>
+        <button id="import-btn" type="button">Import save</button>
+        <textarea
+          id="save-text"
+          rows="3"
+          spellcheck="false"
+          placeholder="Exported save appears here. Paste a save here and press Import."
+        ></textarea>
+        <p id="save-message" class="message"></p>
+      </section>
     </main>
     <div id="update-notice" class="update-notice" role="status" hidden>
       <span>Update ready — restart to install</span>

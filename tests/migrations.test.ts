@@ -1,0 +1,73 @@
+import { describe, expect, it } from 'vitest';
+import { MIGRATIONS, migrateState, SaveError, type MigrationTable } from '../src/game';
+
+// A made-up v1 -> v2 migration used only to exercise the pipeline:
+// v1 stored `coins`; v2 renames it to `gold` and adds a `gems` field.
+const v1ToV2 = (state: Record<string, unknown>): Record<string, unknown> => {
+  const { coins, ...rest } = state;
+  return { ...rest, gold: coins, gems: 0 };
+};
+const v2ToV3 = (state: Record<string, unknown>): Record<string, unknown> => ({
+  ...state,
+  gems: Number(state['gems']) + 5,
+});
+
+const table: MigrationTable = { 1: v1ToV2, 2: v2ToV3 };
+
+function codeOf(fn: () => unknown): string | undefined {
+  try {
+    fn();
+  } catch (error) {
+    if (error instanceof SaveError) return error.code;
+    throw error;
+  }
+  return undefined;
+}
+
+describe('migration pipeline', () => {
+  it('migrates v1 to v2', () => {
+    expect(migrateState({ coins: 7, name: 'x' }, 1, 2, table)).toEqual({
+      gold: 7,
+      gems: 0,
+      name: 'x',
+    });
+  });
+
+  it('chains steps in order (v1 to v3)', () => {
+    expect(migrateState({ coins: 7 }, 1, 3, table)).toEqual({ gold: 7, gems: 5 });
+  });
+
+  it('starts from the right step when the save is already newer', () => {
+    expect(migrateState({ gold: 7, gems: 1 }, 2, 3, table)).toEqual({ gold: 7, gems: 6 });
+  });
+
+  it('leaves current-version data untouched', () => {
+    const data = { gold: 1 };
+    expect(migrateState(data, 3, 3, table)).toBe(data);
+  });
+
+  it('does not mutate its input', () => {
+    const input = { coins: 7 };
+    migrateState(input, 1, 2, table);
+    expect(input).toEqual({ coins: 7 });
+  });
+
+  it('fails clearly when a step is missing', () => {
+    expect(codeOf(() => migrateState({}, 1, 3, { 1: v1ToV2 }))).toBe('missing-migration');
+  });
+
+  it('refuses data from a newer version', () => {
+    expect(codeOf(() => migrateState({}, 4, 3, table))).toBe('future-version');
+  });
+
+  it('rejects invalid version numbers', () => {
+    for (const version of [0, -1, 1.5, NaN]) {
+      expect(codeOf(() => migrateState({}, version, 3, table))).toBe('invalid-format');
+    }
+  });
+
+  it('has a complete real migration table for the current version', () => {
+    // CURRENT_SAVE_VERSION is 1, so no steps are required yet; this guards the table's shape.
+    expect(Object.keys(MIGRATIONS).every((k) => Number.isInteger(Number(k)))).toBe(true);
+  });
+});

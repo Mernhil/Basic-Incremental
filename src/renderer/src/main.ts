@@ -1,4 +1,5 @@
 import { GAME_TITLE, formatVersionLabel } from '../../game';
+import { startGame } from './app';
 import './style.css';
 
 function setupUpdateNotice(): void {
@@ -28,6 +29,7 @@ async function init(): Promise<void> {
   title.textContent = GAME_TITLE;
   version.textContent = formatVersionLabel(await window.api.getVersion());
   setupUpdateNotice();
+  await startGame();
 }
 
 void init();
