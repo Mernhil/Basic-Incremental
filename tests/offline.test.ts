@@ -11,10 +11,10 @@ describe('simulateOffline', () => {
     expect(summary).not.toBeNull();
     expect(summary!.capped).toBe(false);
     expect(summary!.simulatedMs).toBe(HOUR);
-    expect(state.resources['example_wood']!.eq(3600)).toBe(true);
-    expect(summary!.gains['example_wood']!.eq(3600)).toBe(true);
+    expect(state.resources['oak_wood']!.eq(3600)).toBe(true);
+    expect(summary!.gains['oak_wood']!.eq(3600)).toBe(true);
     expect(summary!.bossKills).toBe(36); // 3600 damage / 100 HP
-    expect(summary!.gains['example_portal_shard']!.eq(72)).toBe(true); // 36 kills * 2
+    expect(summary!.gains['moss_sigil']!.eq(72)).toBe(true); // 36 kills * 2
   });
 
   it('caps offline progress at 8 hours', () => {
@@ -23,7 +23,7 @@ describe('simulateOffline', () => {
     expect(summary!.capped).toBe(true);
     expect(summary!.elapsedMs).toBe(20 * HOUR);
     expect(summary!.simulatedMs).toBe(8 * HOUR);
-    expect(state.resources['example_wood']!.eq(8 * 3600)).toBe(true);
+    expect(state.resources['oak_wood']!.eq(8 * 3600)).toBe(true);
   });
 
   it('is not capped at exactly 8 hours', () => {

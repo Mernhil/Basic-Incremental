@@ -8,6 +8,7 @@ import type {
   Mine,
   ModifierData,
   Portal,
+  ProductionConfig,
   Rarity,
   RarityStyle,
   Resource,
@@ -17,6 +18,7 @@ import type {
 import resourcesJson from './content/resources.json';
 import treesJson from './content/trees.json';
 import minesJson from './content/mines.json';
+import productionJson from './content/production.json';
 import cardsJson from './content/cards.json';
 import dungeonsJson from './content/dungeons.json';
 import cosmeticsJson from './content/cosmetics.json';
@@ -31,6 +33,7 @@ export interface Content {
   resources: Resource[];
   trees: Tree[];
   mines: Mine[];
+  production: ProductionConfig;
   cards: Card[];
   dungeons: Dungeon[];
   cosmetics: Cosmetic[];
@@ -40,6 +43,8 @@ export interface Content {
   sets: CosmeticSet[];
   resourceById: ReadonlyMap<string, Resource>;
   dungeonById: ReadonlyMap<string, Dungeon>;
+  treeById: ReadonlyMap<string, Tree>;
+  mineById: ReadonlyMap<string, Mine>;
   cardById: ReadonlyMap<string, Card>;
   cosmeticById: ReadonlyMap<string, Cosmetic>;
   rarityById: ReadonlyMap<Rarity, RarityStyle>;
@@ -85,6 +90,7 @@ export function validateContent(raw: RawContent): Content {
     resources,
     trees,
     mines,
+    production,
     cards,
     dungeons,
     cosmetics,
@@ -94,6 +100,7 @@ export function validateContent(raw: RawContent): Content {
     sets,
   } = parsed;
   checkReferences({ resources, trees, mines, cards, dungeons, cosmetics, portals }, issues);
+  checkProduction({ resources, trees, mines, production }, issues);
   checkCosmetics(cosmetics, rarities, issues);
   checkSets(cosmetics, sets, issues);
   checkModifiers({ resources, trees, mines, dungeons, portals, cosmetics, sets }, issues);
@@ -107,6 +114,7 @@ export function validateContent(raw: RawContent): Content {
     resources,
     trees,
     mines,
+    production,
     cards,
     dungeons,
     cosmetics,
@@ -116,12 +124,72 @@ export function validateContent(raw: RawContent): Content {
     sets,
     resourceById: new Map(resources.map((r) => [r.id, r])),
     dungeonById: new Map(dungeons.map((d) => [d.id, d])),
+    treeById: new Map(trees.map((t) => [t.id, t])),
+    mineById: new Map(mines.map((m) => [m.id, m])),
     cardById: new Map(cards.map((x) => [x.id, x])),
     cosmeticById: new Map(cosmetics.map((x) => [x.id, x])),
     rarityById: new Map(rarities.map((r) => [r.id, r])),
     setById: new Map(sets.map((x) => [x.id, x])),
     starterBySlot,
   };
+}
+
+function checkProduction(
+  c: Pick<Content, 'resources' | 'trees' | 'mines' | 'production'>,
+  issues: string[],
+): void {
+  const resources = new Map(c.resources.map((r) => [r.id, r]));
+  const checkCost = (where: string, resource: string, kind: Resource['kind']): void => {
+    const res = resources.get(resource);
+    if (!res) issues.push(`${where}: unknown resource "${resource}"`);
+    else if (res.kind !== kind)
+      issues.push(`${where}: "${resource}" is ${res.kind}, expected ${kind}`);
+  };
+
+  // Logging is paid for with wood, mining with ore (DESIGN.md 2).
+  c.trees.forEach((tree, i) =>
+    tree.unlockCost.forEach((cost, j) =>
+      checkCost(`trees.json › [${i}] › unlockCost › [${j}] › resource`, cost.resource, 'wood'),
+    ),
+  );
+  c.mines.forEach((mine, i) =>
+    checkCost(`mines.json › [${i}] › level › cost › resource`, mine.level.cost.resource, 'ore'),
+  );
+
+  // Producer ids are shared by modifier scopes and plot contents, so they must be unique.
+  const treeIds = new Set(c.trees.map((t) => t.id));
+  c.mines.forEach((mine, i) => {
+    if (treeIds.has(mine.id)) {
+      issues.push(`mines.json › [${i}] › id: "${mine.id}" is already a tree id`);
+    }
+  });
+
+  const jobs = [
+    {
+      job: 'logging',
+      kind: 'wood',
+      starters: c.trees.filter((t) => t.unlockCost.length === 0),
+      all: c.trees,
+    },
+    {
+      job: 'mining',
+      kind: 'ore',
+      starters: c.mines.filter((m) => m.unlockedByDungeon === null),
+      all: c.mines,
+    },
+  ] as const;
+  for (const { job, kind, starters, all } of jobs) {
+    const config = c.production[job];
+    checkCost(`production.json › ${job} › expansion › resource`, config.expansion.resource, kind);
+    const where = `production.json › ${job} › startProducer`;
+    if (!all.some((p) => p.id === config.startProducer)) {
+      issues.push(
+        `${where}: unknown ${job === 'logging' ? 'tree' : 'mine'} "${config.startProducer}"`,
+      );
+    } else if (!starters.some((p) => p.id === config.startProducer)) {
+      issues.push(`${where}: "${config.startProducer}" is not available from the start`);
+    }
+  }
 }
 
 function checkCosmetics(cosmetics: Cosmetic[], rarities: RarityStyle[], issues: string[]): void {
@@ -239,13 +307,6 @@ function checkReferences(
           `${file}.json › [${i}] › resource: "${item.resource}" is ${out.kind}, expected ${kind}`,
         );
       }
-      item.cost.forEach((cost, j) => {
-        if (!resources.has(cost.resource)) {
-          issues.push(
-            `${file}.json › [${i}] › cost › [${j}] › resource: unknown resource "${cost.resource}"`,
-          );
-        }
-      });
     });
   };
   checkProducer('trees', 'wood', c.trees);
@@ -315,6 +376,7 @@ export function loadContent(): Content {
     resources: resourcesJson,
     trees: treesJson,
     mines: minesJson,
+    production: productionJson,
     cards: cardsJson,
     dungeons: dungeonsJson,
     cosmetics: cosmeticsJson,
