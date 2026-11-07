@@ -48,6 +48,7 @@ export function createSaveStore(dir: string): SaveStore {
   const primaryPath = join(dir, 'save.json');
   const backupPath = join(dir, 'save.bak.json');
   const tempPath = join(dir, 'save.json.tmp');
+  const corruptPath = join(dir, 'save.corrupt.json');
 
   return {
     read() {
@@ -56,8 +57,10 @@ export function createSaveStore(dir: string): SaveStore {
     write(text) {
       mkdirSync(dir, { recursive: true });
       writeFileSync(tempPath, text, 'utf8');
-      if (existsSync(primaryPath) && isJson(readOrNull(primaryPath))) {
-        copyFileSync(primaryPath, backupPath);
+      if (existsSync(primaryPath)) {
+        // A good previous save becomes the backup; a damaged one is kept aside for recovery
+        // instead of being silently destroyed.
+        copyFileSync(primaryPath, isJson(readOrNull(primaryPath)) ? backupPath : corruptPath);
       }
       renameSync(tempPath, primaryPath);
     },

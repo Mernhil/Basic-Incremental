@@ -1,5 +1,6 @@
 export { GAME_TITLE, formatVersionLabel } from './meta';
 export * from './num';
+export * from './format';
 export * from './rng';
 export * from './state';
 export * from './drops';

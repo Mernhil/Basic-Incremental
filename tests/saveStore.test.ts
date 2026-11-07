@@ -41,5 +41,7 @@ describe('createSaveStore', () => {
     store.write('{"n":3}');
     expect(readFileSync(join(dir, 'save.bak.json'), 'utf8')).toBe('{"n":1}');
     expect(store.read().primary).toBe('{"n":3}');
+    // the damaged file is preserved for manual recovery rather than destroyed
+    expect(readFileSync(join(dir, 'save.corrupt.json'), 'utf8')).toBe('{"n":2');
   });
 });
