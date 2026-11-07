@@ -87,14 +87,10 @@ Bronze ★1–6 → Silver ★1–6 → Gold ★1–6 → Prismatic ★1–6 (ma
 - ★6 of each tier is a **big upgrade plus a visual change**.
 - Star colors follow the tier; **Prismatic stars are animated**.
 - **★6 shine:** at ★6 the stars get a polished light sweep that moves back and forth across the star glyphs in a loop, coloured to the tier. On Prismatic it blends with the animated stars. ★1–5 have no shine.
-- **★6 evolution:** each tier's ★6 adds a small, escalating upgrade to the card's look, never a full redesign:
-  - Bronze ★6: shine and one thin ring just outside the card.
-  - Silver ★6: shine and two rings.
-  - Gold ★6: shine, two rings, a gold glow and four corner glints.
-  - Prismatic ★6: shine, a thick fast rainbow ring, a breathing aura behind the card and motes rising along the sides.
-  - Rings carry a thin dark edge so they read on light and dark tables. Reaching ★6 plays a one-time flash.
-- **Prismatic is the top tier for now and must look clearly different from ★1:** its own animated ring and rainbow tier name. Prismatic ★6 adds a much stronger treatment (thick fast ring, aura, rising motes).
-- **Rank visuals never clash with cosmetics:** rank effects sit outside the card edge (rings, aura) and on the stars; cosmetics sit inside the edge, except high-level border flourishes, which may break out at the corners (see "Breaking the edge" in section 7). Stars are never covered by a cosmetic.
+- **The tier is the card's frame** (see section 13): each tier-up rebuilds the frame in the next metal and adds ornament, like an armour set going from basic to epic. Bronze: plain riveted plate. Silver: spikes at the top corners. Gold: side spikes and a crest gem. Prismatic: plate wings and a rainbow-shifting metal.
+- **★6 within a tier** keeps the stars' shine and plays a one-time flash; it does not add rings. The next big visual step is the tier-up itself.
+- **Prismatic is the top tier for now and must look clearly different from ★1:** wings, rainbow metal and the strongest element effect.
+- **Rank visuals never clash with cosmetics:** the frame's tier ornaments (spikes, crest, wings) own the top, the sides and the area outside the edge; cosmetics change the frame's family and the card's finish (section 7). Stars are never covered.
 - **Card enhancements** (Brave Frontier Omni SP style) unlock at a set card rank. See section 10.
 - **Duplicates / shards add stars.**
 - **Tier-ups cost a dungeon material** (see resource uses above).
@@ -112,14 +108,14 @@ Bronze ★1–6 → Silver ★1–6 → Gold ★1–6 → Prismatic ★1–6 (ma
 
 - The UI itself is part of the customization system: **nothing visual is hardcoded**. The default look is just the **starter set** of cosmetics.
 - UI style: simple **card-based UI on a plain table**. More of the UI (for example colour themes or layout skins) can become customizable slots later.
-- **Starter set: Gilded Nocturne.** Gilded card anatomy (body, name plate, art window, stat panel) with calm, flat surfaces and thin gold hairlines; light stone table; the Outfit typeface. Each layer of the card is a place where more extravagant cosmetics can add decoration later.
+- **Starter set: Gilded Nocturne.** The night-table shell and the Outfit typeface for the interface; the cards themselves follow the cel-shaded art style of section 13 with the **Knight plate** frame. Each layer of the card is a place where more extravagant cosmetics can add decoration later.
 - **First unlockable set: Gilded Tradition** (classic trading card: crimson frame, gold plate, rainbow foil). The richer "Medium" gilt variant of the starter is an unlockable border.
 
 ### Slots
 
 **Seven global slots:**
 
-1. Card border
+1. Card border: the **frame family**. The starter is Knight plate; other families (Dragon horn, Celestial, Crystal, Royal crest) are cosmetics. Every family grows with the tier in the same steps (section 13).
 2. Card finish (holo, foil, …). Holo finishes are full-card, animated and restrained, using geometric or fluid patterns.
 3. Attack animation. Attacks are automatic; one attack item contains a variant per job. Starter: a slash that appears and fades at changing angles and positions (fighting, with sparks; logging, with wood chips) and a heavy hit (mining: shockwave, cracks, rock chips, dust).
 4. Tick damage style
@@ -147,12 +143,12 @@ Bronze ★1–6 → Silver ★1–6 → Gold ★1–6 → Prismatic ★1–6 (ma
 
   A step may span more than one level on items with a higher maximum (e.g. two shape levels), and an item with a low maximum compresses the ladder but always keeps the order and always ends on the ambient animation.
 
-- **Ambient animations are small, subtle and cheap:** CSS only, animating `transform` and `opacity` only, at most about 6 particles per card, no per-frame scripting, paused when the card is off screen. Many cards must be on screen at once without a frame-rate cost. Under **reduced motion** they are static (a still frame of the same elements).
+- **Ambient animations of cosmetics are small, subtle and cheap** (element effects on items follow section 13 instead): CSS only, animating `transform` and `opacity` only, at most about 6 particles per card, no per-frame scripting, paused when the card is off screen. Many cards must be on screen at once without a frame-rate cost. Under **reduced motion** they are static (a still frame of the same elements).
 - **Breaking the edge.** High-level border flourishes **may extend outside the card edge**. They coexist with rank effects by zone:
   - **Corners belong to flourishes.** A flourish may reach outside the card edge by at most about 8% of the card width, only within a corner zone (the outer fifth of each side, measured from the corner).
-  - **Sides belong to rank effects.** Rank rings, the aura and rising motes run along the sides and are never hidden by a flourish.
+  - **Sides and top belong to the tier ornaments** (spikes, crest gem, wings) and are never hidden by a flourish.
   - **Stars are never covered.** The rank footer is a keep-clear band: no flourish, gem or animation draws over it, and bottom-corner flourishes sit above or outside it.
-  - **Where they meet at a corner**, the ring passes behind the flourish and Gold ★6 corner glints twinkle on top of the flourish tips (brief, so they never hide it).
+  - **Where they meet at a corner**, tier spikes sit on top and the flourish tucks behind them.
   - Card tiles in grids reserve a bleed margin so flourishes are not clipped.
 
 ## 8. Saves
@@ -310,6 +306,16 @@ Decided with the user for Phase 6 (roles, star and tier-up requirements, start).
 | Mining   | Geode Golem       | Legendary | Harvest bursts give 15 s of output, +15% mining    | +15% mining                        |
 | Mining   | Core Titan        | Exotic    | +40% mining, harvest gauge fills faster            | +25% mining, +5% Core drop chance  |
 
+### 11.10 Card health
+
+Decided with the user for the graphics overhaul, so the player can lose a fight and has a reason to upgrade. Numbers live in data and will be tuned.
+
+- **Bosses hit back.** Every boss attacks the fighting loadout at its own rhythm with its own damage (in data per boss, growing with dungeon tier and with prestige like boss HP). A special dungeon's target does not attack.
+- **One health pool.** The fighting loadout has one shared health bar. Each card adds health from its rarity, level and rank. It is shown like the boss's bar.
+- **Knocked out.** When the pool reaches 0, the loadout is knocked out for a short time (30 s to start), the boss heals to full, and then the fight starts again with full health. A boss you cannot kill before your cards fall is a wall until you get stronger.
+- **Protection** comes only through the modifier system: health and defence are stats, so cosmetics, set bonuses, the skill tree and card enhancements can raise them. There are no heal or shield support effects and no ore upgrade line for defence.
+- **Offline** progress uses the same rules: being knocked out offline costs the same time and boss healing as online.
+
 ## 12. Defaults for underspecified points
 
 Points the decisions above leave open. These defaults apply until changed.
@@ -318,3 +324,41 @@ Points the decisions above leave open. These defaults apply until changed.
 2. **Rank for card enhancements.** Silver ★1.
 3. **Enhancement point budget.** Grows with rank (a few points per tier) and is about half of the total cost of the card's options.
 4. **XP rates.** Tuned in the balance phase so the account level rises quickly early and slowly later.
+
+## 13. Art style
+
+Decided with the user in the graphics overhaul. References (Knights & Dragons armour sets and card UI, Brave Frontier, a cartoon flame-jet effect sheet) are kept locally in `design/references/` and never committed.
+
+- **Look.** Cel-shaded, like Knights & Dragons and Brave Frontier: bold dark outlines (one ink colour, about 3 px at card size), flat shadow shapes and white highlights instead of gradients, saturated metals, and a chunky display font for card names.
+- **The card is the showpiece.** The frame is the tier (section 5): the Knight plate frame grows from plain plate (Bronze) to spikes (Silver), side spikes and a crest gem (Gold) and plate wings with rainbow metal (Prismatic). Rarity colours the card body.
+- **Inside the card is its signature item**, not a character: a weapon, shield, tool or relic, cel-shaded like the frame. **Rarity sets how intricate the item is**, adding parts rather than only colour: Common plain; Rare a fuller, wrapped grip and gem pommel; Epic a winged guard and gem; Legendary a broader, serrated or ornate shape, gold inlay and a ribbon; Mythic neon runes and a crystal edge; Exotic forked or split shapes and floating rings; Void black chrome, glowing cracks and orbiting shards. Twinkles get more frequent with rarity.
+- **Characters** (chibi armoured figures in the same style) are used for **dungeon bosses** and may appear as special card skins later.
+- **Element effects.** Every card has an element; its effect is generated from the item's own shape (edges, fuller, tip), never a static picture placed on top, and always stays secondary to the item: slow, calm, with fire drawn behind the item. Effects are cartoon cel animations (outlined blobs and arcs), not realistic light.
+
+  | Element              | Effect                                                                                                     |
+  | -------------------- | ---------------------------------------------------------------------------------------------------------- |
+  | Fire                 | Edge fire: flames along the edges with uneven, drifting highs and lows; or a trailing stream off the tip   |
+  | Storm                | Arc crackle: jagged cel lightning jumping between points on the item and off its tip                       |
+  | Light                | Aura shell: outlines of the item pulsing outward, shedding sparks                                          |
+  | Nature               | Spiral wrap: a ribbon of leaves and light coiling around the item                                          |
+  | Earth, crystal, void | Power cracks: jagged glowing cracks inside the item, flickering like the arc crackle, in the item's colour |
+
+- **Effects unlock with tier**: none at Bronze and Silver, the element effect from **Gold**, stronger at **Prismatic**. ★6 keeps the stars' shine and one-time flash.
+- **Beta cards** (elements and items):
+
+  | Card              | Element | Item                   |
+  | ----------------- | ------- | ---------------------- |
+  | Ember Squire      | Fire    | Ember Blade (sword)    |
+  | Shield Warden     | Light   | Bulwark (shield)       |
+  | Storm Duelist     | Storm   | Twin storm blades      |
+  | Dawnblade Regent  | Fire    | Dawnblade (greatsword) |
+  | Apprentice Feller | Nature  | Hatchet                |
+  | Grove Keeper      | Nature  | Sapling staff          |
+  | Elder Treant      | Nature  | Heartwood maul         |
+  | Moonwood Dryad    | Light   | Moon bow               |
+  | Cave Digger       | Earth   | Pickaxe                |
+  | Gem Cutter        | Crystal | Cutting chisel         |
+  | Geode Golem       | Crystal | Geode hammer           |
+  | Core Titan        | Void    | Core gauntlet          |
+
+- **Performance.** Element effects run on one shared canvas layer, only for cards on screen, at a capped frame rate. Under reduced motion they show a still frame.
