@@ -51,6 +51,69 @@ export const COPY = {
     locked: (by: string) => `Unlocks from ${by}`,
     perSecond: (amount: string) => `${amount}/s`,
   },
+  shell: {
+    title: 'Basic Incremental',
+    navigation: 'Main',
+    currencies: 'Resources',
+    level: (n: number) => `Account level ${n}`,
+    levelTip:
+      'Account level. You will earn XP from harvests, kills, summons and prestiges once the skill tree arrives.',
+    coming: 'Coming in a later beta update.',
+  },
+  pages: {
+    home: { label: 'Home', frame: '', empty: '' },
+    cards: {
+      label: 'Cards',
+      frame: 'Collection',
+      empty:
+        'Your card collection. Every card you find or summon will be listed here with its rarity, rank and level.',
+    },
+    production: {
+      label: 'Production',
+      frame: 'Plots and slots',
+      empty:
+        'Your tree plots and mine slots. Choose what grows and what gets mined, and buy more room.',
+    },
+    dungeons: {
+      label: 'Dungeons',
+      frame: 'Dungeon list',
+      empty:
+        'Pick a dungeon and its boss is fought automatically. Clearing one opens the next, and new mines.',
+    },
+    summon: {
+      label: 'Summon',
+      frame: 'Portals',
+      empty: 'Spend sigils from dungeons to summon new cards and cosmetics.',
+    },
+    skills: {
+      label: 'Skill Tree',
+      frame: 'Account tree',
+      empty: 'Spend skill points from your account level, and build each card its own way.',
+    },
+    wardrobe: {
+      label: 'Wardrobe',
+      frame: 'Equipped cosmetics',
+      empty:
+        'Equip borders, finishes, attacks, numbers, tables and cursors, and upgrade the ones you own.',
+    },
+    achievements: {
+      label: 'Achievements',
+      frame: 'Goals',
+      empty: 'Goals to reach. Some of them reward cosmetics.',
+    },
+    shop: {
+      label: 'Shop',
+      frame: 'Shard shop',
+      empty: 'Spend shards from duplicate cards past max rank.',
+    },
+    settings: { label: 'Settings', frame: '', empty: '' },
+  },
+  home: {
+    damage: 'Damage',
+    damageTip: 'Damage per second',
+    base: 'Base',
+    total: 'Total',
+  },
   hp: {
     bars: (n: number) => `×${n}`,
     value: (hp: string, max: string) => `${hp} / ${max}`,

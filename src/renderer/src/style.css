@@ -1,49 +1,5 @@
-/* Main screen layout. Colours come from the equipped table tokens (--bi-on-table*), so the screen
-   follows whatever table is equipped, light or dark. */
-
-.app {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 20px 28px 72px;
-  display: grid;
-  gap: 26px;
-}
-.app__top {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-.app__title {
-  margin: 0;
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--bi-on-table);
-}
-.app__version {
-  font-size: 13px;
-  color: var(--bi-on-table-muted);
-}
-
-.section-title {
-  margin: 0 0 14px;
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--bi-on-table-muted);
-}
-
-.panel {
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--bi-on-table) 7%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bi-on-table) 16%, transparent);
-}
-.panel__title {
-  margin: 0 0 8px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--bi-on-table);
-}
+/* Page content inside the shell. Text on the table uses --bi-on-table*; text inside framed
+   panels uses --bi-frame-*. Both come from the equipped table item. */
 
 .notice {
   margin: 0;
@@ -58,48 +14,114 @@
 }
 
 .away__list {
-  margin: 0 0 12px;
+  margin: 0;
   padding: 0 0 0 18px;
   display: grid;
   gap: 3px;
   font-size: 15px;
-  color: var(--bi-on-table);
+}
+.away .button {
+  justify-self: start;
 }
 
 .button {
   padding: 7px 14px;
   border: 0;
   border-radius: 8px;
-  background: var(--bi-on-table);
-  color: var(--bi-table-bg);
+  background: var(--bi-chrome-accent);
+  color: var(--bi-chrome-bg);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
 }
 .button:hover {
-  filter: brightness(1.15);
+  filter: brightness(1.1);
 }
 .button:focus-visible,
-.tools__text:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--bi-on-table) 70%, transparent);
+.tools__text:focus-visible,
+.has-tip:focus-visible {
+  outline: 2px solid var(--bi-chrome-accent);
   outline-offset: 2px;
 }
 
-/* table: boss on the left, loadout on the right */
+/* Home: boss frame on the left, loadout on the right, production below */
 .table {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 34px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
 }
-.table__loadout {
-  flex: 1;
-  min-width: 0;
+@media (max-width: 1100px) {
+  .table {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.table__boss .frame__body {
+  justify-items: center;
+}
+.stat-row {
+  margin: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+.stat-row dt {
+  color: var(--bi-frame-ink-muted);
+}
+.stat-row dd {
+  margin: 0;
+}
+.has-tip {
+  cursor: help;
+  border-radius: 4px;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.table__loadout .frame__body {
+  container-type: inline-size;
+}
+/* Four cards need 746px. In a narrower frame the row is scaled down as a whole (transform, not
+   zoom, so the rank star effects stay aligned) instead of wrapping one card alone. */
+.loadout-fit {
+  --s: 1;
+  height: calc(248px * var(--s));
+  /* the unscaled row is still 746px wide in layout; clip that, but leave room for rank rings */
+  overflow: clip;
+  overflow-clip-margin: 24px;
 }
 .loadout {
   display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
+  gap: 14px;
+  width: 746px;
+  transform: scale(var(--s));
+  transform-origin: top left;
+}
+@container (max-width: 745px) {
+  .loadout-fit {
+    --s: 0.92;
+  }
+}
+@container (max-width: 685px) {
+  .loadout-fit {
+    --s: 0.84;
+  }
+}
+@container (max-width: 626px) {
+  .loadout-fit {
+    --s: 0.76;
+  }
+}
+@container (max-width: 566px) {
+  .loadout-fit {
+    --s: 0.68;
+  }
+}
+@container (max-width: 507px) {
+  .loadout-fit {
+    --s: 0.6;
+  }
 }
 .slot-empty {
   display: grid;
@@ -109,8 +131,8 @@
   height: 248px;
   padding: 16px;
   border-radius: 12px;
-  border: 2px dashed color-mix(in srgb, var(--bi-on-table) 35%, transparent);
-  color: var(--bi-on-table-muted);
+  border: 2px dashed var(--bi-frame-title-line);
+  color: var(--bi-frame-ink-muted);
   font-size: 13px;
   text-align: center;
 }
@@ -119,15 +141,17 @@
 .production__tiles {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px;
+  gap: 14px;
 }
 .prod {
   display: flex;
   gap: 12px;
   align-items: center;
-  padding: 10px;
+  padding: 10px 14px 10px 10px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--bi-on-table) 7%, transparent);
+  background: var(--bi-frame-title-bg);
+  box-shadow: inset 0 0 0 1px var(--bi-frame-title-line);
+  color: var(--bi-frame-title-ink);
 }
 .prod__stage {
   position: relative;
@@ -149,39 +173,17 @@
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: var(--bi-on-table);
 }
 .prod__meta {
   margin: 2px 0 0;
   font-size: 13px;
-  color: var(--bi-on-table-muted);
+  opacity: 0.85;
 }
 .prod--locked .prod__stage {
   filter: grayscale(1) brightness(0.6);
 }
 .prod .bi-tick {
   font-size: calc(var(--bi-tick-size, 22px) * 0.75);
-}
-
-/* resources */
-.resources__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 28px;
-  margin: 0;
-}
-.resources__item {
-  display: grid;
-  gap: 2px;
-}
-.resources__item dt {
-  font-size: 13px;
-  color: var(--bi-on-table-muted);
-}
-.resources__item dd {
-  margin: 0;
-  font-size: 20px;
-  color: var(--bi-on-table);
 }
 
 /* save tools */
@@ -198,9 +200,9 @@
   width: 100%;
   padding: 8px;
   border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--bi-on-table) 30%, transparent);
-  background: color-mix(in srgb, var(--bi-table-bg) 80%, #000);
-  color: var(--bi-on-table);
+  border: 1px solid var(--bi-frame-title-line);
+  background: var(--bi-frame-title-bg);
+  color: var(--bi-frame-title-ink);
   font:
     13px/1.4 Consolas,
     'Cascadia Mono',
@@ -210,7 +212,6 @@
   margin: 0;
   min-height: 1.3em;
   font-size: 14px;
-  color: var(--bi-on-table);
 }
 
 .fatal {
