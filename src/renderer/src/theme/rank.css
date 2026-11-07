@@ -151,7 +151,9 @@
   inset: -4px;
   border-radius: calc(var(--bi-radius, 12px) + 9px);
   border: 1.5px solid var(--star);
-  box-shadow: 0 0 0 1px rgba(10, 14, 22, 0.45), inset 0 0 0 1px rgba(10, 14, 22, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(10, 14, 22, 0.45),
+    inset 0 0 0 1px rgba(10, 14, 22, 0.35);
 }
 
 /* corner glints at Gold 6 */
