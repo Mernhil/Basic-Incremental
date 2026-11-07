@@ -1,0 +1,77 @@
+/* Direction C: Nocturne Frost. Hairlines, quiet type, light used only for rank and effects. */
+@property --angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.dir {
+  --font-body: 'Instrument Sans', 'Segoe UI', sans-serif;
+  --ink: #e7edf6;
+  --muted: #98a8c0;
+  --card-bg: #121824;
+  --line: #2b364a;
+  --ice: #a9ddff;
+  --rose: #ffadc7;
+  --table-bg: #0b0f16;
+  --star-off: rgba(152, 168, 192, .35);
+  background-image:
+    radial-gradient(70% 55% at 50% 0%, rgba(120, 170, 230, .14), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .035) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+}
+.dir h1 { font-size: 30px; font-weight: 500; letter-spacing: -.02em; line-height: 1.05; }
+.blurb { margin-top: 6px; font-size: 15px; color: var(--muted); }
+.slots { max-width: 560px; color: var(--muted); }
+.slots b { font-weight: 500; color: var(--ink); }
+.section-title { font-size: 15px; font-weight: 500; margin-bottom: 14px; color: var(--muted); }
+
+.tone-a { --art: 190 70% 62%; } .tone-b { --art: 160 55% 58%; } .tone-c { --art: 38 70% 62%; } .tone-d { --art: 260 60% 70%; }
+.tone-boss { --art: 215 25% 62%; }
+
+/* border: Hairline frost + finish: frosted glass sheen on every card */
+.card { padding: 12px; gap: 9px; color: var(--ink); background: var(--card-bg); border: 1px solid var(--line); border-radius: 14px;
+  background-image: linear-gradient(160deg, rgba(255, 255, 255, .07), transparent 38%); }
+.card__name { font-size: 14px; font-weight: 600; line-height: 1.15; }
+.card__job { flex: none; font-size: 12px; color: var(--muted); }
+.card__art { border-radius: 9px; border: 1px solid var(--line); --emblem: transparent;
+  background: radial-gradient(circle at 50% 40%, hsl(var(--art) / .22), transparent 70%), #0e131d; }
+.art__emblem { fill: none; stroke: hsl(var(--art)); stroke-width: 1.6; stroke-linejoin: round; filter: drop-shadow(0 0 6px hsl(var(--art) / .45)); }
+.card__stats dt { font-size: 12px; color: var(--muted); }
+.card__stats dd { font-size: 17px; font-weight: 500; line-height: 1.15; }
+.card__rank { padding-top: 8px; border-top: 1px solid var(--line); }
+.rank-name { font-size: 12px; color: var(--muted); }
+.stars { --star-size: 16px; }
+
+/* star-6 evolution: the hairline takes the tier colour and gains a soft halo */
+.is-star6 { border-color: var(--star); box-shadow: 0 0 0 1px color-mix(in srgb, var(--star) 40%, transparent), 0 0 22px color-mix(in srgb, var(--star) 28%, transparent); }
+.rank-prismatic.is-star6 { border-color: transparent; }
+.rank-prismatic.is-star6::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; z-index: -1; pointer-events: none;
+  background: conic-gradient(from var(--angle), #ff5f9e, #ffb347, #f4f46b, #5ff0a8, #5fc6ff, #b48cff, #ff5f9e);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: spin 6s linear infinite; }
+@keyframes spin { to { --angle: 360deg; } }
+
+/* finish: Thin-film iridescence (an iridescent edge plus a soft film over the art) */
+.finish-holo { border-color: transparent; }
+.finish-holo::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; z-index: -1; pointer-events: none;
+  background: conic-gradient(from var(--angle), #8ee9ff, #c7a6ff, #ffb0d6, #ffe6a3, #9dffd2, #8ee9ff);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: spin 7s linear infinite; }
+.finish-holo .card__art::after { content: ''; position: absolute; inset: 0; opacity: .35; mix-blend-mode: screen;
+  background: linear-gradient(120deg, transparent 20%, #8ee9ff 38%, #ffb0d6 52%, #ffe6a3 66%, transparent 80%); background-size: 240% 100%; animation: film 7s ease-in-out infinite alternate; }
+@keyframes film { to { background-position: 100% 0; } }
+
+/* boss + HP bar */
+.card--boss { padding: 14px; }
+.card--boss .card__name { font-size: 18px; font-weight: 500; }
+.hp { height: 10px; border-radius: 99px; background: #1b2434; overflow: visible; margin: 8px 0 22px; }
+.hp__fill { border-radius: 99px; background: var(--ice); box-shadow: 0 0 12px rgba(169, 221, 255, .55); }
+.hp__text { inset: auto 0 -22px 0; display: block; text-align: right; font-size: 13px; font-weight: 500; color: var(--muted); }
+
+/* attack animation: Scan beam */
+.fx { position: absolute; left: 0; right: 0; top: 0; height: 2px; z-index: 2; opacity: 0; background: var(--ice);
+  box-shadow: 0 0 16px 3px rgba(169, 221, 255, .8); animation: scan 2.4s ease-in infinite; }
+@keyframes scan { 0% { transform: translateY(0); opacity: 1; } 22% { transform: translateY(300px); opacity: 1; } 28%, 100% { transform: translateY(300px); opacity: 0; } }
+.card--boss .card__art { animation: flash 2.4s ease-in infinite; }
+@keyframes flash { 0%, 100% { filter: none; } 12% { filter: brightness(1.5); } 26% { filter: none; } }
+
+/* tick damage: Ice drift; number style: Light tabular */
+.tick { font-size: 19px; font-weight: 500; letter-spacing: .04em; color: var(--ice); text-shadow: 0 0 10px rgba(169, 221, 255, .6), 0 1px 2px rgba(0, 0, 0, .8); }
+.tick--crit { font-size: 28px; font-weight: 600; color: var(--rose); text-shadow: 0 0 14px rgba(255, 173, 199, .65), 0 1px 2px rgba(0, 0, 0, .8); }

@@ -1,0 +1,74 @@
+/* Two upgradable cosmetic items, three levels each. Each level keeps everything from the level
+   below and adds one visible thing, so an upgrade always reads as "more", never "different".
+   Cosmetics draw inside the card edge (decoration layer, art, finish layer); the rank layer
+   draws outside it, so the two never fight. */
+
+/* ===== Card border: Gilded Filigree ===================================================== */
+.card[class*='border-filigree-'] .card__deco { display: block; --c: var(--gold-hi); --L: 16px; --t: 2px; --o: 3px;
+  background:
+    linear-gradient(var(--c), var(--c)) top var(--o) left var(--o) / var(--L) var(--t),
+    linear-gradient(var(--c), var(--c)) top var(--o) left var(--o) / var(--t) var(--L),
+    linear-gradient(var(--c), var(--c)) top var(--o) right var(--o) / var(--L) var(--t),
+    linear-gradient(var(--c), var(--c)) top var(--o) right var(--o) / var(--t) var(--L),
+    linear-gradient(var(--c), var(--c)) bottom var(--o) left var(--o) / var(--L) var(--t),
+    linear-gradient(var(--c), var(--c)) bottom var(--o) left var(--o) / var(--t) var(--L),
+    linear-gradient(var(--c), var(--c)) bottom var(--o) right var(--o) / var(--L) var(--t),
+    linear-gradient(var(--c), var(--c)) bottom var(--o) right var(--o) / var(--t) var(--L);
+  background-repeat: no-repeat; }
+.deco-gem { display: none; }
+
+/* level 1: gilt corner brackets */
+
+/* level 2: longer brackets, an inner engraved line, and a gold gem set into the top edge */
+.border-filigree-2 .card__deco,
+.border-filigree-3 .card__deco { --L: 24px; --t: 2.5px; }
+.border-filigree-2 .card__deco::before,
+.border-filigree-3 .card__deco::before { content: ''; position: absolute; inset: 6px; border-radius: 8px;
+  border: 1px solid rgba(243, 220, 154, 0.38); }
+.border-filigree-2 .deco-gem,
+.border-filigree-3 .deco-gem { display: block; position: absolute; left: 50%; top: -5px; width: 10px; height: 10px; margin-left: -5px;
+  transform: rotate(45deg); border-radius: 2px;
+  background: linear-gradient(135deg, #fff3c4, #d9b35a 50%, #8a6a22); box-shadow: 0 0 0 1.5px #2b1a05; }
+
+/* level 3: a ruby replaces the gold gem and pulses, and a point of light runs round the border */
+.border-filigree-3 .deco-gem { width: 13px; height: 13px; margin-left: -6.5px; top: -7px;
+  background: radial-gradient(circle at 35% 35%, #ffd0d0, #d9404f 45%, #5a0f1a);
+  box-shadow: 0 0 0 1.5px var(--gold), 0 0 0 3px #2b1a05; animation: gem-pulse 2.4s ease-in-out infinite; }
+@keyframes gem-pulse { 0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 90, 100, 0.4)); } 50% { filter: drop-shadow(0 0 8px rgba(255, 90, 100, 0.95)); } }
+.border-filigree-3 .card__deco::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1.5px;
+  background: conic-gradient(from var(--angle), transparent 0 72%, rgba(255, 246, 214, 0) 74%, #fff6d6 84%, rgba(255, 246, 214, 0) 94%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: spin 4.5s linear infinite; }
+
+/* ===== Card finish: Aurora Foil ========================================================== */
+.card[class*='finish-aurora-'] .art__emblem { position: relative; z-index: 1; }
+
+/* level 1: a soft, still aurora wash over the art */
+.card[class*='finish-aurora-'] .card__art::after { content: ''; position: absolute; inset: 0; mix-blend-mode: screen;
+  background: linear-gradient(125deg, transparent 15%, rgba(142, 233, 255, 0.28) 38%, rgba(199, 166, 255, 0.3) 52%, rgba(255, 176, 214, 0.28) 66%, transparent 86%); }
+
+/* level 2: the wash moves and brightens, and sparkles twinkle in the art */
+.finish-aurora-2 .card__art::after,
+.finish-aurora-3 .card__art::after { background-size: 260% 100%; opacity: 1;
+  background-image: linear-gradient(125deg, transparent 15%, rgba(142, 233, 255, 0.5) 36%, rgba(199, 166, 255, 0.55) 50%, rgba(255, 176, 214, 0.5) 64%, rgba(255, 230, 163, 0.4) 74%, transparent 88%);
+  animation: aurora-drift 5s ease-in-out infinite alternate; }
+@keyframes aurora-drift { from { background-position: 0% 0; } to { background-position: 100% 0; } }
+.finish-aurora-2 .card__art::before,
+.finish-aurora-3 .card__art::before { content: ''; position: absolute; inset: 0; z-index: 2;
+  background:
+    radial-gradient(circle at 18% 28%, #fff 0 1px, transparent 2.2px), radial-gradient(circle at 76% 22%, #fff 0 1.2px, transparent 2.5px),
+    radial-gradient(circle at 62% 70%, #fff 0 1px, transparent 2.2px), radial-gradient(circle at 30% 78%, #fff 0 1.2px, transparent 2.5px),
+    radial-gradient(circle at 88% 58%, #fff 0 1px, transparent 2.2px);
+  animation: twinkle 1.4s ease-in-out infinite alternate; }
+@keyframes twinkle { from { opacity: 0.25; } to { opacity: 1; } }
+
+/* level 3: the whole card turns holographic (plate, panels and frame), under the rank footer */
+.finish-aurora-3 .card__finish { display: block; mix-blend-mode: screen; background-size: 280% 100%;
+  background-image: linear-gradient(115deg, transparent 10%, rgba(142, 233, 255, 0.34) 30%, rgba(199, 166, 255, 0.4) 45%, rgba(255, 176, 214, 0.34) 60%, rgba(255, 230, 163, 0.28) 70%, transparent 88%);
+  animation: aurora-drift 6s ease-in-out infinite alternate-reverse; }
+.finish-aurora-3 .card__head,
+.finish-aurora-3 .card__stats { box-shadow: inset 0 0 0 1px rgba(199, 166, 255, 0.6), 0 0 10px rgba(142, 233, 255, 0.18); }
+
+/* showcase spacing: room for the prismatic aura so it never reaches a neighbour or a caption */
+.row { gap: 30px; }
+.labeled { gap: 24px; }

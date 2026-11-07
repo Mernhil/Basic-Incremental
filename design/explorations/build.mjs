@@ -1,0 +1,483 @@
+// Builds the three standalone style mockups from one shared markup, so every direction
+// shows exactly the same content. Run: node design/explorations/build.mjs
+import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const read = (name) => readFileSync(join(here, name), 'utf8');
+
+const fontFile = (pkg, file) => `../../node_modules/@fontsource/${pkg}/files/${file}.woff2`;
+const face = (family, pkg, weight, style = 'normal') =>
+  `@font-face{font-family:'${family}';font-style:${style};font-weight:${weight};font-display:block;` +
+  `src:url('${fontFile(pkg, `${pkg}-latin-${weight}-${style}`)}') format('woff2')}`;
+
+const directions = [
+  {
+    file: 'a-flatland.html',
+    css: 'a-flatland.css',
+    name: 'Flatland Ink',
+    blurb: 'Clean flat: solid colour, hard outlines, no gradients.',
+    fonts: [face('Bricolage Grotesque', 'bricolage-grotesque', 500), face('Bricolage Grotesque', 'bricolage-grotesque', 700), face('Bricolage Grotesque', 'bricolage-grotesque', 800)],
+    slots: [
+      ['Card border', 'Ink outline'],
+      ['Card finish', 'Stripe holo'],
+      ['Attack animation', 'Pop ring'],
+      ['Tick damage', 'Sticker pill'],
+      ['Number style', 'Rounded heavy'],
+      ['Table', 'Dot grid'],
+    ],
+  },
+  {
+    file: 'b-gilded.html',
+    css: 'b-gilded.css',
+    name: 'Gilded Tradition',
+    blurb: 'Classic trading card: coloured frame, gold plate, felt table.',
+    fonts: [
+      face('Alegreya', 'alegreya', 400),
+      face('Alegreya', 'alegreya', 700),
+      face('Alegreya', 'alegreya', 400, 'italic'),
+      face('Alegreya', 'alegreya', 700, 'italic'),
+      face('Alegreya Sans', 'alegreya-sans', 400),
+      face('Alegreya Sans', 'alegreya-sans', 500),
+      face('Alegreya Sans', 'alegreya-sans', 700),
+    ],
+    slots: [
+      ['Card border', 'Crimson and gilt'],
+      ['Card finish', 'Rainbow foil'],
+      ['Attack animation', 'Gilt slash'],
+      ['Tick damage', 'Engraved rise'],
+      ['Number style', 'Engraved gold'],
+      ['Table', 'Green felt'],
+    ],
+  },
+  {
+    file: 'c-nocturne.html',
+    css: 'c-nocturne.css',
+    name: 'Nocturne Frost',
+    blurb: 'Dark minimal: hairlines, quiet type, light only where it matters.',
+    fonts: [face('Instrument Sans', 'instrument-sans', 400), face('Instrument Sans', 'instrument-sans', 500), face('Instrument Sans', 'instrument-sans', 600)],
+    slots: [
+      ['Card border', 'Hairline frost'],
+      ['Card finish', 'Thin-film iridescence'],
+      ['Attack animation', 'Scan beam'],
+      ['Tick damage', 'Ice drift'],
+      ['Number style', 'Light tabular'],
+      ['Table', 'Midnight grid'],
+    ],
+  },
+  {
+    file: 'b2-gilded-options.html',
+    css: 'b-gilded.css',
+    extraCss: ['b2-options.css'],
+    controls: true,
+    name: 'Gilded Tradition options',
+    blurb: 'Same cosmetic items, new table and fonts. Use the picker to mix.',
+    fonts: [
+      face('Marcellus', 'marcellus', 400),
+      face('Barlow Semi Condensed', 'barlow-semi-condensed', 500),
+      face('Barlow Semi Condensed', 'barlow-semi-condensed', 600),
+      face('Barlow Semi Condensed', 'barlow-semi-condensed', 700),
+      face('Spectral', 'spectral', 400),
+      face('Spectral', 'spectral', 700),
+      face('Spectral', 'spectral', 700, 'italic'),
+      face('Source Sans 3', 'source-sans-3', 400),
+      face('Source Sans 3', 'source-sans-3', 600),
+      face('Source Sans 3', 'source-sans-3', 700),
+      face('Outfit', 'outfit', 500),
+      face('Outfit', 'outfit', 700),
+      face('Outfit', 'outfit', 800),
+    ],
+    slots: [
+      ['Card border', 'Crimson and gilt'],
+      ['Card finish', 'Rainbow foil'],
+      ['Attack animation', 'Gilt slash'],
+      ['Tick damage', 'Engraved rise'],
+      ['Number style', 'Engraved gold'],
+      ['Table', 'Plain (pick below)'],
+    ],
+  },
+  {
+    file: 'c2-gilded-nocturne.html',
+    css: 'd-hybrid.css',
+    controls: 'hybrid',
+    name: 'Gilded Nocturne',
+    blurb: 'Gilded items on a calm Nocturne structure. Outfit throughout.',
+    fonts: [
+      face('Outfit', 'outfit', 500),
+      face('Outfit', 'outfit', 600),
+      face('Outfit', 'outfit', 700),
+      face('Outfit', 'outfit', 800),
+    ],
+    slots: [
+      ['Card border', 'Gilt hairline'],
+      ['Card finish', 'Rainbow foil'],
+      ['Attack animation', 'Gilt slash'],
+      ['Tick damage', 'Engraved rise'],
+      ['Number style', 'Engraved gold'],
+      ['Table', 'Plain (pick below)'],
+    ],
+  },
+  {
+    file: 'd2-upgrades.html',
+    css: 'd-hybrid.css',
+    extraCss: ['e-upgrades.css'],
+    controls: 'hybrid',
+    layout: 'upgrades',
+    name: 'Upgradable cosmetics',
+    blurb: 'Gilded Nocturne base, two items with three levels each, and the new prismatic tier.',
+    fonts: [
+      face('Outfit', 'outfit', 500),
+      face('Outfit', 'outfit', 600),
+      face('Outfit', 'outfit', 700),
+      face('Outfit', 'outfit', 800),
+    ],
+    slots: [
+      ['Card border', 'Gilded Filigree, levels 1 to 3'],
+      ['Card finish', 'Aurora Foil, levels 1 to 3'],
+      ['Attack animation', 'Gilt slash'],
+      ['Tick damage', 'Engraved rise'],
+      ['Number style', 'Engraved gold'],
+      ['Table', 'Plain (pick below)'],
+    ],
+  },
+  {
+    file: 'd3-attacks-holo-rarity.html',
+    css: 'd-hybrid.css',
+    extraCss: ['f-attacks.css'],
+    controls: 'hybrid',
+    layout: 'attacks',
+    name: 'Attacks, holo and rarity',
+    blurb: 'Starter attack per job, quieter animated holos, rarity colours and the cursor slot.',
+    fonts: [
+      face('Outfit', 'outfit', 500),
+      face('Outfit', 'outfit', 600),
+      face('Outfit', 'outfit', 700),
+      face('Outfit', 'outfit', 800),
+    ],
+    slots: [
+      ['Attack animation', 'Slash (fighting, logging), Heavy hit (mining)'],
+      ['Card finish', 'Four holo candidates'],
+      ['Cursor', 'Gilded pointer'],
+      ['Table', 'Plain (pick below)'],
+    ],
+  },
+];
+
+// ---- tiny flat emblems used as art placeholders -------------------------------------------
+const emblems = {
+  blade: '<path d="M50 8 62 60 50 70 38 60Z"/><rect x="30" y="64" width="40" height="7" rx="2"/><rect x="45" y="70" width="10" height="22" rx="2"/>',
+  pick: '<path d="M12 40C30 14 70 14 88 40 70 30 30 30 12 40Z"/><rect x="46" y="30" width="8" height="62" rx="3"/>',
+  axe: '<path d="M30 20C62 8 84 26 76 52 60 44 44 42 30 50Z"/><rect x="26" y="20" width="8" height="72" rx="3"/>',
+  shield: '<path d="M50 8 84 20V48C84 70 68 84 50 92 32 84 16 70 16 48V20Z"/>',
+  gem: '<path d="M30 16H70L90 40 50 90 10 40Z"/>',
+  drum: '<ellipse cx="50" cy="32" rx="34" ry="12"/><path d="M16 32V70C16 78 32 86 50 86S84 78 84 70V32C84 40 68 44 50 44S16 40 16 32Z"/>',
+  golem: '<rect x="22" y="20" width="56" height="48" rx="8"/><rect x="34" y="72" width="12" height="18" rx="3"/><rect x="54" y="72" width="12" height="18" rx="3"/>',
+  rock: '<path d="M14 70 26 38 46 26 70 30 86 52 82 76 54 86 28 84Z"/><path d="M40 44 52 52 46 64M62 42 70 56"/>',
+  tree: '<path d="M50 10 76 46H62L82 70H18L38 46H24Z"/><rect x="44" y="70" width="12" height="20" rx="2"/>',
+};
+const art = (kind) =>
+  `<svg class="art__emblem" viewBox="0 0 100 100" aria-hidden="true">${emblems[kind]}</svg>`;
+
+// ---- markup ---------------------------------------------------------------------------------
+const TIER_NAME = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold', prismatic: 'Prismatic' };
+
+function stars(tier, count) {
+  const on = '★'.repeat(count);
+  const off = '★'.repeat(6 - count);
+  const label = `${TIER_NAME[tier]}, ${count} of 6 stars`;
+  return (
+    `<span class="stars" role="img" aria-label="${label}">` +
+    `<span class="stars__on" aria-hidden="true">${on}</span>` +
+    `<span class="stars__sheen" aria-hidden="true">${on}</span>` +
+    `<span class="stars__off" aria-hidden="true">${off}</span></span>`
+  );
+}
+
+function card(opts) {
+  const html = cardHtml(opts);
+  return opts.label
+    ? `<figure class="labeled">${html}<figcaption>${opts.label}</figcaption></figure>`
+    : html;
+}
+
+function cardHtml({ name, job, role, emblem, tone, tier, count, power, rate, extra = '', finish = '', cls = '', rar = '' }) {
+  const six = count === 6 ? ' is-star6' : '';
+  return `
+  <article class="card rank-${tier}${six} job-${job.toLowerCase()} tone-${tone}${finish ? ` finish-${finish}` : ''}${rar ? ` rar-${rar}` : ''} ${cls}">
+    <span class="card__rankfx" aria-hidden="true"><i class="mote"></i><i class="mote"></i><i class="mote"></i><i class="mote"></i></span>
+    <span class="card__finish" aria-hidden="true"></span>
+    <span class="card__deco" aria-hidden="true"><i class="deco-gem"></i></span>
+    <header class="card__head"><h3 class="card__name">${name}</h3><span class="card__job">${role ?? job}</span></header>
+    <div class="card__art">${art(emblem)}</div>
+    <dl class="card__stats">
+      <div><dt>Power</dt><dd class="num">${power}</dd></div>
+      <div><dt>${extra ? extra[0] : 'Rate'}</dt><dd class="num">${extra ? extra[1] : rate}</dd></div>
+    </dl>
+    <footer class="card__rank"><span class="rank-name">${TIER_NAME[tier]}</span>${stars(tier, count)}</footer>
+  </article>`;
+}
+
+function boss() {
+  return `
+  <article class="card card--boss tone-boss rank-gold" aria-label="Boss: Stone Warden">
+    <header class="card__head"><h3 class="card__name">Stone Warden</h3><span class="card__job">Boss</span></header>
+    <div class="card__art"><div class="fx" aria-hidden="true"></div>${art('golem')}
+      <div class="ticks" aria-hidden="true">
+        <span class="tick num" style="--x:22%;animation-delay:0s">1.2K</span>
+        <span class="tick num" style="--x:58%;animation-delay:-.2s">1.2K</span>
+        <span class="tick tick--crit num" style="--x:38%;animation-delay:-.45s">8.4K</span>
+        <span class="tick num" style="--x:72%;animation-delay:-.65s">1.2K</span>
+        <span class="tick num" style="--x:12%;animation-delay:-.85s">1.2K</span>
+      </div>
+    </div>
+    <div class="hp" role="progressbar" aria-label="Boss HP" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68">
+      <div class="hp__fill" style="width:68%"></div>
+      <span class="hp__text num">6.8M / 10M</span>
+    </div>
+  </article>`;
+}
+
+// Mockup-only picker so table and font options can be mixed. Reads and writes the URL hash.
+const PICKER_SCRIPT = `
+(() => {
+  const params = new URLSearchParams(location.hash.slice(1));
+  const apply = (key, value) => {
+    document.body.dataset[key] = value;
+    for (const b of document.querySelectorAll('.picker [data-key="' + key + '"]')) {
+      b.setAttribute('aria-pressed', String(b.dataset.value === value));
+    }
+  };
+  const keys = document.querySelector('.picker').dataset.keys.split(',');
+  for (const key of keys) apply(key, params.get(key) ?? document.body.dataset[key]);
+  document.querySelector('.picker').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    apply(b.dataset.key, b.dataset.value);
+    params.set(b.dataset.key, b.dataset.value);
+    history.replaceState(null, '', '#' + params);
+  });
+})();`;
+
+const TABLES = [
+  ['navy', 'Ink navy'],
+  ['graphite', 'Graphite'],
+  ['stone', 'Light stone'],
+];
+
+function picker(kind) {
+  const group = (key, label, items) =>
+    `<fieldset><legend>${label}</legend>` +
+    items
+      .map(([v, t]) => `<button type="button" data-key="${key}" data-value="${v}">${t}</button>`)
+      .join('') +
+    '</fieldset>';
+  const hybrid = kind === 'hybrid';
+  const fonts = group('font', 'Fonts', [
+    ['inscribed', 'Inscribed'],
+    ['bookish', 'Book serif'],
+    ['modern', 'Modern sans'],
+  ]);
+  const ornament = group('ornament', 'Gilt', [
+    ['minimal', 'Minimal'],
+    ['medium', 'Medium'],
+  ]);
+  return (
+    `<aside class="picker" aria-label="Options" data-keys="${hybrid ? 'table,ornament' : 'table,font'}">` +
+    group('table', 'Table', TABLES) +
+    (hybrid ? ornament : fonts) +
+    `</aside><script>${PICKER_SCRIPT}</script>`
+  );
+}
+
+// Freezes every animation inside an element with data-t at that many milliseconds, so a
+// filmstrip of the same attack can show several moments side by side.
+const FRAME_SCRIPT = `
+for (const el of document.querySelectorAll('[data-t]')) {
+  for (const a of el.getAnimations({ subtree: true })) {
+    a.pause();
+    a.currentTime = Number(el.dataset.t);
+  }
+}`;
+
+// One attack "stage": the boss art window with three automatic hits per 2.4 s cycle.
+// Each hit has its own angle and position (in game these would be randomised per hit).
+const HITS = [
+  { dx: -12, dy: -16, r: -28, d: 0 },
+  { dx: 16, dy: 18, r: 18, d: 0.6 },
+  { dx: 4, dy: -2, r: -68, d: 1.2 },
+];
+const PARTICLES = [
+  [-34, -26],
+  [30, -30],
+  [-26, 28],
+  [38, 22],
+];
+
+function stage(kind, t) {
+  const emblem = kind === 'mining' ? 'rock' : kind === 'logging' ? 'tree' : 'golem';
+  const hits = HITS.map(({ dx, dy, r, d }) => {
+    const parts = PARTICLES.map(([sx, sy]) => `<i class="p" style="--sx:${sx}px;--sy:${sy}px"></i>`).join('');
+    const body =
+      kind === 'mining'
+        ? `<i class="dust"></i><i class="flash"></i><i class="burst"></i><i class="ring"></i>${parts}`
+        : `<i class="slash"></i>${parts}`;
+    return `<div class="hit" style="--dx:${dx}px;--dy:${dy}px;--r:${r}deg;--d:${d}s">${body}</div>`;
+  }).join('');
+  return `<div class="stage stage--${kind}"${t === undefined ? '' : ` data-t="${t}"`}>${art(emblem)}${hits}</div>`;
+}
+
+function attackSections() {
+  const section = (id, title, inner, note = '') =>
+    `\n  <section aria-labelledby="${id}">\n    <h2 id="${id}" class="section-title">${title}</h2>${note ? `\n    <p class="note">${note}</p>` : ''}\n    <div class="row">${inner}</div>\n  </section>`;
+  const fig = (inner, label) => `<figure class="labeled">${inner}<figcaption>${label}</figcaption></figure>`;
+  const strip = (kind) =>
+    [
+      fig(stage(kind), 'Live'),
+      fig(stage(kind, 12), 'Appears'),
+      fig(stage(kind, 90), 'Full'),
+      fig(stage(kind, 300), 'Fading'),
+      fig(stage(kind, 640), 'Next hit, new angle'),
+    ].join('');
+  const silver = (finish, label) =>
+    card({ name: 'Aurora Fang', job: 'Fighting', emblem: 'gem', tone: 'b', tier: 'silver', count: 3, power: '3.3K', rate: '1.1s', cls: finish, label, rar: 'epic' });
+  const rarities = [
+    ['common', 'Common'],
+    ['rare', 'Rare'],
+    ['epic', 'Epic'],
+    ['legendary', 'Legendary'],
+    ['mythic', 'Mythic (neon pink)'],
+    ['exotic', 'Exotic (neon orange)'],
+    ['void', 'Void (metallic black)'],
+  ];
+  const cursors = [
+    ['cursor-starter', 'Gilded pointer (starter)'],
+    ['cursor-prism', 'Prism pointer (unlockable example)'],
+  ]
+    .map(([cls, label]) => fig(`<div class="cursor-tile"><i class="cursor-preview ${cls}"></i></div>`, label))
+    .join('');
+
+  return [
+    section('a1', 'Fighting: slash at changing angles, with sparks', strip('fighting'), 'Three automatic hits, then a short pause. Each slash appears, thins and fades in about a quarter of a second.'),
+    section('a2', 'Mining: a heavy hit (shockwave, cracks, rock chips, dust)', strip('mining')),
+    section('a3', 'Logging: the same slash, with wood chips', strip('logging')),
+    section('h1', 'Holo finishes: animated, quieter, patterned', [silver('', 'No finish'), silver('finish-etched', 'Etched lines'), silver('finish-glitter', 'Starlight grain'), silver('finish-shards', 'Prism shards'), silver('finish-moire', 'Moiré rings')].join(''), 'Colour only appears where the moving light crosses the pattern; the rest stays silver.'),
+    section('r1', 'Rarity colours the card body', rarities.map(([r, label]) => card({ name: 'Gilded Edge', job: 'Fighting', emblem: 'blade', tone: 'a', tier: 'gold', count: 4, power: '9.6K', rate: '1.0s', rar: r, label })).join('')),
+    section('c1', 'Cursor (new cosmetic slot)', cursors, 'The starter cursor is active on this page.'),
+  ].join('\n');
+}
+
+// Sections for the upgradable-cosmetics showcase.
+function upgradeSections() {
+  const section = (id, title, inner) =>
+    `\n  <section aria-labelledby="${id}">\n    <h2 id="${id}" class="section-title">${title}</h2>\n    <div class="row">${inner}</div>\n  </section>`;
+  const edge = (cls, label) =>
+    card({ name: 'Gilded Edge', job: 'Fighting', emblem: 'blade', tone: 'a', tier: 'gold', count: 4, power: '9.6K', rate: '1.0s', cls, label });
+  const fang = (cls, label) =>
+    card({ name: 'Aurora Fang', job: 'Fighting', emblem: 'gem', tone: 'b', tier: 'silver', count: 3, power: '3.3K', rate: '1.1s', cls, label });
+  const prism = (count) =>
+    card({ name: 'Prism Shield', job: 'Fighting', emblem: 'shield', tone: 'd', tier: 'prismatic', count, power: count === 6 ? '88K' : '52K', rate: '0.8s', label: `Prismatic ${count}` });
+
+  const loadout = [
+    card({ name: 'Ember Warden', job: 'Fighting', role: 'Main', emblem: 'blade', tone: 'a', tier: 'prismatic', count: 6, power: '88K', extra: ['Tick', '0.7s'], cls: 'border-filigree-3 finish-aurora-3' }),
+    card({ name: 'Whetstone', job: 'Fighting', role: 'Support', emblem: 'gem', tone: 'b', tier: 'gold', count: 6, power: '+18%', extra: ['Adds', 'Damage'], cls: 'border-filigree-2 finish-aurora-2' }),
+    card({ name: 'Twin Blade', job: 'Fighting', role: 'Support', emblem: 'axe', tone: 'c', tier: 'silver', count: 5, power: '+20%', extra: ['Adds', 'Attack'], cls: 'border-filigree-1 finish-aurora-1' }),
+    card({ name: 'War Drum', job: 'Fighting', role: 'Support', emblem: 'drum', tone: 'd', tier: 'bronze', count: 2, power: '+15%', extra: ['Adds', 'Speed'] }),
+  ].join('');
+
+  return [
+    `\n  <section aria-labelledby="u0">\n    <h2 id="u0" class="section-title">Battle, with upgraded cosmetics equipped</h2>\n    <div class="row row--battle">${boss()}<div class="row">${loadout}</div></div>\n  </section>`,
+    section('u1', 'Prismatic tier: star 1, 3, 5 and 6, next to Gold star 6', [prism(1), prism(3), prism(5), prism(6), card({ name: 'Gilded Edge', job: 'Fighting', emblem: 'blade', tone: 'a', tier: 'gold', count: 6, power: '21.0K', rate: '0.9s', label: 'Gold 6' })].join('')),
+    section('u2', 'Card border: Gilded Filigree, base and levels 1 to 3', [edge('', 'No border item'), edge('border-filigree-1', 'Level 1'), edge('border-filigree-2', 'Level 2'), edge('border-filigree-3', 'Level 3')].join('')),
+    section('u3', 'Card finish: Aurora Foil, base and levels 1 to 3', [fang('', 'No finish item'), fang('finish-aurora-1', 'Level 1'), fang('finish-aurora-2', 'Level 2'), fang('finish-aurora-3', 'Level 3')].join('')),
+    section('u4', 'Everything at once: max cosmetics on every tier', [
+      card({ name: 'Stone Pick', job: 'Mining', emblem: 'pick', tone: 'c', tier: 'bronze', count: 6, power: '980', rate: '3.1/s', cls: 'border-filigree-3 finish-aurora-3', label: 'Bronze 6' }),
+      card({ name: 'Birch Axe', job: 'Logging', emblem: 'axe', tone: 'b', tier: 'silver', count: 6, power: '4.4K', rate: '12/s', cls: 'border-filigree-3 finish-aurora-3', label: 'Silver 6' }),
+      card({ name: 'Gilded Edge', job: 'Fighting', emblem: 'blade', tone: 'a', tier: 'gold', count: 6, power: '21.0K', rate: '0.9s', cls: 'border-filigree-3 finish-aurora-3', label: 'Gold 6' }),
+      card({ name: 'Prism Shield', job: 'Fighting', emblem: 'shield', tone: 'd', tier: 'prismatic', count: 6, power: '88K', rate: '0.7s', cls: 'border-filigree-3 finish-aurora-3', label: 'Prismatic 6' }),
+    ].join('')),
+  ].join('\n');
+}
+
+function page(d) {
+  const base = read('base.css');
+  const own = [d.css, ...(d.extraCss ?? [])].map(read).join('\n');
+  const slotList = d.slots.map(([k, v]) => `<li><span>${k}</span> <b>${v}</b></li>`).join('');
+
+  const loadout = [
+    card({ name: 'Ember Warden', job: 'Fighting', role: 'Main', emblem: 'blade', tone: 'a', tier: 'gold', count: 4, power: '12.4K', extra: ['Tick', '1.0s'] }),
+    card({ name: 'Whetstone', job: 'Fighting', role: 'Support', emblem: 'gem', tone: 'b', tier: 'silver', count: 3, power: '+10%', extra: ['Adds', 'Damage'] }),
+    card({ name: 'Twin Blade', job: 'Fighting', role: 'Support', emblem: 'axe', tone: 'c', tier: 'bronze', count: 5, power: '+20%', extra: ['Adds', 'Attack'] }),
+    card({ name: 'War Drum', job: 'Fighting', role: 'Support', emblem: 'drum', tone: 'd', tier: 'silver', count: 1, power: '+15%', extra: ['Adds', 'Speed'] }),
+  ].join('');
+
+  const ranks = [
+    card({ name: 'Stone Pick', job: 'Mining', emblem: 'pick', tone: 'c', tier: 'bronze', count: 3, power: '320', rate: '2.4/s' }),
+    card({ name: 'Birch Axe', job: 'Logging', emblem: 'axe', tone: 'b', tier: 'silver', count: 4, power: '1.8K', rate: '9.1/s' }),
+    card({ name: 'Gilded Edge', job: 'Fighting', emblem: 'blade', tone: 'a', tier: 'gold', count: 2, power: '9.6K', rate: '1.0s' }),
+    card({ name: 'Prism Shield', job: 'Fighting', emblem: 'shield', tone: 'd', tier: 'prismatic', count: 5, power: '52K', rate: '0.8s' }),
+  ].join('');
+
+  const pair = [
+    card({ name: 'Gilded Edge', job: 'Fighting', emblem: 'blade', tone: 'a', tier: 'gold', count: 5, power: '14.2K', rate: '1.0s' }),
+    card({ name: 'Gilded Edge', job: 'Fighting', emblem: 'blade', tone: 'a', tier: 'gold', count: 6, power: '21.0K', rate: '0.9s' }),
+  ].join('');
+
+  const extremes = [
+    card({ name: 'Stone Pick', job: 'Mining', emblem: 'pick', tone: 'c', tier: 'bronze', count: 6, power: '980', rate: '3.1/s' }),
+    card({ name: 'Prism Shield', job: 'Fighting', emblem: 'shield', tone: 'd', tier: 'prismatic', count: 6, power: '88K', rate: '0.7s' }),
+    card({ name: 'Aurora Fang', job: 'Fighting', emblem: 'gem', tone: 'b', tier: 'silver', count: 3, power: '3.3K', rate: '1.1s', finish: 'holo' }),
+  ].join('');
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${d.name} — style exploration</title>
+<style>
+${d.fonts.join('\n')}
+${base}
+${own}
+</style>
+</head>
+<body class="dir"${d.controls === 'hybrid' ? ' data-table="navy" data-ornament="minimal"' : d.controls ? ' data-table="navy" data-font="inscribed"' : ''}>
+<main class="table">
+  <header class="setbar">
+    <div><h1>${d.name}</h1><p class="blurb">${d.blurb}</p></div>
+    <ul class="slots" aria-label="Cosmetic set">${slotList}</ul>
+  </header>
+
+${
+  d.layout === 'upgrades'
+    ? upgradeSections()
+    : d.layout === 'attacks'
+      ? attackSections()
+      : `
+  <section aria-labelledby="s1">
+    <h2 id="s1" class="section-title">Battle</h2>
+    <div class="row row--battle">${boss()}<div class="row">${loadout}</div></div>
+  </section>
+
+  <section aria-labelledby="s2">
+    <h2 id="s2" class="section-title">Ranks</h2>
+    <div class="row">${ranks}</div>
+  </section>
+
+  <section aria-labelledby="s3">
+    <h2 id="s3" class="section-title">Star 5 and star 6, with the shine and a faint frame glow</h2>
+    <div class="row">${pair}<div class="row">${extremes}</div></div>
+  </section>`
+}
+</main>
+${d.controls ? picker(d.controls) : ''}
+${d.layout === 'attacks' ? `<script>${FRAME_SCRIPT}</script>` : ''}
+</body>
+</html>
+`;
+}
+
+for (const d of directions) {
+  writeFileSync(join(here, d.file), page(d));
+  console.log('wrote', d.file);
+}

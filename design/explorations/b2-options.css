@@ -1,0 +1,70 @@
+/* Table and font options layered over b-gilded.css. The card items (frame, foil, slash, engraved
+   numbers) are unchanged; only the table and typography vary. Selected via body[data-*]. */
+
+/* ---- table: plain surfaces, no texture ---- */
+body.dir[data-table='navy'] {
+  --table-bg: #111a35;
+  background-image: radial-gradient(90% 60% at 50% 0%, rgba(140, 170, 255, 0.12), transparent 70%);
+}
+body.dir[data-table='graphite'] {
+  --table-bg: #222020;
+  background-image: radial-gradient(90% 60% at 50% 0%, rgba(255, 255, 255, 0.07), transparent 70%);
+}
+body.dir[data-table='stone'] {
+  --table-bg: #cfd5dd;
+  color: #1c2330;
+  background-image: radial-gradient(90% 60% at 50% 0%, rgba(255, 255, 255, 0.55), transparent 70%);
+}
+/* light table: dark text, lighter card shadows */
+body[data-table='stone'] h1 { color: #7c1d2a; }
+body[data-table='stone'] .blurb { color: #3d4757; }
+body[data-table='stone'] .slots { color: #1c2330; }
+body[data-table='stone'] .slots b { color: #7c1d2a; }
+body[data-table='stone'] .section-title { color: #7c1d2a; }
+body[data-table='stone'] .card {
+  box-shadow: 0 0 0 2px var(--gold-2), 0 0 0 3.5px #2b1a05, 0 6px 10px rgba(28, 35, 48, 0.35), inset 0 0 0 1.5px rgba(241, 210, 122, 0.75);
+}
+body[data-table='stone'] .is-star6 {
+  box-shadow: 0 0 0 2px var(--gold-1), 0 0 0 3.5px #2b1a05, 0 0 16px 3px color-mix(in srgb, var(--star) 70%, transparent), 0 6px 10px rgba(28, 35, 48, 0.35), inset 0 0 0 1.5px rgba(255, 236, 170, 0.95);
+}
+body[data-table='stone'] .picker { background: rgba(255, 255, 255, 0.85); color: #1c2330; }
+
+/* ---- fonts ---- */
+/* Inscribed: Roman capitals-style titles (Marcellus has one weight and no italic) */
+body[data-font='inscribed'] {
+  --font-title: 'Marcellus', Georgia, serif;
+  --font-body: 'Barlow Semi Condensed', 'Segoe UI', sans-serif;
+}
+body[data-font='inscribed'] :is(h1, .section-title, .card__name, .rank-name, .tick) { font-weight: 400; font-style: normal; }
+body[data-font='inscribed'] .card__name { font-size: 15px; }
+body[data-font='inscribed'] .card__job { font-style: normal; font-weight: 500; }
+body[data-font='inscribed'] .card--boss .card__name { font-size: 19px; }
+body[data-font='inscribed'] .card__stats dd { font-weight: 600; }
+
+/* Book serif: sturdy text serif for names, humanist sans for stats */
+body[data-font='bookish'] {
+  --font-title: 'Spectral', Georgia, serif;
+  --font-body: 'Source Sans 3', 'Segoe UI', sans-serif;
+}
+body[data-font='bookish'] :is(h1, .section-title, .rank-name, .tick) { font-style: normal; font-weight: 700; }
+body[data-font='bookish'] .card__job { font-style: normal; font-weight: 600; }
+body[data-font='bookish'] .card__name { font-size: 15px; }
+
+/* Modern sans: one geometric family, no serifs anywhere */
+body[data-font='modern'] {
+  --font-title: 'Outfit', 'Segoe UI', sans-serif;
+  --font-body: 'Outfit', 'Segoe UI', sans-serif;
+}
+body[data-font='modern'] :is(h1, .section-title, .card__name, .rank-name, .tick) { font-style: normal; font-weight: 700; }
+body[data-font='modern'] .tick { font-weight: 800; }
+body[data-font='modern'] .card__job { font-style: normal; font-weight: 500; }
+body[data-font='modern'] .card__stats dd { font-weight: 700; }
+
+
+/* keep every card title on one line so cards stay aligned across font options */
+body[data-font] .card__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body[data-font] .card__job { flex: none; }
+body[data-font='bookish'] .card__name,
+body[data-font='modern'] .card__name { font-size: 14px; }
+body[data-font='bookish'] .card__job,
+body[data-font='modern'] .card__job { font-size: 11px; }

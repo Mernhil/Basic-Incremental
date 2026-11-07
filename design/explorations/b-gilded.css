@@ -1,0 +1,79 @@
+/* Direction B: Gilded Tradition. Coloured frame, gold name plate, art window, parchment text box,
+   on a green felt table. Serif for names, humanist sans for numbers. */
+.dir {
+  --font-body: 'Alegreya Sans', 'Segoe UI', sans-serif;
+  --font-title: 'Alegreya', Georgia, serif;
+  --ink: #2a1a0c;
+  --gold-1: #f1d27a; --gold-2: #b98a2a; --gold-3: #7d5a14;
+  --parch: #f4ead2;
+  --table-bg: #0f3a2c;
+  --star-off: rgba(255, 255, 255, .22);
+  color: #f2ead6;
+  background-image:
+    radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, .09), transparent 60%),
+    radial-gradient(100% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, .45)),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/></filter><rect width='220' height='220' filter='url(%23n)' opacity='.5'/></svg>");
+}
+.dir h1 { font-family: var(--font-title); font-size: 38px; font-weight: 700; font-style: italic; line-height: 1; color: var(--gold-1); }
+.blurb { margin-top: 6px; font-size: 16px; color: #d8ceb4; }
+.slots { max-width: 560px; color: #efe6cf; }
+.slots b { font-weight: 700; color: var(--gold-1); }
+.section-title { font-family: var(--font-title); font-style: italic; font-size: 21px; font-weight: 700; margin-bottom: 14px; color: var(--gold-1); }
+
+.tone-a { --art-1: #c0553a; --art-2: #6a2a1c; } .tone-b { --art-1: #3c8f7d; --art-2: #17463c; }
+.tone-c { --art-1: #d9a441; --art-2: #7a5214; } .tone-d { --art-1: #7b62c9; --art-2: #2f2466; }
+.tone-boss { --art-1: #6f7d86; --art-2: #2a3238; }
+.job-fighting { --frame: #7c1d2a; --frame-2: #52121c; }
+.job-mining { --frame: #6d4a1e; --frame-2: #3f2a10; }
+.job-logging { --frame: #1f5a3a; --frame-2: #123a25; }
+.tone-boss { --frame: #3a424a; --frame-2: #1f252a; }
+
+/* border: Crimson and gilt (frame colour follows the job) */
+.card { padding: 11px 11px 8px; gap: 6px; color: var(--ink); border-radius: 13px;
+  background: linear-gradient(160deg, var(--frame), var(--frame-2));
+  box-shadow: 0 0 0 2px var(--gold-2), 0 0 0 3.5px #2b1a05, 0 10px 18px rgba(0, 0, 0, .5), inset 0 0 0 1.5px rgba(241, 210, 122, .75); }
+.card__head { padding: 3px 8px; border-radius: 6px; align-items: center;
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 1px 0 rgba(0, 0, 0, .5); }
+.card__name { font-family: var(--font-title); font-size: 16px; font-weight: 700; line-height: 1.15; }
+.card__job { font-size: 12px; font-style: italic; font-weight: 500; color: #3a2508; }
+.card__art { border-radius: 5px; background: radial-gradient(circle at 50% 38%, var(--art-1), var(--art-2));
+  box-shadow: inset 0 0 0 2px var(--gold-2), inset 0 0 0 3.5px #2b1a05, inset 0 0 14px rgba(0, 0, 0, .55); --emblem: rgba(255, 244, 214, .92); }
+.card__stats { padding: 5px 8px; border-radius: 5px; background: var(--parch); box-shadow: inset 0 0 0 1px rgba(125, 90, 20, .55); }
+.card__stats dt { font-size: 12px; font-weight: 500; color: #5a4325; }
+.card__stats dd { font-size: 17px; font-weight: 700; line-height: 1.1; color: var(--ink); }
+.card__rank { padding: 1px 4px 0; color: #f3e6c3; }
+.rank-name { font-family: var(--font-title); font-style: italic; font-size: 14px; font-weight: 700; }
+.stars { --star-size: 17px; }
+.stars__on { text-shadow: none; }
+.card__rank .stars__on { filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .7)); }
+
+/* star-6 evolution: a faint gilt halo, a little richer than the base frame */
+.is-star6 { box-shadow: 0 0 0 2px var(--gold-1), 0 0 0 3.5px #2b1a05, 0 0 16px 3px color-mix(in srgb, var(--star) 70%, transparent), 0 10px 18px rgba(0, 0, 0, .5), inset 0 0 0 1.5px rgba(255, 236, 170, .95); }
+
+/* finish: Rainbow foil with sparkle */
+.finish-holo .card__art::after { content: ''; position: absolute; inset: 0; mix-blend-mode: color-dodge; opacity: .75;
+  background:
+    radial-gradient(circle at 20% 30%, #fff 0 1px, transparent 2px), radial-gradient(circle at 70% 60%, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 45% 80%, #fff 0 1px, transparent 2px), radial-gradient(circle at 85% 20%, #fff 0 1px, transparent 2px),
+    repeating-linear-gradient(115deg, #ff3d9a, #ffc23d, #3dff9e, #3da6ff, #a06bff, #ff3d9a 28%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 220% 100%; animation: foil 5s linear infinite alternate; }
+@keyframes foil { to { background-position: 0 0, 0 0, 0 0, 0 0, 100% 0; } }
+
+/* boss + HP bar */
+.card--boss .card__name { font-size: 21px; }
+.hp { border-radius: 6px; background: #1a0b0e; box-shadow: inset 0 0 0 2px var(--gold-2), inset 0 0 0 3.5px #2b1a05; height: 26px; padding: 4px; }
+.hp__fill { border-radius: 3px; background: linear-gradient(180deg, #e0473d, #8e1d22); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4); }
+.hp__text { color: #fff4dc; text-shadow: 0 1px 2px #000; font-size: 13px; }
+
+/* attack animation: Gilt slash */
+.fx { position: absolute; left: -10%; top: 46%; width: 120%; height: 5px; z-index: 2; opacity: 0; transform-origin: 0 50%;
+  background: linear-gradient(90deg, transparent, #fff 25%, var(--gold-1) 70%, transparent); filter: drop-shadow(0 0 6px #ffe38a);
+  animation: slash 2.4s ease-out infinite; }
+@keyframes slash { 0% { transform: rotate(-32deg) scaleX(0); opacity: 1; } 10% { transform: rotate(-32deg) scaleX(1); opacity: 1; } 24%, 100% { transform: rotate(-32deg) scaleX(1); opacity: 0; } }
+.card--boss .art__emblem { animation: jolt 2.4s ease-out infinite; }
+@keyframes jolt { 0% { transform: translateX(-7px) rotate(-2deg); } 6% { transform: translateX(6px) rotate(1.5deg); } 14%, 100% { transform: none; } }
+
+/* tick damage: Engraved rise; number style: Engraved gold with a dark edge */
+.tick { font-family: var(--font-title); font-weight: 700; font-style: italic; font-size: 27px; color: #ffe08a;
+  -webkit-text-stroke: 2px #3a2204; paint-order: stroke fill; text-shadow: 0 2px 0 #3a2204, 0 0 8px rgba(0, 0, 0, .6); }
+.tick--crit { font-size: 38px; color: #ffb02e; text-shadow: 0 2px 0 #7c1d2a, 0 0 12px #ff8a5a; }
