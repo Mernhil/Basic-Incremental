@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": ["Bash(git *)", "Bash(gh *)"],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f)",
+      "Bash(git push * -f *)",
+      "Bash(git push *+*)",
+      "Bash(git push * --delete *)",
+      "Bash(git push * -d *)",
+      "Bash(git push * :main*)",
+      "Bash(git branch -D main*)",
+      "Bash(git branch -d main*)",
+      "Bash(git branch --delete * main*)",
+      "Bash(gh repo delete*)",
+      "Bash(gh api * DELETE *git/refs/heads/main*)",
+      "Bash(gh api * --method DELETE *git/refs/heads/main*)",
+      "Bash(gh api -X DELETE *main*)"
+    ]
+  }
+}
