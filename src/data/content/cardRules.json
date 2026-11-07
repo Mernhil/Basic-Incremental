@@ -1,0 +1,129 @@
+{
+  "startCards": ["ember_squire", "apprentice_feller", "cave_digger"],
+  "cost": {
+    "common": 2,
+    "rare": 3,
+    "epic": 5,
+    "legendary": 8,
+    "mythic": 12,
+    "exotic": 16,
+    "void": 20
+  },
+  "costCap": { "base": 6, "perLevel": 2 },
+  "levelCaps": {
+    "bronze": [20, 24, 28, 32, 36, 40],
+    "silver": [40, 44, 48, 52, 56, 60],
+    "gold": [60, 64, 68, 72, 76, 80],
+    "prismatic": [80, 84, 88, 92, 96, 100]
+  },
+  "xpCurve": { "base": "10", "growth": "1.12" },
+  "xp": {
+    "perKill": "50",
+    "tierGrowth": "5",
+    "perUnit": { "logging": "1", "mining": "2" }
+  },
+  "power": {
+    "perLevel": 0.02,
+    "perStar": 0.05,
+    "star6Bonus": 0.25,
+    "tier": { "bronze": 1, "silver": 1.5, "gold": 2.25, "prismatic": 3.5 }
+  },
+  "mainGrowth": {
+    "fighting": [
+      { "stat": "combat.damage", "kind": "percent", "value": "100" },
+      { "stat": "burst.fill", "kind": "percent", "value": "10", "scope": { "job": "fighting" } }
+    ],
+    "logging": [
+      {
+        "stat": "production.rate",
+        "kind": "percent",
+        "value": "100",
+        "scope": { "job": "logging" }
+      },
+      { "stat": "burst.fill", "kind": "percent", "value": "10", "scope": { "job": "logging" } }
+    ],
+    "mining": [
+      {
+        "stat": "production.rate",
+        "kind": "percent",
+        "value": "100",
+        "scope": { "job": "mining" }
+      },
+      { "stat": "burst.fill", "kind": "percent", "value": "10", "scope": { "job": "mining" } }
+    ]
+  },
+  "starUp": {
+    "duplicates": 1,
+    "tiers": {
+      "bronze": { "resource": "moss_core", "amounts": ["2", "3", "4", "5", "15"] },
+      "silver": { "resource": "cinder_core", "amounts": ["3", "4", "6", "8", "24"] },
+      "gold": { "resource": "frost_core", "amounts": ["4", "6", "8", "10", "30"] },
+      "prismatic": { "resource": "frost_core", "amounts": ["8", "10", "12", "15", "45"] }
+    }
+  },
+  "tierUp": {
+    "bronze": {
+      "logging": [
+        { "resource": "moss_core", "amount": "10" },
+        { "resource": "ironwood", "amount": "2000" }
+      ],
+      "mining": [
+        { "resource": "moss_core", "amount": "10" },
+        { "resource": "iron_ore", "amount": "1000" }
+      ],
+      "fighting": [
+        { "resource": "moss_core", "amount": "10" },
+        { "resource": "iron_ore", "amount": "1000" }
+      ]
+    },
+    "silver": {
+      "logging": [
+        { "resource": "cinder_core", "amount": "20" },
+        { "resource": "moonwood", "amount": "5000" }
+      ],
+      "mining": [
+        { "resource": "cinder_core", "amount": "20" },
+        { "resource": "crystal_ore", "amount": "2000" }
+      ],
+      "fighting": [
+        { "resource": "cinder_core", "amount": "20" },
+        { "resource": "crystal_ore", "amount": "2000" }
+      ]
+    },
+    "gold": {
+      "logging": [
+        { "resource": "frost_core", "amount": "40" },
+        { "resource": "frost_sigil", "amount": "100" }
+      ],
+      "mining": [
+        { "resource": "frost_core", "amount": "40" },
+        { "resource": "frost_sigil", "amount": "100" }
+      ],
+      "fighting": [
+        { "resource": "frost_core", "amount": "40" },
+        { "resource": "frost_sigil", "amount": "100" }
+      ]
+    }
+  },
+  "shards": {
+    "common": 1,
+    "rare": 2,
+    "epic": 4,
+    "legendary": 8,
+    "mythic": 15,
+    "exotic": 25,
+    "void": 40
+  },
+  "drop": {
+    "chance": 0.01,
+    "weights": {
+      "common": 60,
+      "rare": 25,
+      "epic": 10,
+      "legendary": 4,
+      "mythic": 2,
+      "exotic": 1,
+      "void": 0.5
+    }
+  }
+}

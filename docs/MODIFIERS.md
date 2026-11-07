@@ -8,7 +8,7 @@ Every tunable number in the game goes through one pipeline (DESIGN.md 11.5), so 
 { "stat": "production.rate", "kind": "percent", "value": "5", "scope": { "job": "logging" } }
 ```
 
-- **stat**: one of `STATS` (production rate, damage, damage upgrade gain, boss HP, drop chance, pity, portal amount, material chance and amount, burst interval / size / fill / power, special dungeon rewards, offline cap, XP, loadout cost cap, summon pity, cost multiplier, cost growth, plot/slot capacity, mine level bonus).
+- **stat**: one of `STATS` (production rate, damage, damage upgrade gain, boss HP, drop chance, card drop chance, pity, portal amount, material chance and amount, burst interval / size / fill / power, special dungeon rewards, offline cap, XP, loadout cost cap, summon pity, cost multiplier, cost growth, plot/slot capacity, mine level bonus).
 - **kind** and the fixed order they apply in:
   1. `flat`: added (all flats summed)
   2. `percent`: all percents summed, then applied once (`"5"` = +5%)
@@ -23,7 +23,8 @@ Every tunable number in the game goes through one pipeline (DESIGN.md 11.5), so 
 `collectModifiers(state, content)` gathers every active modifier with its source (`cosmetic`, `set`, `skill`, `enhancement`, `card`, `prestige`, `achievement`). Today it reads:
 
 - owned cosmetics (`ownedModifiers` in `cosmetics.json`), worn or not;
-- fully equipped sets (`modifiers` in `sets.json`).
+- fully equipped sets (`modifiers` in `sets.json`);
+- cards in the three loadouts (`cardModifiers` in `src/game/cards.ts`): the main card's `main` modifiers plus the job's `mainGrowth` from `cardRules.json`, and each support card's `support` modifiers. Card modifiers carry a `scale` (`full` grows with the card's power from level, stars and tier; `none` stays fixed; default `full` for flat and percent, `none` otherwise).
 
 New systems add their modifiers inside `collectModifiers`; callers never change.
 
@@ -31,7 +32,7 @@ New systems add their modifiers inside `collectModifiers`; callers never change.
 
 - `computeStat(stat, base, modifiers, context)` returns the value plus the modifiers that applied, in order, for tooltip breakdowns.
 - `statValue(...)` returns only the value.
-- Game helpers that already use it: `producerRate`, `plotCapacity`, `curvePrice` (expansions, mine levels), `treeUnlockCost`, `baseDamage`, `damageStat` / `effectiveDamage`, `damageUpgradeCost`, `bossMaxHp`, `effectiveDrops`, `burstStats`, `trialRewards`, `offlineCapMs`.
+- Game helpers that already use it: `producerRate`, `plotCapacity`, `curvePrice` (expansions, mine levels), `treeUnlockCost`, `baseDamage`, `damageStat` / `effectiveDamage`, `damageUpgradeCost`, `bossMaxHp`, `effectiveDrops`, `burstStats`, `trialRewards`, `offlineCapMs`, `loadoutCostCap`, `cardDropChance`, `fightingXpPerKill` / `productionXpPerUnit` (`xp.card`), `starUpCost` / `tierUpCost` (`cost.multiplier`).
 - Prices: exponential prices read `cost.growth` for the growth factor (never below 1), then every price is scaled by `cost.multiplier` (base 1, never below 0) and rounded up. Both get the job, producer and resource in their context.
 
 ## Adding a stat

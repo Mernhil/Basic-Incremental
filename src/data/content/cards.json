@@ -1,29 +1,280 @@
 [
   {
-    "id": "example_fighting_main",
-    "name": "Example Fighter",
+    "id": "ember_squire",
+    "name": "Ember Squire",
     "job": "fighting",
     "rarity": "common",
-    "role": "main",
-    "mainAbility": {
-      "kind": "ticks",
-      "multiplier": "1",
-      "intervalSeconds": 1
+    "main": {
+      "description": "Steady hits every 1 s",
+      "modifiers": [
+        { "stat": "burst.interval", "kind": "set", "value": "1", "scope": { "job": "fighting" } }
+      ]
+    },
+    "support": {
+      "description": "+5% damage",
+      "modifiers": [{ "stat": "combat.damage", "kind": "percent", "value": "5" }]
     }
   },
   {
-    "id": "example_fighting_support",
-    "name": "Example Sidekick",
+    "id": "shield_warden",
+    "name": "Shield Warden",
     "job": "fighting",
     "rarity": "rare",
-    "role": "support",
-    "supportEffect": {
-      "kind": "damageBonus",
-      "value": "0.1"
+    "main": {
+      "description": "Steady hits every 1 s, +10% damage",
+      "modifiers": [
+        { "stat": "burst.interval", "kind": "set", "value": "1", "scope": { "job": "fighting" } },
+        { "stat": "combat.damage", "kind": "percent", "value": "10" }
+      ]
     },
-    "startRank": {
-      "tier": "silver",
-      "stars": 2
+    "support": {
+      "description": "+1 burst fill per hit",
+      "modifiers": [
+        {
+          "stat": "burst.fill",
+          "kind": "flat",
+          "value": "1",
+          "scope": { "job": "fighting" },
+          "scale": "none"
+        }
+      ]
+    }
+  },
+  {
+    "id": "storm_duelist",
+    "name": "Storm Duelist",
+    "job": "fighting",
+    "rarity": "epic",
+    "main": {
+      "description": "Fast hits every 0.5 s, gauge fills twice as fast",
+      "modifiers": [
+        { "stat": "burst.interval", "kind": "set", "value": "0.5", "scope": { "job": "fighting" } },
+        { "stat": "burst.fill", "kind": "mult", "value": "2", "scope": { "job": "fighting" } }
+      ]
+    },
+    "support": {
+      "description": "+12% damage",
+      "modifiers": [{ "stat": "combat.damage", "kind": "percent", "value": "12" }]
+    }
+  },
+  {
+    "id": "dawnblade_regent",
+    "name": "Dawnblade Regent",
+    "job": "fighting",
+    "rarity": "legendary",
+    "main": {
+      "description": "Heavy hits every 2 s, signature attack ×15",
+      "modifiers": [
+        { "stat": "burst.interval", "kind": "set", "value": "2", "scope": { "job": "fighting" } },
+        { "stat": "burst.power", "kind": "set", "value": "15", "scope": { "job": "fighting" } }
+      ]
+    },
+    "support": {
+      "description": "+15% damage, +10% rare drop chance",
+      "modifiers": [
+        { "stat": "combat.damage", "kind": "percent", "value": "15" },
+        { "stat": "drops.rareChance", "kind": "percent", "value": "10" }
+      ]
+    }
+  },
+  {
+    "id": "apprentice_feller",
+    "name": "Apprentice Feller",
+    "job": "logging",
+    "rarity": "common",
+    "main": { "description": "Steady output" },
+    "support": {
+      "description": "+5% logging",
+      "modifiers": [
+        {
+          "stat": "production.rate",
+          "kind": "percent",
+          "value": "5",
+          "scope": { "job": "logging" }
+        }
+      ]
+    }
+  },
+  {
+    "id": "grove_keeper",
+    "name": "Grove Keeper",
+    "job": "logging",
+    "rarity": "rare",
+    "main": {
+      "description": "+10% logging",
+      "modifiers": [
+        {
+          "stat": "production.rate",
+          "kind": "percent",
+          "value": "10",
+          "scope": { "job": "logging" }
+        }
+      ]
+    },
+    "support": {
+      "description": "+1 harvest-burst fill per tick",
+      "modifiers": [
+        {
+          "stat": "burst.fill",
+          "kind": "flat",
+          "value": "1",
+          "scope": { "job": "logging" },
+          "scale": "none"
+        }
+      ]
+    }
+  },
+  {
+    "id": "elder_treant",
+    "name": "Elder Treant",
+    "job": "logging",
+    "rarity": "epic",
+    "main": {
+      "description": "Harvest bursts give 15 s of output instead of 10 s",
+      "modifiers": [
+        { "stat": "burst.power", "kind": "set", "value": "15", "scope": { "job": "logging" } }
+      ]
+    },
+    "support": {
+      "description": "+12% logging",
+      "modifiers": [
+        {
+          "stat": "production.rate",
+          "kind": "percent",
+          "value": "12",
+          "scope": { "job": "logging" }
+        }
+      ]
+    }
+  },
+  {
+    "id": "moonwood_dryad",
+    "name": "Moonwood Dryad",
+    "job": "logging",
+    "rarity": "mythic",
+    "main": {
+      "description": "+30% logging, harvest gauge fills faster",
+      "modifiers": [
+        {
+          "stat": "production.rate",
+          "kind": "percent",
+          "value": "30",
+          "scope": { "job": "logging" }
+        },
+        { "stat": "burst.fill", "kind": "mult", "value": "1.5", "scope": { "job": "logging" } }
+      ]
+    },
+    "support": {
+      "description": "+20% logging",
+      "modifiers": [
+        {
+          "stat": "production.rate",
+          "kind": "percent",
+          "value": "20",
+          "scope": { "job": "logging" }
+        }
+      ]
+    }
+  },
+  {
+    "id": "cave_digger",
+    "name": "Cave Digger",
+    "job": "mining",
+    "rarity": "common",
+    "main": { "description": "Steady output" },
+    "support": {
+      "description": "+5% mining",
+      "modifiers": [
+        { "stat": "production.rate", "kind": "percent", "value": "5", "scope": { "job": "mining" } }
+      ]
+    }
+  },
+  {
+    "id": "gem_cutter",
+    "name": "Gem Cutter",
+    "job": "mining",
+    "rarity": "rare",
+    "main": {
+      "description": "+10% mining",
+      "modifiers": [
+        {
+          "stat": "production.rate",
+          "kind": "percent",
+          "value": "10",
+          "scope": { "job": "mining" }
+        }
+      ]
+    },
+    "support": {
+      "description": "+1 harvest-burst fill per tick",
+      "modifiers": [
+        {
+          "stat": "burst.fill",
+          "kind": "flat",
+          "value": "1",
+          "scope": { "job": "mining" },
+          "scale": "none"
+        }
+      ]
+    }
+  },
+  {
+    "id": "geode_golem",
+    "name": "Geode Golem",
+    "job": "mining",
+    "rarity": "legendary",
+    "main": {
+      "description": "Harvest bursts give 15 s of output, +15% mining",
+      "modifiers": [
+        { "stat": "burst.power", "kind": "set", "value": "15", "scope": { "job": "mining" } },
+        {
+          "stat": "production.rate",
+          "kind": "percent",
+          "value": "15",
+          "scope": { "job": "mining" }
+        }
+      ]
+    },
+    "support": {
+      "description": "+15% mining",
+      "modifiers": [
+        {
+          "stat": "production.rate",
+          "kind": "percent",
+          "value": "15",
+          "scope": { "job": "mining" }
+        }
+      ]
+    }
+  },
+  {
+    "id": "core_titan",
+    "name": "Core Titan",
+    "job": "mining",
+    "rarity": "exotic",
+    "main": {
+      "description": "+40% mining, harvest gauge fills faster",
+      "modifiers": [
+        {
+          "stat": "production.rate",
+          "kind": "percent",
+          "value": "40",
+          "scope": { "job": "mining" }
+        },
+        { "stat": "burst.fill", "kind": "mult", "value": "1.5", "scope": { "job": "mining" } }
+      ]
+    },
+    "support": {
+      "description": "+25% mining, +5% Core drop chance",
+      "modifiers": [
+        {
+          "stat": "production.rate",
+          "kind": "percent",
+          "value": "25",
+          "scope": { "job": "mining" }
+        },
+        { "stat": "drops.materialChance", "kind": "percent", "value": "5" }
+      ]
     }
   }
 ]
