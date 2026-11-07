@@ -14,8 +14,14 @@ export default tseslint.config(
       'electron.vite.config.ts',
       'vitest.config.mts',
       'tests/**/*.ts',
+      'scripts/**/*.mjs',
     ],
     languageOptions: { globals: globals.node },
+  },
+  {
+    // Playwright scripts run in Node but pass callbacks that execute in the page.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
   {
     files: ['src/renderer/**/*.ts'],

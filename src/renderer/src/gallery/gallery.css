@@ -1,0 +1,78 @@
+/* Dev-only gallery chrome. Uses the table tokens so it follows the equipped table. */
+.gallery__page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 24px 32px 64px;
+  display: grid;
+  gap: 28px;
+}
+.gallery__title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--bi-on-table);
+}
+.gallery__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: flex-end;
+}
+.gallery__field {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--bi-on-table-muted);
+}
+.gallery__field select {
+  font: inherit;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.gallery__field select + select {
+  margin-top: 2px;
+}
+.gallery__note,
+.gallery__sets {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--bi-on-table-muted);
+}
+.gallery__h2 {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--bi-on-table-muted);
+}
+.gallery__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  align-items: flex-start;
+}
+.gallery__fig {
+  margin: 0;
+  display: grid;
+  gap: 22px;
+  justify-items: center;
+}
+.gallery__fig figcaption {
+  font-size: 13px;
+  color: var(--bi-on-table-muted);
+}
+.gallery__button {
+  margin-top: 18px;
+  padding: 6px 14px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--bi-on-table);
+  font: inherit;
+  cursor: pointer;
+}
+.gallery__button:focus-visible,
+.gallery__field select:focus-visible {
+  outline: 2px solid var(--bi-on-table);
+  outline-offset: 2px;
+}

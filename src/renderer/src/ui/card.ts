@@ -1,0 +1,123 @@
+import type { Rank } from '../../../data';
+import type { ResolvedCard } from '../../../game';
+import { applyCardTheme } from '../theme/apply';
+
+/** Placeholder emblems until real card art exists. */
+const EMBLEMS: Record<string, string> = {
+  blade:
+    '<path d="M50 8 62 60 50 70 38 60Z"/><path d="M30 64H70V71H30Z"/><path d="M45 70H55V92H45Z"/>',
+  gem: '<path d="M30 16H70L90 40 50 90 10 40Z"/>',
+  shield: '<path d="M50 8 84 20V48C84 70 68 84 50 92 32 84 16 70 16 48V20Z"/>',
+  pick: '<path d="M12 40C30 14 70 14 88 40 70 30 30 30 12 40Z"/><path d="M46 30H54V92H46Z"/>',
+  axe: '<path d="M30 20C62 8 84 26 76 52 60 44 44 42 30 50Z"/><path d="M26 20H34V92H26Z"/>',
+  golem:
+    '<rect x="22" y="20" width="56" height="48" rx="8"/><rect x="34" y="72" width="12" height="18" rx="3"/><rect x="54" y="72" width="12" height="18" rx="3"/>',
+  rock: '<path d="M14 70 26 38 46 26 70 30 86 52 82 76 54 86 28 84Z"/>',
+  tree: '<path d="M50 10 76 46H62L82 70H18L38 46H24Z"/><path d="M44 70H56V90H44Z"/>',
+};
+
+const TIER_NAMES: Record<Rank['tier'], string> = {
+  bronze: 'Bronze',
+  silver: 'Silver',
+  gold: 'Gold',
+  prismatic: 'Prismatic',
+};
+
+export interface CardStat {
+  label: string;
+  value: string;
+}
+
+export interface CardProps {
+  name: string;
+  /** Short role or job label shown on the name plate. */
+  label: string;
+  job: string;
+  emblem: keyof typeof EMBLEMS | string;
+  rank: Rank;
+  stats: [CardStat, CardStat];
+  theme: ResolvedCard;
+  boss?: boolean;
+}
+
+export interface CardView {
+  el: HTMLElement;
+  update(props: CardProps): void;
+  /** Plays the one-time star 5 -> 6 flash (skipped with reduced motion by CSS). */
+  levelUp(): void;
+}
+
+function starsHtml(rank: Rank): string {
+  const on = '★'.repeat(rank.stars);
+  const off = '★'.repeat(6 - rank.stars);
+  return (
+    `<span class="bi-stars__on" aria-hidden="true">${on}</span>` +
+    `<span class="bi-stars__sheen" aria-hidden="true">${on}</span>` +
+    `<span class="bi-stars__off" aria-hidden="true">${off}</span>`
+  );
+}
+
+/**
+ * A card. Structure is fixed; every visual comes from the theme (CSS variables and recipe
+ * classes) and the rank (data attributes read by rank.css).
+ */
+export function createCard(initial: CardProps): CardView {
+  const el = document.createElement('article');
+  el.className = 'bi-card';
+  el.innerHTML = `
+    <span class="bi-card__rarity" aria-hidden="true"></span>
+    <span class="bi-card__rankfx" aria-hidden="true"><i class="bi-mote"></i><i class="bi-mote"></i><i class="bi-mote"></i><i class="bi-mote"></i></span>
+    <span class="bi-card__finish" aria-hidden="true"></span>
+    <span class="bi-card__deco" aria-hidden="true"><i class="bi-gem"></i></span>
+    <header class="bi-card__head"><h3 class="bi-card__name"></h3><span class="bi-card__job"></span></header>
+    <div class="bi-card__art"><svg class="bi-card__emblem" viewBox="0 0 100 100" aria-hidden="true"></svg></div>
+    <dl class="bi-card__stats">
+      <div><dt></dt><dd class="bi-num"></dd></div>
+      <div><dt></dt><dd class="bi-num"></dd></div>
+    </dl>
+    <footer class="bi-card__rank"><span class="bi-rank-name"></span><span class="bi-stars" role="img"></span></footer>`;
+
+  const q = <T extends Element>(sel: string) => el.querySelector(sel) as T;
+  const name = q<HTMLElement>('.bi-card__name');
+  const job = q<HTMLElement>('.bi-card__job');
+  const emblem = q<SVGElement>('.bi-card__emblem');
+  const dts = el.querySelectorAll('dt');
+  const dds = el.querySelectorAll('dd');
+  const rankName = q<HTMLElement>('.bi-rank-name');
+  const stars = q<HTMLElement>('.bi-stars');
+
+  const update = (p: CardProps): void => {
+    el.classList.toggle('bi-card--boss', Boolean(p.boss));
+    el.dataset['tier'] = p.rank.tier;
+    el.dataset['stars'] = String(p.rank.stars);
+    el.dataset['job'] = p.job;
+    el.setAttribute(
+      'aria-label',
+      `${p.name}, ${p.label}, ${TIER_NAMES[p.rank.tier]} ${p.rank.stars} of 6 stars`,
+    );
+    name.textContent = p.name;
+    job.textContent = p.label;
+    emblem.innerHTML = EMBLEMS[p.emblem] ?? EMBLEMS['gem']!;
+    p.stats.forEach((s, i) => {
+      dts[i]!.textContent = s.label;
+      dds[i]!.textContent = s.value;
+    });
+    rankName.textContent = TIER_NAMES[p.rank.tier];
+    stars.setAttribute('aria-label', `${TIER_NAMES[p.rank.tier]}, ${p.rank.stars} of 6 stars`);
+    stars.innerHTML = starsHtml(p.rank);
+    applyCardTheme(el, p.theme);
+  };
+
+  update(initial);
+
+  return {
+    el,
+    update,
+    levelUp() {
+      el.classList.remove('is-levelup');
+      void el.offsetWidth; // restart the animation
+      el.classList.add('is-levelup');
+      window.setTimeout(() => el.classList.remove('is-levelup'), 1200);
+    },
+  };
+}
