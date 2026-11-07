@@ -14,7 +14,54 @@ export const MIGRATIONS: MigrationTable = {
   /** v1 -> v2: cosmetics (equipped loadout and owned items) were added. Start empty; starters
    *  are filled in when the save is read. */
   1: (state) => ({ ...state, cosmetics: { loadout: { slots: {}, cards: {} }, owned: {} } }),
+  2: v2ToV3,
 };
+
+/**
+ * v2 -> v3: production moved from "producer id -> plot count" to plots/slots with chosen
+ * contents, expansions, unlocked tree kinds and mine levels; dungeon clears are recorded; the
+ * placeholder content (example_*) was replaced by the beta content. Ids are a snapshot of the
+ * v0.2 and v0.3 data, so this step keeps working whatever the content becomes later.
+ */
+function v2ToV3(state: Record<string, unknown>): Record<string, unknown> {
+  const { producers, ...rest } = state;
+  const counts = isRecord(producers) ? producers : {};
+  // v0.2 had one start plot per job and no way to buy more; anything above one is an expansion.
+  const job = (legacyId: string, newId: string) => {
+    const n = Math.max(1, Math.floor(Number(counts[legacyId] ?? 0)) || 0);
+    return { expansions: n - 1, plots: Array<string>(n).fill(newId) };
+  };
+  return {
+    ...rest,
+    resources: renameKeys(state['resources'], LEGACY_RESOURCES),
+    pity: renameKeys(state['pity'], { example_boss: 'root_warden' }),
+    activeDungeonId:
+      state['activeDungeonId'] === 'example_dungeon' ? 'mossy_cellar' : state['activeDungeonId'],
+    production: {
+      logging: job('example_tree', 'oak'),
+      mining: job('example_mine', 'copper_quarry'),
+      unlockedTrees: [],
+      mineLevels: {},
+    },
+    clearedDungeons: [],
+  };
+}
+
+const LEGACY_RESOURCES: Record<string, string> = {
+  example_wood: 'oak_wood',
+  example_ore: 'copper_ore',
+  example_portal_shard: 'moss_sigil',
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Copies a record with some keys renamed; non-records are returned as they are. */
+function renameKeys(value: unknown, names: Record<string, string>): unknown {
+  if (!isRecord(value)) return value;
+  return Object.fromEntries(Object.entries(value).map(([k, v]) => [names[k] ?? k, v]));
+}
 
 /** Runs every step from `fromVersion` up to `targetVersion`, in order. */
 export function migrateState(

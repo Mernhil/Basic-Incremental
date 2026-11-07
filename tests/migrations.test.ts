@@ -80,3 +80,44 @@ describe('migration pipeline', () => {
     });
   });
 });
+
+describe('v2 -> v3 (production)', () => {
+  const step = MIGRATIONS[2]!;
+
+  it('turns producer counts into plots and renames the example ids', () => {
+    const out = step({
+      resources: { example_wood: '5', other: '1' },
+      producers: { example_tree: 3, example_mine: 2 },
+      pity: { example_boss: 4 },
+      activeDungeonId: 'example_dungeon',
+    });
+    expect(out).toEqual({
+      resources: { oak_wood: '5', other: '1' },
+      pity: { root_warden: 4 },
+      activeDungeonId: 'mossy_cellar',
+      production: {
+        logging: { expansions: 2, plots: ['oak', 'oak', 'oak'] },
+        mining: { expansions: 1, plots: ['copper_quarry', 'copper_quarry'] },
+        unlockedTrees: [],
+        mineLevels: {},
+      },
+      clearedDungeons: [],
+    });
+  });
+
+  it('gives the start plot and slot when producers are missing or junk', () => {
+    const out = step({ producers: 'junk', activeDungeonId: null }) as {
+      production: { logging: unknown; mining: unknown };
+      activeDungeonId: unknown;
+    };
+    expect(out.production.logging).toEqual({ expansions: 0, plots: ['oak'] });
+    expect(out.production.mining).toEqual({ expansions: 0, plots: ['copper_quarry'] });
+    expect(out.activeDungeonId).toBeNull();
+  });
+
+  it('does not mutate its input', () => {
+    const input = { resources: { example_wood: '1' }, producers: { example_tree: 1 } };
+    step(input);
+    expect(input).toEqual({ resources: { example_wood: '1' }, producers: { example_tree: 1 } });
+  });
+});
