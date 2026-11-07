@@ -66,6 +66,37 @@ const directions = [
       ['Table', 'Midnight grid'],
     ],
   },
+  {
+    file: 'b2-gilded-options.html',
+    css: 'b-gilded.css',
+    extraCss: ['b2-options.css'],
+    controls: true,
+    name: 'Gilded Tradition options',
+    blurb: 'Same cosmetic items, new table and fonts. Use the picker to mix.',
+    fonts: [
+      face('Marcellus', 'marcellus', 400),
+      face('Barlow Semi Condensed', 'barlow-semi-condensed', 500),
+      face('Barlow Semi Condensed', 'barlow-semi-condensed', 600),
+      face('Barlow Semi Condensed', 'barlow-semi-condensed', 700),
+      face('Spectral', 'spectral', 400),
+      face('Spectral', 'spectral', 700),
+      face('Spectral', 'spectral', 700, 'italic'),
+      face('Source Sans 3', 'source-sans-3', 400),
+      face('Source Sans 3', 'source-sans-3', 600),
+      face('Source Sans 3', 'source-sans-3', 700),
+      face('Outfit', 'outfit', 500),
+      face('Outfit', 'outfit', 700),
+      face('Outfit', 'outfit', 800),
+    ],
+    slots: [
+      ['Card border', 'Crimson and gilt'],
+      ['Card finish', 'Rainbow foil'],
+      ['Attack animation', 'Gilt slash'],
+      ['Tick damage', 'Engraved rise'],
+      ['Number style', 'Engraved gold'],
+      ['Table', 'Plain (pick below)'],
+    ],
+  },
 ];
 
 // ---- tiny flat emblems used as art placeholders -------------------------------------------
@@ -130,9 +161,52 @@ function boss() {
   </article>`;
 }
 
+// Mockup-only picker so table and font options can be mixed. Reads and writes the URL hash.
+const PICKER_SCRIPT = `
+(() => {
+  const params = new URLSearchParams(location.hash.slice(1));
+  const apply = (key, value) => {
+    document.body.dataset[key] = value;
+    for (const b of document.querySelectorAll('.picker [data-key="' + key + '"]')) {
+      b.setAttribute('aria-pressed', String(b.dataset.value === value));
+    }
+  };
+  for (const key of ['table', 'font']) apply(key, params.get(key) ?? document.body.dataset[key]);
+  document.querySelector('.picker').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    apply(b.dataset.key, b.dataset.value);
+    params.set(b.dataset.key, b.dataset.value);
+    history.replaceState(null, '', '#' + params);
+  });
+})();`;
+
+function picker() {
+  const group = (key, label, items) =>
+    `<fieldset><legend>${label}</legend>` +
+    items
+      .map(([v, t]) => `<button type="button" data-key="${key}" data-value="${v}">${t}</button>`)
+      .join('') +
+    '</fieldset>';
+  return (
+    `<aside class="picker" aria-label="Options">` +
+    group('table', 'Table', [
+      ['navy', 'Ink navy'],
+      ['graphite', 'Graphite'],
+      ['stone', 'Light stone'],
+    ]) +
+    group('font', 'Fonts', [
+      ['inscribed', 'Inscribed'],
+      ['bookish', 'Book serif'],
+      ['modern', 'Modern sans'],
+    ]) +
+    `</aside><script>${PICKER_SCRIPT}</script>`
+  );
+}
+
 function page(d) {
   const base = read('base.css');
-  const own = read(d.css);
+  const own = [d.css, ...(d.extraCss ?? [])].map(read).join('\n');
   const slotList = d.slots.map(([k, v]) => `<li><span>${k}</span> <b>${v}</b></li>`).join('');
 
   const loadout = [
@@ -172,7 +246,7 @@ ${base}
 ${own}
 </style>
 </head>
-<body class="dir">
+<body class="dir"${d.controls ? ' data-table="navy" data-font="inscribed"' : ''}>
 <main class="table">
   <header class="setbar">
     <div><h1>${d.name}</h1><p class="blurb">${d.blurb}</p></div>
@@ -194,6 +268,7 @@ ${own}
     <div class="row">${pair}<div class="row">${extremes}</div></div>
   </section>
 </main>
+${d.controls ? picker() : ''}
 </body>
 </html>
 `;
