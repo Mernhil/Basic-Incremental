@@ -3,6 +3,7 @@ import {
   Decimal,
   GameLoop,
   SaveError,
+  baseDamage,
   bossMaxHp,
   collectModifiers,
   computeStat,
@@ -72,7 +73,7 @@ function loadoutProps(content: Content, state: GameState, card: Card): CardProps
       ? [
           {
             label: 'Damage',
-            value: `${formatDecimal(state.damage.mul(card.mainAbility.multiplier))}/s`,
+            value: `${formatDecimal(baseDamage(state, content).mul(card.mainAbility.multiplier))}/s`,
           },
           { label: 'Hits every', value: `${card.mainAbility.intervalSeconds}s` },
         ]
@@ -202,10 +203,15 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
   damageValue.classList.add('has-tip');
   damageRow.append(damageLabel, damageValue);
   const damageStat = () =>
-    computeStat('combat.damage', loop.state.damage, collectModifiers(loop.state, content), {
-      job: 'fighting',
-      dungeon: dungeon?.id,
-    });
+    computeStat(
+      'combat.damage',
+      baseDamage(loop.state, content),
+      collectModifiers(loop.state, content),
+      {
+        job: 'fighting',
+        dungeon: dungeon?.id,
+      },
+    );
   attachTooltip(damageValue, () => statTip(content, COPY.home.damageTip, damageStat(), '/s'));
   battle.body.append(damageRow);
   table.append(battle.el);
@@ -347,7 +353,7 @@ export async function startGame(root: HTMLElement, version: string): Promise<voi
       const effect = attack()?.fighting;
       if (effect)
         playHit(effect, view.art, { rng: defaultRng, target: view.art.querySelector('svg') });
-      const dealt = loop.state.damage
+      const dealt = baseDamage(loop.state, content)
         .mul(main.mainAbility.multiplier)
         .mul(main.mainAbility.intervalSeconds);
       showTick(view.art, formatDecimal(dealt), { rng: defaultRng });

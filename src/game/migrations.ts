@@ -15,7 +15,37 @@ export const MIGRATIONS: MigrationTable = {
    *  are filled in when the save is read. */
   1: (state) => ({ ...state, cosmetics: { loadout: { slots: {}, cards: {} }, owned: {} } }),
   2: v2ToV3,
+  3: v3ToV4,
 };
+
+/**
+ * v3 -> v4: combat (Phase 5). The single `damage` number became damage upgrade levels (nothing
+ * could buy damage before, so it was always the starting value); kills per dungeon, the special
+ * dungeon attempt and burst gauges were added. Bosses only existed in the Mossy Cellar before, so
+ * every earlier kill counts there, and a save with a kill has cleared it (unlocking Iron Deeps).
+ * Boss HP is respawned because the boss numbers changed.
+ */
+function v3ToV4(state: Record<string, unknown>): Record<string, unknown> {
+  const rest = { ...state };
+  delete rest['damage'];
+  const stats = isRecord(state['stats']) ? state['stats'] : {};
+  const kills = Math.max(0, Math.floor(Number(stats['bossKills'] ?? 0)) || 0);
+  const cleared = Array.isArray(state['clearedDungeons']) ? [...state['clearedDungeons']] : [];
+  if (kills > 0 && !cleared.includes('mossy_cellar')) cleared.push('mossy_cellar');
+  const gauge = () => ({ gauge: 0, timer: 0 });
+  return {
+    ...rest,
+    clearedDungeons: cleared,
+    bossHp: null,
+    combat: {
+      damageLevels: {},
+      kills: kills > 0 ? { mossy_cellar: kills } : {},
+      trialAttempt: { elapsedSeconds: 0, dealt: '0' },
+      trialBest: {},
+    },
+    bursts: { fighting: gauge(), logging: gauge(), mining: gauge() },
+  };
+}
 
 /**
  * v2 -> v3: production moved from "producer id -> plot count" to plots/slots with chosen

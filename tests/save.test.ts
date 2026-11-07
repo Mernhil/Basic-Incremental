@@ -15,8 +15,18 @@ import { constantRng, content, freshState } from './helpers';
 
 /** A state with non-trivial values everywhere. */
 function busyState() {
-  let state = advance(freshState(), content, 250_000, constantRng(0.001)).state; // 2 kills, 2 rares
-  state = { ...state, damage: new Decimal('1.5e500'), prestigeCount: 3 };
+  const strong = freshState();
+  strong.combat.damageLevels = { copper_edge: 4999 };
+  // 5000 dps for 25 s plus one signature attack: 175,000 damage = 2 kills (2 rares) of 60,000 HP.
+  let state = advance(strong, content, 25_000, constantRng(0.001)).state;
+  state = {
+    ...state,
+    prestigeCount: 3,
+    resources: { ...state.resources, oak_wood: new Decimal('1.5e500') },
+  };
+  state.combat.trialBest = { glimmer_trial: 0.5 };
+  state.combat.trialAttempt = { elapsedSeconds: 12.5, dealt: new Decimal('3e400') };
+  state.bursts.mining = { gauge: 7, timer: 0.25 };
   state.pity = { root_warden: 17 };
   return state;
 }
@@ -39,7 +49,10 @@ describe('save round-trip', () => {
     const loaded = readSave(createSaveText(state, NOW), content);
     expect(loaded.savedAt).toBe(NOW);
     expect(serializeState(loaded.state)).toEqual(serializeState(state));
-    expect(loaded.state.damage.eq(new Decimal('1.5e500'))).toBe(true);
+    expect(loaded.state.resources['oak_wood']!.eq(new Decimal('1.5e500'))).toBe(true);
+    expect(loaded.state.combat.trialAttempt.dealt.eq(new Decimal('3e400'))).toBe(true);
+    expect(loaded.state.combat.damageLevels).toEqual({ copper_edge: 4999 });
+    expect(loaded.state.combat.kills).toEqual({ mossy_cellar: 2 });
     expect(loaded.state.inventory['holo_hex']).toBe(2);
     expect(loaded.state.pity['root_warden']).toBe(17);
     expect(loaded.state.bossHp!.eq(state.bossHp!)).toBe(true);
@@ -69,7 +82,7 @@ describe('invalid saves', () => {
     expect(codeOf(() => readSave('{nope', content))).toBe('invalid-json');
     expect(codeOf(() => readSave('{"hello":1}', content))).toBe('invalid-format');
     const bad = JSON.parse(createSaveText(freshState(), NOW));
-    bad.state.damage = 'banana';
+    bad.state.combat.trialAttempt.dealt = 'banana';
     expect(codeOf(() => readSave(JSON.stringify(bad), content))).toBe('invalid-format');
     bad.version = 0;
     expect(codeOf(() => readSave(JSON.stringify(bad), content))).toBe('invalid-format');
@@ -238,7 +251,10 @@ describe('save format v3: production', () => {
     expect(state.pity).toEqual({ root_warden: 12 });
     expect(state.production.logging).toEqual({ expansions: 0, plots: ['oak'] });
     expect(state.production.mining).toEqual({ expansions: 0, plots: ['copper_quarry'] });
-    expect(state.clearedDungeons).toEqual([]);
+    // v3 -> v4: the 3 earlier kills were in the Mossy Cellar, so it counts as cleared.
+    expect(state.clearedDungeons).toEqual(['mossy_cellar']);
+    expect(state.combat.kills).toEqual({ mossy_cellar: 3 });
+    expect(state.bossHp).toBeNull();
     expect(serializeState(state).production).toEqual(serializeState(freshState()).production);
   });
 });

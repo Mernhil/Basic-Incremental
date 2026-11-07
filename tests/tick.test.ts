@@ -11,6 +11,16 @@ import { constantRng, content, freshState } from './helpers';
 
 const dungeon = content.dungeons[0]!;
 const rng = constantRng(0.5);
+const maxHp = bossMaxHp(dungeon, 0);
+
+/** A fresh state dealing `dps` damage per second (through Copper Edge levels). */
+function withDps(dps: Decimal) {
+  const state = freshState();
+  const perLevel = content.combat.damageUpgrades[0]!.damagePerLevel;
+  const levels = dps.sub(content.combat.startingDamage).div(perLevel).toNumber();
+  state.combat.damageLevels = { [content.combat.damageUpgrades[0]!.id]: levels };
+  return state;
+}
 
 describe('advance (tick math)', () => {
   it('produces rate * plots * seconds', () => {
@@ -26,23 +36,26 @@ describe('advance (tick math)', () => {
 
   it('applies damage to the boss without killing it', () => {
     const { state, report } = advance(freshState(), content, 10_000, rng);
-    expect(state.bossHp!.eq(90)).toBe(true);
+    expect(state.bossHp!.eq(maxHp.sub(10))).toBe(true); // 1 dps, no burst yet
     expect(report.bossKills).toBe(0);
   });
 
-  it('kills, rolls the portal drop and respawns the boss at full HP', () => {
-    const { state, report } = advance(freshState(), content, 100_000, rng);
+  it('kills, rolls the drops and respawns the boss at full HP', () => {
+    // Exactly enough damage for one kill in one second.
+    const { state, report } = advance(withDps(maxHp), content, 1000, rng);
     expect(report.bossKills).toBe(1);
     expect(state.stats.bossKills).toBe(1);
-    // rng 0.5 -> 1 + floor(0.5 * 3) = 2 portal shards
-    expect(state.resources['moss_sigil']!.eq(2)).toBe(true);
-    expect(state.bossHp!.eq(100)).toBe(true);
+    // rng 0.5 -> min + floor(0.5 * span) sigils; 0.5 >= the 10% Core chance -> no Core.
+    const { min, max } = dungeon.drops.portalResource;
+    expect(state.resources['moss_sigil']!.eq(min + Math.floor(0.5 * (max - min + 1)))).toBe(true);
+    expect(state.resources['moss_core']!.eq(0)).toBe(true);
+    expect(state.bossHp!.eq(maxHp)).toBe(true);
   });
 
   it('carries overflow damage into the next boss', () => {
-    const { state, report } = advance(freshState(), content, 250_000, rng);
+    const { state, report } = advance(withDps(maxHp.mul(2.5)), content, 1000, rng);
     expect(report.bossKills).toBe(2);
-    expect(state.bossHp!.eq(50)).toBe(true);
+    expect(approxEq(state.bossHp!, maxHp.div(2))).toBe(true);
   });
 
   it('ignores zero, negative and non-finite deltas', () => {
@@ -61,15 +74,13 @@ describe('advance (tick math)', () => {
   });
 
   it('scales boss HP slowly with prestige count', () => {
-    expect(bossMaxHp(dungeon, 0).eq(100)).toBe(true);
-    // 100 * 1.02^10
-    expect(approxEq(bossMaxHp(dungeon, 10), 121.899441999, 1e-6)).toBe(true);
+    expect(bossMaxHp(dungeon, 0).eq(dungeon.boss.hp)).toBe(true);
+    const scaled = dungeon.boss.hp.mul(Math.pow(1 + dungeon.boss.hpScalingPerPrestige, 10));
+    expect(approxEq(bossMaxHp(dungeon, 10), scaled, 1e-6)).toBe(true);
   });
 
   it('caps boss kills per call', () => {
-    const strong = freshState();
-    strong.damage = new Decimal('1e30');
-    const { report } = advance(strong, content, 1000, rng);
+    const { report } = advance(withDps(new Decimal('1e30')), content, 1000, rng);
     expect(report.bossKills).toBe(MAX_KILLS_PER_ADVANCE);
   });
 

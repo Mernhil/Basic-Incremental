@@ -338,6 +338,25 @@ export function producerRate(
   return Decimal.max(statValue('production.rate', base, modifiers, ctx), 0);
 }
 
+/** Resource id -> gained per second from one job's active plots/slots. */
+export function jobProductionPerSecond(
+  state: GameState,
+  content: Content,
+  job: ProductionJob,
+  modifiers: readonly Modifier[] = collectModifiers(state, content),
+  counts: Record<string, number> = producerCounts(state, content, modifiers),
+): Record<string, Decimal> {
+  const out: Record<string, Decimal> = {};
+  for (const producer of producersOf(content, job)) {
+    const count = counts[producer.id] ?? 0;
+    if (count === 0) continue;
+    const level = job === 'mining' ? mineLevel(state, producer.id) : 0;
+    const gained = producerRate(producer, job, modifiers, level).mul(count);
+    out[producer.resource] = (out[producer.resource] ?? new Decimal(0)).add(gained);
+  }
+  return out;
+}
+
 /** Resource id -> total gained per second from every active plot/slot. */
 export function productionPerSecond(
   state: GameState,
@@ -347,12 +366,10 @@ export function productionPerSecond(
   const out: Record<string, Decimal> = {};
   const counts = producerCounts(state, content, modifiers);
   for (const job of PRODUCTION_JOBS) {
-    for (const producer of producersOf(content, job)) {
-      const count = counts[producer.id] ?? 0;
-      if (count === 0) continue;
-      const level = job === 'mining' ? mineLevel(state, producer.id) : 0;
-      const gained = producerRate(producer, job, modifiers, level).mul(count);
-      out[producer.resource] = (out[producer.resource] ?? new Decimal(0)).add(gained);
+    for (const [resource, gained] of Object.entries(
+      jobProductionPerSecond(state, content, job, modifiers, counts),
+    )) {
+      out[resource] = (out[resource] ?? new Decimal(0)).add(gained);
     }
   }
   return out;

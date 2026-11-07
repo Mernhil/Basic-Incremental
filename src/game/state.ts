@@ -1,4 +1,4 @@
-import type { Content, ProductionJob } from '../data';
+import type { BurstJob, Content, ProductionJob } from '../data';
 import { Decimal } from './num';
 import type { CosmeticLoadout } from './theme';
 
@@ -14,9 +14,11 @@ export interface GameState {
   production: ProductionState;
   /** Dungeons cleared at least once. Kept through prestige; clearing one unlocks mine types. */
   clearedDungeons: string[];
-  /** Base damage per second. Bought with resources, kept through prestige. */
-  damage: Decimal;
-  /** Dungeon whose boss is being auto-fought, or null. */
+  /** Damage upgrades, kills per dungeon and the Glimmer Trial attempt. See combat.ts. */
+  combat: CombatState;
+  /** Burst gauges: fighting (signature attack) and harvest bursts for logging and mining. */
+  bursts: Record<BurstJob, BurstGauge>;
+  /** Dungeon (or special dungeon) being auto-fought, or null. */
   activeDungeonId: string | null;
   /** Current boss HP; null means "spawn a fresh boss on the next tick". */
   bossHp: Decimal | null;
@@ -60,7 +62,46 @@ export interface ProductionState {
   mineLevels: Record<string, number>;
 }
 
-export const STARTING_DAMAGE = 1;
+export interface CombatState {
+  /** Damage upgrade line id -> level bought with ore. Kept through prestige. */
+  damageLevels: Record<string, number>;
+  /** Dungeon id -> boss kills, ever. */
+  kills: Record<string, number>;
+  /** The running special-dungeon attempt (only meaningful while a trial is active). */
+  trialAttempt: TrialAttempt;
+  /** Special dungeon id -> best score, 0..1. */
+  trialBest: Record<string, number>;
+}
+
+export interface TrialAttempt {
+  elapsedSeconds: number;
+  /** Damage dealt to the target so far in this attempt. */
+  dealt: Decimal;
+}
+
+export interface BurstGauge {
+  /** Gauge points, 0 up to the burst size (exclusive). */
+  gauge: number;
+  /** Seconds since the last hit / tick, 0 up to the interval (exclusive). */
+  timer: number;
+}
+
+export function initialCombat(): CombatState {
+  return {
+    damageLevels: {},
+    kills: {},
+    trialAttempt: { elapsedSeconds: 0, dealt: new Decimal(0) },
+    trialBest: {},
+  };
+}
+
+export function initialBursts(): Record<BurstJob, BurstGauge> {
+  return {
+    fighting: { gauge: 0, timer: 0 },
+    logging: { gauge: 0, timer: 0 },
+    mining: { gauge: 0, timer: 0 },
+  };
+}
 
 /** Production as in a brand-new game (or right after a prestige, minus the kept unlocks). */
 export function initialProduction(content: Content): ProductionState {
@@ -82,7 +123,8 @@ export function createInitialState(content: Content): GameState {
     resources,
     production: initialProduction(content),
     clearedDungeons: [],
-    damage: new Decimal(STARTING_DAMAGE),
+    combat: initialCombat(),
+    bursts: initialBursts(),
     activeDungeonId: content.dungeons[0]?.id ?? null,
     bossHp: null,
     pity: {},
@@ -105,6 +147,8 @@ export function cloneState(state: GameState): GameState {
     resources: { ...state.resources },
     production: cloneProduction(state.production),
     clearedDungeons: [...state.clearedDungeons],
+    combat: cloneCombat(state.combat),
+    bursts: cloneBursts(state.bursts),
     pity: { ...state.pity },
     inventory: { ...state.inventory },
     stats: { ...state.stats },
@@ -125,4 +169,17 @@ export function cloneProduction(p: ProductionState): ProductionState {
     unlockedTrees: [...p.unlockedTrees],
     mineLevels: { ...p.mineLevels },
   };
+}
+
+export function cloneCombat(c: CombatState): CombatState {
+  return {
+    damageLevels: { ...c.damageLevels },
+    kills: { ...c.kills },
+    trialAttempt: { ...c.trialAttempt },
+    trialBest: { ...c.trialBest },
+  };
+}
+
+export function cloneBursts(b: Record<BurstJob, BurstGauge>): Record<BurstJob, BurstGauge> {
+  return { fighting: { ...b.fighting }, logging: { ...b.logging }, mining: { ...b.mining } };
 }
