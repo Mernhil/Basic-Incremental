@@ -1,0 +1,59 @@
+[
+  {
+    "id": "glimmer_trial",
+    "name": "The Glimmer Trial",
+    "unlockedBy": "ember_crypt",
+    "durationSeconds": 30,
+    "target": {
+      "id": "glimmer_sentinel",
+      "name": "Glimmer Sentinel",
+      "hp": "1.4e5"
+    },
+    "tiers": [
+      {
+        "score": 0.25,
+        "rewards": [
+          {
+            "resource": "glimmer_dust",
+            "amount": "1"
+          }
+        ]
+      },
+      {
+        "score": 0.5,
+        "rewards": [
+          {
+            "resource": "glimmer_dust",
+            "amount": "2"
+          }
+        ]
+      },
+      {
+        "score": 0.75,
+        "rewards": [
+          {
+            "resource": "glimmer_dust",
+            "amount": "3"
+          },
+          {
+            "resource": "facet_shard",
+            "amount": "1"
+          }
+        ]
+      },
+      {
+        "score": 1,
+        "rewards": [
+          {
+            "resource": "glimmer_dust",
+            "amount": "5"
+          },
+          {
+            "resource": "facet_shard",
+            "amount": "2"
+          }
+        ]
+      }
+    ]
+  }
+]

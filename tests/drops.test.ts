@@ -81,6 +81,7 @@ describe('rollBossDrop', () => {
       expect(portal).toBeLessThanOrEqual(drops.portalResource.max);
       seen.add(portal);
     }
-    expect([...seen].sort()).toEqual([1, 2, 3]);
+    const { min, max } = drops.portalResource;
+    expect([...seen].sort()).toEqual(Array.from({ length: max - min + 1 }, (_, i) => min + i));
   });
 });

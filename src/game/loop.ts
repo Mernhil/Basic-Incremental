@@ -1,7 +1,8 @@
 import type { Content } from '../data';
 import type { Rng } from './rng';
 import type { GameState } from './state';
-import { advanceChunked, type TickReport } from './tick';
+import type { TickReport } from './report';
+import { advanceChunked } from './tick';
 
 /** Real elapsed time larger than this in one step is clamped (matches the offline cap). */
 export const MAX_STEP_MS = 8 * 60 * 60 * 1000;

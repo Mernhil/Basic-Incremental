@@ -270,6 +270,17 @@ Active play with the game left open, in hours of play:
 | First max-level cosmetic                 | 20 h   |
 | Beta content mostly exhausted            | 40 h   |
 
+### 11.8 Combat rules
+
+Decided with the user for Phase 5. Numbers live in data and will be tuned.
+
+- **Clearing and unlocking.** A dungeon is **cleared on its first boss kill** (`killsToClear` in data, 1 for now). Clearing dungeon N unlocks dungeon N+1 (`unlockedBy` in data) and the mine type tied to it (Iron Deeps, Crystal Grotto).
+- **Damage purchases.** One upgrade line **per ore**: Copper, Iron and Crystal. Each line has its own exponential price in that ore and adds flat damage per level; higher ores add much more. Levels are kept through prestige.
+- **Cores** (Moss / Cinder / Frost) drop with a moderate **chance per kill** (10% to start), no pity. Sigils drop on every kill; the rare item keeps its low odds and pity.
+- **The Glimmer Trial.** Picked like a dungeon; unlocks when Dungeon 2 is cleared. Each **attempt lasts 30 s** against a target with a **fixed HP** (no prestige scaling) and repeats automatically. **Score** = share of the target's HP dealt in the attempt (capped at 100%). Rewards are paid every attempt by **score tier**: each of 25 / 50 / 75 / 100% adds Glimmer Dust; Facet Shards only at 75% and 100%. Reaching 100% clears the trial.
+- **Burst gauge.** The fighting job hits once per main-card interval (1 s while no card is equipped). Each hit fills the gauge by 1; at 20 the signature attack fires and deals **10× a hit** on top of the normal damage. Supports raise the fill per hit through modifiers.
+- **Harvest burst.** Each production job ticks once per second; each tick fills that job's gauge by 1; at 30 a bonus harvest gives **10 s of the job's output** from every plot / slot at once.
+
 ## 12. Defaults for underspecified points
 
 Points the decisions above leave open. These defaults apply until changed.

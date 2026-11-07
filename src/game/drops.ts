@@ -24,3 +24,8 @@ export function rollBossDrop(drops: Dungeon['drops'], pity: number, rng: Rng): B
   const portal = portalResource.min + Math.floor(rng() * span);
   return { rare: dropped, pity: dropped ? 0 : pity + 1, portal };
 }
+
+/** Rolls the material (Core) drop of one kill: `amount` units with `chance`, no pity. */
+export function rollMaterialDrop(drops: Dungeon['drops'], rng: Rng): number {
+  return rng() < drops.material.chance ? drops.material.amount : 0;
+}

@@ -1,6 +1,7 @@
 import { COSMETIC_SLOTS, RARITIES, contentSchemas } from './schemas';
 import type {
   Card,
+  CombatConfig,
   Cosmetic,
   CosmeticSet,
   CosmeticSlot,
@@ -13,6 +14,7 @@ import type {
   RarityStyle,
   Resource,
   Tree,
+  Trial,
   WearRules,
 } from './schemas';
 import resourcesJson from './content/resources.json';
@@ -21,6 +23,8 @@ import minesJson from './content/mines.json';
 import productionJson from './content/production.json';
 import cardsJson from './content/cards.json';
 import dungeonsJson from './content/dungeons.json';
+import trialsJson from './content/trials.json';
+import combatJson from './content/combat.json';
 import cosmeticsJson from './content/cosmetics.json';
 import portalsJson from './content/portals.json';
 import raritiesJson from './content/rarities.json';
@@ -36,6 +40,9 @@ export interface Content {
   production: ProductionConfig;
   cards: Card[];
   dungeons: Dungeon[];
+  /** Special dungeons (strength tests). Their ids share the dungeon id space. */
+  trials: Trial[];
+  combat: CombatConfig;
   cosmetics: Cosmetic[];
   portals: Portal[];
   rarities: RarityStyle[];
@@ -43,6 +50,7 @@ export interface Content {
   sets: CosmeticSet[];
   resourceById: ReadonlyMap<string, Resource>;
   dungeonById: ReadonlyMap<string, Dungeon>;
+  trialById: ReadonlyMap<string, Trial>;
   treeById: ReadonlyMap<string, Tree>;
   mineById: ReadonlyMap<string, Mine>;
   cardById: ReadonlyMap<string, Card>;
@@ -93,6 +101,8 @@ export function validateContent(raw: RawContent): Content {
     production,
     cards,
     dungeons,
+    trials,
+    combat,
     cosmetics,
     portals,
     rarities,
@@ -100,10 +110,11 @@ export function validateContent(raw: RawContent): Content {
     sets,
   } = parsed;
   checkReferences({ resources, trees, mines, cards, dungeons, cosmetics, portals }, issues);
+  checkCombat({ resources, dungeons, trials, combat }, issues);
   checkProduction({ resources, trees, mines, production }, issues);
   checkCosmetics(cosmetics, rarities, issues);
   checkSets(cosmetics, sets, issues);
-  checkModifiers({ resources, trees, mines, dungeons, portals, cosmetics, sets }, issues);
+  checkModifiers({ resources, trees, mines, dungeons, trials, portals, cosmetics, sets }, issues);
   if (issues.length > 0) throw new ContentValidationError(issues);
 
   const starterBySlot = Object.fromEntries(
@@ -117,6 +128,8 @@ export function validateContent(raw: RawContent): Content {
     production,
     cards,
     dungeons,
+    trials,
+    combat,
     cosmetics,
     portals,
     rarities,
@@ -124,6 +137,7 @@ export function validateContent(raw: RawContent): Content {
     sets,
     resourceById: new Map(resources.map((r) => [r.id, r])),
     dungeonById: new Map(dungeons.map((d) => [d.id, d])),
+    trialById: new Map(trials.map((t) => [t.id, t])),
     treeById: new Map(trees.map((t) => [t.id, t])),
     mineById: new Map(mines.map((m) => [m.id, m])),
     cardById: new Map(cards.map((x) => [x.id, x])),
@@ -241,13 +255,16 @@ function checkSets(cosmetics: Cosmetic[], sets: CosmeticSet[], issues: string[])
 
 /** Modifier scopes must name things that exist, so a typo never silently disables a buff. */
 function checkModifiers(
-  c: Pick<Content, 'resources' | 'trees' | 'mines' | 'dungeons' | 'portals' | 'cosmetics' | 'sets'>,
+  c: Pick<
+    Content,
+    'resources' | 'trees' | 'mines' | 'dungeons' | 'trials' | 'portals' | 'cosmetics' | 'sets'
+  >,
   issues: string[],
 ): void {
   const known = {
     producer: new Set([...c.trees, ...c.mines].map((x) => x.id)),
     resource: new Set(c.resources.map((x) => x.id)),
-    dungeon: new Set(c.dungeons.map((x) => x.id)),
+    dungeon: new Set([...c.dungeons, ...c.trials].map((x) => x.id)),
     portal: new Set(c.portals.map((x) => x.id)),
   };
   const check = (where: string, modifiers: ModifierData[]): void => {
@@ -264,6 +281,62 @@ function checkModifiers(
     check(`cosmetics.json › [${i}] › ownedModifiers`, x.ownedModifiers),
   );
   c.sets.forEach((x, i) => check(`sets.json › [${i}] › modifiers`, x.modifiers));
+}
+
+/** Dungeons, trials and damage upgrades must point at existing things of the right kind. */
+function checkCombat(
+  c: Pick<Content, 'resources' | 'dungeons' | 'trials' | 'combat'>,
+  issues: string[],
+): void {
+  const resources = new Map(c.resources.map((r) => [r.id, r]));
+  const checkResource = (where: string, resource: string, kind: Resource['kind']): void => {
+    const res = resources.get(resource);
+    if (!res) issues.push(`${where}: unknown resource "${resource}"`);
+    else if (res.kind !== kind)
+      issues.push(`${where}: "${resource}" is ${res.kind}, expected ${kind}`);
+  };
+
+  // Each dungeon is unlocked by an earlier one, so the chain has a start and no loops.
+  const earlier = new Set<string>();
+  c.dungeons.forEach((d, i) => {
+    if (d.unlockedBy !== null && !earlier.has(d.unlockedBy)) {
+      issues.push(
+        `dungeons.json › [${i}] › unlockedBy: "${d.unlockedBy}" is not a dungeon listed before it`,
+      );
+    }
+    earlier.add(d.id);
+    checkResource(
+      `dungeons.json › [${i}] › drops › material › resource`,
+      d.drops.material.resource,
+      'material',
+    );
+  });
+
+  c.trials.forEach((t, i) => {
+    if (earlier.has(t.id))
+      issues.push(`trials.json › [${i}] › id: "${t.id}" is already a dungeon id`);
+    if (t.unlockedBy !== null && !earlier.has(t.unlockedBy)) {
+      issues.push(`trials.json › [${i}] › unlockedBy: unknown dungeon "${t.unlockedBy}"`);
+    }
+    t.tiers.forEach((tierEntry, j) =>
+      tierEntry.rewards.forEach((r, k) =>
+        checkResource(
+          `trials.json › [${i}] › tiers › [${j}] › rewards › [${k}] › resource`,
+          r.resource,
+          'material',
+        ),
+      ),
+    );
+  });
+
+  // Damage is bought with ore (DESIGN.md 2), one line per ore (11.8).
+  const seen = new Set<string>();
+  c.combat.damageUpgrades.forEach((u, i) => {
+    const where = `combat.json › damageUpgrades › [${i}]`;
+    if (seen.has(u.id)) issues.push(`${where} › id: duplicate id "${u.id}"`);
+    seen.add(u.id);
+    checkResource(`${where} › cost › resource`, u.cost.resource, 'ore');
+  });
 }
 
 function checkReferences(
@@ -379,6 +452,8 @@ export function loadContent(): Content {
     production: productionJson,
     cards: cardsJson,
     dungeons: dungeonsJson,
+    trials: trialsJson,
+    combat: combatJson,
     cosmetics: cosmeticsJson,
     portals: portalsJson,
     rarities: raritiesJson,

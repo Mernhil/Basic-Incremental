@@ -3,18 +3,26 @@ import type { Content } from '../data';
 import { MIGRATIONS, migrateState, type MigrationTable } from './migrations';
 import { Decimal, decimalToString, isDecimalString } from './num';
 import { SaveError } from './saveError';
+import { isDungeonUnlocked } from './combat';
 import { isProducerUnlocked, PRODUCTION_JOBS } from './production';
-import { cloneProduction, cloneState, createInitialState, type GameState } from './state';
+import {
+  cloneBursts,
+  cloneProduction,
+  cloneState,
+  createInitialState,
+  type GameState,
+} from './state';
 import { sanitizeLoadout, type CosmeticLoadout } from './theme';
 
 export { SaveError } from './saveError';
 
 /** Bump this (and add a migration) whenever the saved format changes. */
-export const CURRENT_SAVE_VERSION = 3;
+export const CURRENT_SAVE_VERSION = 4;
 
 const decimalText = z.string().refine(isDecimalString, { message: 'not a valid number' });
 const counts = z.record(z.string(), z.number().int().min(0));
 const equippedSchema = z.object({ id: z.string(), level: z.number().int().min(1) });
+const gaugeSchema = z.object({ gauge: z.number().min(0), timer: z.number().min(0) });
 const jobProductionSchema = z.object({
   expansions: z.number().int().min(0),
   plots: z.array(z.string().nullable()),
@@ -30,7 +38,13 @@ export const serializedStateSchema = z.object({
     mineLevels: counts,
   }),
   clearedDungeons: z.array(z.string()),
-  damage: decimalText,
+  combat: z.object({
+    damageLevels: counts,
+    kills: counts,
+    trialAttempt: z.object({ elapsedSeconds: z.number().min(0), dealt: decimalText }),
+    trialBest: z.record(z.string(), z.number().min(0).max(1)),
+  }),
+  bursts: z.object({ fighting: gaugeSchema, logging: gaugeSchema, mining: gaugeSchema }),
   activeDungeonId: z.string().nullable(),
   bossHp: decimalText.nullable(),
   pity: counts,
@@ -72,7 +86,16 @@ export function serializeState(state: GameState): SerializedState {
     resources,
     production: cloneProduction(state.production),
     clearedDungeons: [...state.clearedDungeons],
-    damage: decimalToString(state.damage),
+    combat: {
+      damageLevels: { ...state.combat.damageLevels },
+      kills: { ...state.combat.kills },
+      trialAttempt: {
+        elapsedSeconds: state.combat.trialAttempt.elapsedSeconds,
+        dealt: decimalToString(state.combat.trialAttempt.dealt),
+      },
+      trialBest: { ...state.combat.trialBest },
+    },
+    bursts: cloneBursts(state.bursts),
     activeDungeonId: state.activeDungeonId,
     bossHp: state.bossHp ? decimalToString(state.bossHp) : null,
     pity: { ...state.pity },
@@ -95,7 +118,9 @@ export function deserializeState(saved: SerializedState, content: Content): Game
   const state = cloneState(base);
   for (const [id, text] of Object.entries(saved.resources)) state.resources[id] = new Decimal(text);
   // Unknown ids (removed from the game) are dropped; locked producers leave their plot empty.
-  state.clearedDungeons = saved.clearedDungeons.filter((id) => content.dungeonById.has(id));
+  state.clearedDungeons = saved.clearedDungeons.filter(
+    (id) => content.dungeonById.has(id) || content.trialById.has(id),
+  );
   state.production = {
     logging: { ...saved.production.logging, plots: [...saved.production.logging.plots] },
     mining: { ...saved.production.mining, plots: [...saved.production.mining.plots] },
@@ -110,10 +135,25 @@ export function deserializeState(saved: SerializedState, content: Content): Game
       if (id !== null && !isProducerUnlocked(state, content, job, id)) list[i] = null;
     });
   }
-  state.damage = new Decimal(saved.damage);
+  const upgrades = new Set(content.combat.damageUpgrades.map((u) => u.id));
+  state.combat = {
+    damageLevels: Object.fromEntries(
+      Object.entries(saved.combat.damageLevels).filter(([id]) => upgrades.has(id)),
+    ),
+    kills: { ...saved.combat.kills },
+    trialAttempt: {
+      elapsedSeconds: saved.combat.trialAttempt.elapsedSeconds,
+      dealt: new Decimal(saved.combat.trialAttempt.dealt),
+    },
+    trialBest: { ...saved.combat.trialBest },
+  };
+  state.bursts = cloneBursts(saved.bursts);
+  const active = saved.activeDungeonId;
   state.activeDungeonId =
-    saved.activeDungeonId && content.dungeonById.has(saved.activeDungeonId)
-      ? saved.activeDungeonId
+    active === null ||
+    ((content.dungeonById.has(active) || content.trialById.has(active)) &&
+      isDungeonUnlocked(state, content, active))
+      ? active
       : base.activeDungeonId;
   state.bossHp = saved.bossHp ? new Decimal(saved.bossHp) : null;
   state.pity = { ...saved.pity };
