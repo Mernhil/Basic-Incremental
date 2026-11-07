@@ -153,3 +153,11 @@ describe('card ranks and portals', () => {
     expect(issues.some((i) => i.startsWith('portals.json › [0] › pity › threshold'))).toBe(true);
   });
 });
+
+describe('the starter table defines every table token', () => {
+  it('so the screen shell never falls back to a missing value', async () => {
+    const { SLOT_TOKENS } = await import('../src/data');
+    const defined = Object.keys(loadContent().starterBySlot.table.levels[0]!.tokens);
+    for (const key of SLOT_TOKENS.table) expect(defined).toContain(key);
+  });
+});
