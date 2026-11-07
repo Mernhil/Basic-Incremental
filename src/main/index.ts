@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { GAME_TITLE } from '../game';
 import { IPC_CHANNELS } from '../preload/api';
+import { setupAutoUpdates } from './updater';
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -38,6 +39,12 @@ function createWindow(): void {
 void app.whenReady().then(() => {
   ipcMain.handle(IPC_CHANNELS.getVersion, () => app.getVersion());
   createWindow();
+
+  try {
+    setupAutoUpdates();
+  } catch (error) {
+    console.error('Auto-update setup failed:', error);
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

@@ -1,0 +1,30 @@
+appId: com.mernhil.basicincremental
+productName: Basic incremental
+copyright: Copyright (c) Mernhil
+
+directories:
+  output: release
+
+files:
+  - out/**
+  - package.json
+
+# Unsigned build: no code-signing config on purpose.
+win:
+  target:
+    - target: nsis
+      arch: x64
+  artifactName: ${name}-setup-${version}.${ext}
+
+nsis:
+  # One-click per-user install keeps silent auto-updates simple (no UAC prompt).
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  deleteAppDataOnUninstall: false
+
+publish:
+  provider: github
+  owner: Mernhil
+  repo: Basic-incremental
+  releaseType: release
